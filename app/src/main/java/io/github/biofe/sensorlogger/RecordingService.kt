@@ -53,12 +53,14 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
     private lateinit var sensorHandler: Handler
     private var wakeLock: PowerManager.WakeLock? = null
     private var accelWriter: BufferedWriter? = null
+    private var gyroWriter: BufferedWriter? = null
     private var gpsWriter: BufferedWriter? = null
     private var audioThread: Thread? = null
     @Volatile private var audioRunning = false
     private var audioSampleRate = 0
     private var audioSourceName = "none"
     private var accelSensorName = "none"
+    private var gyroSensorName = "none"
     private lateinit var stopDetector: StopDetector
     private var autoStopped = false
 
@@ -83,6 +85,7 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
         RecorderState.recording = true
         bootUtcMs = System.currentTimeMillis() - SystemClock.elapsedRealtime()
         rideDir = Rides.newRideDir(this)
+        RecorderState.rideDir = rideDir
         val random = kotlin.random.Random(SecureRandom().nextLong())
         trimStartM = PrivacyTrim.randomRadiusM(random)
         trimEndM = PrivacyTrim.randomRadiusM(random)
@@ -98,6 +101,7 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
         sensorHandler = Handler(sensorThread.looper)
 
         startAccelerometer()
+        startGyroscope()
         startGps()
         startAudio()
         writeMeta(stoppedAtMs = null)
@@ -126,8 +130,10 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
             sensorHandler.removeCallbacksAndMessages(null)
             sensorHandler.post {
                 accelWriter?.close()
+                gyroWriter?.close()
                 gpsWriter?.close()
                 accelWriter = null
+                gyroWriter = null
                 gpsWriter = null
             }
             sensorThread.quitSafely()
@@ -156,11 +162,23 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
         sm.registerListener(this, accel, ACCEL_PERIOD_US, sensorHandler)
     }
 
+    /** Rotation rate around the phone's axes. On a handlebar it separates tilting and steering from shocks. */
+    private fun startGyroscope() {
+        val sm = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        val gyro = sm.getDefaultSensor(Sensor.TYPE_GYROSCOPE) ?: return
+        gyroSensorName = "${gyro.vendor} ${gyro.name}"
+        gyroWriter = File(rideDir, Rides.GYRO_FILE).bufferedWriter().apply {
+            write("t_utc_ms,gx,gy,gz\n")
+        }
+        sm.registerListener(this, gyro, ACCEL_PERIOD_US, sensorHandler)
+    }
+
     override fun onSensorChanged(event: SensorEvent) {
-        val w = accelWriter ?: return
+        val isGyro = event.sensor.type == Sensor.TYPE_GYROSCOPE
+        val w = (if (isGyro) gyroWriter else accelWriter) ?: return
         val t = bootUtcMs + event.timestamp / 1_000_000.0
         w.write(String.format(Locale.US, "%.1f,%.4f,%.4f,%.4f\n", t, event.values[0], event.values[1], event.values[2]))
-        RecorderState.accelSamples++
+        if (isGyro) RecorderState.gyroSamples++ else RecorderState.accelSamples++
     }
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) = Unit
@@ -194,6 +212,7 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
         RecorderState.gpsFixes++
         RecorderState.lastGpsAccuracyM = location.accuracy
         RecorderState.lastSpeedKmh = location.speed * 3.6f
+        RecorderState.lastFix = doubleArrayOf(location.latitude, location.longitude, location.accuracy.toDouble())
         stopDetector.onFix(GeoPoint(t, location.latitude, location.longitude), location.accuracy.toDouble())
     }
 
@@ -286,6 +305,7 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
             .put("stopped_utc_ms", stoppedAtMs ?: JSONObject.NULL)
             .put("accel_sensor", accelSensorName)
             .put("accel_period_us", ACCEL_PERIOD_US)
+            .put("gyro_sensor", gyroSensorName)
             .put("gps_interval_ms", GPS_INTERVAL_MS)
             .put("audio_source", audioSourceName)
             .put("audio_sample_rate", audioSampleRate)

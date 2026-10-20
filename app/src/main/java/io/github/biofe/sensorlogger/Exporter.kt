@@ -94,7 +94,7 @@ object Exporter {
         zip.write(meta.toString(2).toByteArray())
         zip.closeEntry()
 
-        for (name in listOf(Rides.ACCEL_FILE, Rides.GPS_FILE, Rides.SOUND_FILE)) {
+        for (name in listOf(Rides.ACCEL_FILE, Rides.GYRO_FILE, Rides.GPS_FILE, Rides.SOUND_FILE, Rides.ANNOTATIONS_FILE)) {
             val file = File(ride, name)
             if (!file.exists()) continue
             zip.putNextEntry(ZipEntry("$rideId/$name"))

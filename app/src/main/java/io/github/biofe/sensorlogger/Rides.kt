@@ -11,6 +11,8 @@ object Rides {
     const val ACCEL_FILE = "accel.csv"
     const val GPS_FILE = "gps.csv"
     const val SOUND_FILE = "sound.csv"
+    const val GYRO_FILE = "gyro.csv"
+    const val ANNOTATIONS_FILE = "annotations.csv"
     const val META_FILE = "meta.json"
 
     fun root(context: Context): File =

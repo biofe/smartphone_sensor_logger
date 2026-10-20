@@ -10,6 +10,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.ArrayAdapter
@@ -24,6 +25,7 @@ import java.util.Locale
 class MainActivity : Activity() {
 
     private lateinit var startStop: Button
+    private lateinit var annotate: Button
     private lateinit var status: TextView
     private lateinit var ridesView: ListView
     private var rides: List<File> = emptyList()
@@ -40,6 +42,10 @@ class MainActivity : Activity() {
         val pad = (16 * resources.displayMetrics.density).toInt()
 
         startStop = Button(this).apply { setOnClickListener { toggleRecording() } }
+        annotate = Button(this).apply {
+            text = "Annotate this spot"
+            setOnClickListener { AnnotationPoll.show(this@MainActivity) { render() } }
+        }
         status = TextView(this).apply {
             typeface = Typeface.MONOSPACE
             setPadding(0, pad / 2, 0, pad)
@@ -61,6 +67,7 @@ class MainActivity : Activity() {
             orientation = LinearLayout.VERTICAL
             setPadding(pad, pad, pad, pad)
             addView(startStop, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
+            addView(annotate, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
             addView(status)
             addView(exportAll, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
             addView(hint)
@@ -91,17 +98,20 @@ class MainActivity : Activity() {
     private fun render() {
         val s = RecorderState
         startStop.text = if (s.recording) "Stop ride" else "Start ride"
+        annotate.visibility = if (s.recording) View.VISIBLE else View.GONE
         status.text = if (s.recording) {
             val secs = (System.currentTimeMillis() - s.startedAtMs) / 1000
             buildString {
                 append(String.format(Locale.US, "Recording %d:%02d\n", secs / 60, secs % 60))
                 append("Accelerometer  ${s.accelSamples} samples\n")
+                append("Gyroscope      ${s.gyroSamples} samples\n")
                 append("GPS            ${s.gpsFixes} fixes")
                 if (!s.lastGpsAccuracyM.isNaN()) {
                     append(String.format(Locale.US, ", ±%.0f m, %.0f km/h", s.lastGpsAccuracyM, s.lastSpeedKmh))
                 }
                 append("\nSound          ${s.soundFrames} frames")
                 if (!s.lastLaeqDb.isNaN()) append(String.format(Locale.US, ", %.0f dBFS(A)", s.lastLaeqDb))
+                if (s.annotations > 0) append("\nAnnotations    ${s.annotations}")
                 s.error?.let { append("\n⚠ $it") }
             }
         } else if (s.autoStopped) {
