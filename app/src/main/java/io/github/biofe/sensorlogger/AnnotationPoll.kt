@@ -23,10 +23,18 @@ object AnnotationPoll {
     val SURFACES = listOf(
         "asphalt", "concrete slabs", "paving stones", "cobbles", "compacted gravel", "loose gravel", "dirt",
     )
+    val PATH_TYPES = listOf(
+        "road with traffic", "quiet road", "painted cycle lane", "separate cycle path",
+        "shared with pedestrians", "agricultural or forest track", "park path",
+    )
+    val WIDTHS = listOf(
+        "narrow: under 1.5 m, one bike", "medium: 1.5-3 m, two bikes pass", "wide: over 3 m, car width",
+    )
+    private val WIDTH_CODES = listOf("narrow", "medium", "wide")
     val CONDITIONS = listOf("1 very bad", "2 bad", "3 ok", "4 good", "5 very good")
     val SOUNDS = listOf("traffic", "nature", "industry", "construction", "people", "quiet")
 
-    private const val HEADER = "t_utc_ms,lat,lon,accuracy_m,surface,condition,sounds,note\n"
+    private const val HEADER = "t_utc_ms,lat,lon,accuracy_m,path_type,width,surface,condition,sounds,note\n"
 
     fun show(activity: Activity, onSaved: () -> Unit) {
         val rideDir = RecorderState.rideDir
@@ -48,6 +56,8 @@ object AnnotationPoll {
         fun radios(options: List<String>) = RadioGroup(activity).apply {
             options.forEachIndexed { i, o -> addView(RadioButton(activity).apply { text = o; id = i + 1 }) }
         }
+        val pathType = radios(PATH_TYPES)
+        val width = radios(WIDTHS)
         val surface = radios(SURFACES)
         val condition = radios(CONDITIONS)
         val sounds = SOUNDS.map { CheckBox(activity).apply { text = it } }
@@ -56,6 +66,10 @@ object AnnotationPoll {
         val form = LinearLayout(activity).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(pad, 0, pad, 0)
+            addView(heading("Type of way"))
+            addView(pathType)
+            addView(heading("Width you can ride on"))
+            addView(width)
             addView(heading("Surface"))
             addView(surface)
             addView(heading("Condition"))
@@ -74,6 +88,8 @@ object AnnotationPoll {
                     String.format(Locale.US, "%.7f", fix[0]),
                     String.format(Locale.US, "%.7f", fix[1]),
                     String.format(Locale.US, "%.1f", fix[2]),
+                    PATH_TYPES.getOrNull(pathType.checkedRadioButtonId - 1) ?: "",
+                    WIDTH_CODES.getOrNull(width.checkedRadioButtonId - 1) ?: "",
                     SURFACES.getOrNull(surface.checkedRadioButtonId - 1) ?: "",
                     (condition.checkedRadioButtonId).takeIf { it > 0 }?.toString() ?: "",
                     sounds.filter { it.isChecked }.joinToString(";") { it.text },

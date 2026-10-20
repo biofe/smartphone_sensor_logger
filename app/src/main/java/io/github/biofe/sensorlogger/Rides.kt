@@ -12,6 +12,7 @@ object Rides {
     const val GPS_FILE = "gps.csv"
     const val SOUND_FILE = "sound.csv"
     const val GYRO_FILE = "gyro.csv"
+    const val PRESSURE_FILE = "pressure.csv"
     const val ANNOTATIONS_FILE = "annotations.csv"
     const val META_FILE = "meta.json"
 

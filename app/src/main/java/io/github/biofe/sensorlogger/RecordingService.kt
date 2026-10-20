@@ -54,6 +54,7 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
     private var wakeLock: PowerManager.WakeLock? = null
     private var accelWriter: BufferedWriter? = null
     private var gyroWriter: BufferedWriter? = null
+    private var pressureWriter: BufferedWriter? = null
     private var gpsWriter: BufferedWriter? = null
     private var audioThread: Thread? = null
     @Volatile private var audioRunning = false
@@ -61,6 +62,7 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
     private var audioSourceName = "none"
     private var accelSensorName = "none"
     private var gyroSensorName = "none"
+    private var pressureSensorName = "none"
     private lateinit var stopDetector: StopDetector
     private var autoStopped = false
 
@@ -102,6 +104,7 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
 
         startAccelerometer()
         startGyroscope()
+        startBarometer()
         startGps()
         startAudio()
         writeMeta(stoppedAtMs = null)
@@ -131,9 +134,11 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
             sensorHandler.post {
                 accelWriter?.close()
                 gyroWriter?.close()
+                pressureWriter?.close()
                 gpsWriter?.close()
                 accelWriter = null
                 gyroWriter = null
+                pressureWriter = null
                 gpsWriter = null
             }
             sensorThread.quitSafely()
@@ -173,7 +178,25 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
         sm.registerListener(this, gyro, ACCEL_PERIOD_US, sensorHandler)
     }
 
+    /** Air pressure gives elevation changes far more precisely than GPS altitude. */
+    private fun startBarometer() {
+        val sm = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        val baro = sm.getDefaultSensor(Sensor.TYPE_PRESSURE) ?: return
+        pressureSensorName = "${baro.vendor} ${baro.name}"
+        pressureWriter = File(rideDir, Rides.PRESSURE_FILE).bufferedWriter().apply {
+            write("t_utc_ms,pressure_hpa\n")
+        }
+        sm.registerListener(this, baro, PRESSURE_PERIOD_US, sensorHandler)
+    }
+
     override fun onSensorChanged(event: SensorEvent) {
+        if (event.sensor.type == Sensor.TYPE_PRESSURE) {
+            val w = pressureWriter ?: return
+            val t = bootUtcMs + event.timestamp / 1_000_000.0
+            w.write(String.format(Locale.US, "%.1f,%.3f\n", t, event.values[0]))
+            RecorderState.pressureSamples++
+            return
+        }
         val isGyro = event.sensor.type == Sensor.TYPE_GYROSCOPE
         val w = (if (isGyro) gyroWriter else accelWriter) ?: return
         val t = bootUtcMs + event.timestamp / 1_000_000.0
@@ -306,6 +329,7 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
             .put("accel_sensor", accelSensorName)
             .put("accel_period_us", ACCEL_PERIOD_US)
             .put("gyro_sensor", gyroSensorName)
+            .put("pressure_sensor", pressureSensorName)
             .put("gps_interval_ms", GPS_INTERVAL_MS)
             .put("audio_source", audioSourceName)
             .put("audio_sample_rate", audioSampleRate)
@@ -370,6 +394,7 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
         private const val STOP_CHECK_MS = 30_000L
         private const val ACCEL_PERIOD_US = 10_000 // 100 Hz
         private const val GPS_INTERVAL_MS = 1000L
+        private const val PRESSURE_PERIOD_US = 100_000 // 10 Hz
     }
 }
 

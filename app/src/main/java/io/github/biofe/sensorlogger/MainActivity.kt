@@ -105,6 +105,7 @@ class MainActivity : Activity() {
                 append(String.format(Locale.US, "Recording %d:%02d\n", secs / 60, secs % 60))
                 append("Accelerometer  ${s.accelSamples} samples\n")
                 append("Gyroscope      ${s.gyroSamples} samples\n")
+                append("Barometer      ${s.pressureSamples} samples\n")
                 append("GPS            ${s.gpsFixes} fixes")
                 if (!s.lastGpsAccuracyM.isNaN()) {
                     append(String.format(Locale.US, ", ±%.0f m, %.0f km/h", s.lastGpsAccuracyM, s.lastSpeedKmh))

@@ -7,6 +7,7 @@ object RecorderState {
     @Volatile var startedAtMs = 0L
     @Volatile var accelSamples = 0L
     @Volatile var gyroSamples = 0L
+    @Volatile var pressureSamples = 0L
     @Volatile var gpsFixes = 0L
     @Volatile var annotations = 0
     /** Last GPS fix, for annotations */
@@ -23,6 +24,7 @@ object RecorderState {
         startedAtMs = System.currentTimeMillis()
         accelSamples = 0
         gyroSamples = 0
+        pressureSamples = 0
         gpsFixes = 0
         annotations = 0
         lastFix = null

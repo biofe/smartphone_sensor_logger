@@ -12,9 +12,10 @@ Each ride is one folder with one CSV per sensor and a `meta.json`. Every CSV sta
 |---|---|---|
 | `accel.csv` | 100 Hz | `ax, ay, az` in m/s², raw accelerometer including gravity |
 | `gyro.csv` | 100 Hz | `gx, gy, gz` in rad/s, rotation rate around the phone's axes (if the phone has a gyroscope) |
+| `pressure.csv` | 10 Hz | `pressure_hpa`, air pressure (if the phone has a barometer); gives elevation changes more precisely than GPS |
 | `gps.csv` | 1 Hz | `gps_time_ms, lat, lon, alt_m, speed_mps, bearing_deg, accuracy_m` |
 | `sound.csv` | every 125 ms | `laeq_dbfs` (A-weighted level) and 26 band levels `band_50_dbfs` … `band_16000_dbfs` |
-| `annotations.csv` | when the rider fills in the poll | `lat, lon, accuracy_m` of the last GPS fix, `surface`, `condition` (1–5), `sounds` (`;`-separated), `note` |
+| `annotations.csv` | when the rider fills in the poll | `lat, lon, accuracy_m` of the last GPS fix, `path_type`, `width` (narrow < 1.5 m, medium, wide > 3 m), `surface`, `condition` (1–5), `sounds` (`;`-separated), `note` |
 | `meta.json` | once | random ride id, phone model, sensor names, audio sample rate and source |
 
 **Sound is never stored as audio.** Each 125 ms frame is turned into 26 band levels in memory and then discarded, so speech cannot be recovered from the files. Levels are in dBFS (0 dB = mean square of a full-scale signal) and are not calibrated. Compare them relative to each other and per phone, not as absolute dB(A). Bands below about 100 Hz are approximate (few FFT bins per band) and are dominated by wind noise while riding.
@@ -35,7 +36,7 @@ The untrimmed data stays on the phone until the ride is deleted (long-press it i
 3. For reliable recording with the screen off, set the app's battery usage to **Unrestricted** (Settings → Apps → Bike Sensor Logger → Battery).
 4. Put the phone in your pocket and ride. Tap **Stop ride** at the end. If you forget, recording stops by itself after 10 minutes without moving (more than 50 m), and the standing time is left out of the export. Waits at traffic lights are far shorter and don't stop it.
 
-To record ground truth, stop, open the app and tap **Annotate this spot** while the ride is recording. The short poll (surface, condition, what you hear, optional note) is saved with your position.
+To record ground truth, stop, open the app and tap **Annotate this spot** while the ride is recording. The short poll (type of way, width, surface, condition, what you hear, optional note) is saved with your position.
 5. Tap the ride and send the ZIP.
 
 Other apps that use the microphone at the same time (e.g. NoiseCapture or a call) can block sound recording; the screen shows a warning if that happens.
