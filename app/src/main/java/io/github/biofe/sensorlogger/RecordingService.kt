@@ -28,11 +28,15 @@ import android.os.HandlerThread
 import android.os.IBinder
 import android.os.PowerManager
 import android.os.SystemClock
+import io.github.biofe.sensorlogger.core.GeoPoint
+import io.github.biofe.sensorlogger.core.PrivacyTrim
+import io.github.biofe.sensorlogger.core.StopDetector
 import io.github.biofe.sensorlogger.core.ThirdOctaveAnalyzer
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.BufferedWriter
 import java.io.File
+import java.security.SecureRandom
 import java.util.Locale
 import java.util.UUID
 
@@ -40,6 +44,7 @@ import java.util.UUID
  * Foreground service that records accelerometer (100 Hz), GPS (1 Hz) and sound levels
  * (1/3-octave bands every 125 ms) to CSV while the phone is in a pocket with the screen off.
  * Raw audio never leaves memory: each 125 ms frame is reduced to band levels and discarded.
+ * Recording stops by itself once the rider has not moved for 10 minutes (see [StopDetector]).
  */
 class RecordingService : Service(), SensorEventListener, LocationListener {
 
@@ -54,6 +59,12 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
     private var audioSampleRate = 0
     private var audioSourceName = "none"
     private var accelSensorName = "none"
+    private lateinit var stopDetector: StopDetector
+    private var autoStopped = false
+
+    /** Privacy trim radii, drawn once per ride so re-exporting never reveals more. */
+    private var trimStartM = 0.0
+    private var trimEndM = 0.0
 
     /** UTC ms at elapsedRealtime == 0, so sensor timestamps (elapsed-realtime based) map to wall-clock time. */
     private var bootUtcMs = 0L
@@ -72,6 +83,10 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
         RecorderState.recording = true
         bootUtcMs = System.currentTimeMillis() - SystemClock.elapsedRealtime()
         rideDir = Rides.newRideDir(this)
+        val random = kotlin.random.Random(SecureRandom().nextLong())
+        trimStartM = PrivacyTrim.randomRadiusM(random)
+        trimEndM = PrivacyTrim.randomRadiusM(random)
+        stopDetector = StopDetector(RecorderState.startedAtMs)
 
         val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
         wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "sensorlogger:ride").apply {
@@ -86,7 +101,19 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
         startGps()
         startAudio()
         writeMeta(stoppedAtMs = null)
+        sensorHandler.postDelayed(::checkStill, STOP_CHECK_MS)
         return START_NOT_STICKY
+    }
+
+    /** Runs on the sensor thread, like [onLocationChanged], so the detector needs no locking. */
+    private fun checkStill() {
+        if (!RecorderState.recording) return
+        if (stopDetector.shouldStop(System.currentTimeMillis())) {
+            autoStopped = true
+            stopSelf()
+        } else {
+            sensorHandler.postDelayed(::checkStill, STOP_CHECK_MS)
+        }
     }
 
     override fun onDestroy() {
@@ -96,6 +123,7 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
             audioRunning = false
             audioThread?.join(2000)
             // Close writers on the thread that writes to them
+            sensorHandler.removeCallbacksAndMessages(null)
             sensorHandler.post {
                 accelWriter?.close()
                 gpsWriter?.close()
@@ -107,6 +135,8 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
             writeMeta(stoppedAtMs = System.currentTimeMillis())
             wakeLock?.release()
             RecorderState.recording = false
+            RecorderState.autoStopped = autoStopped
+            if (autoStopped) notifyAutoStopped()
         }
         super.onDestroy()
     }
@@ -164,6 +194,7 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
         RecorderState.gpsFixes++
         RecorderState.lastGpsAccuracyM = location.accuracy
         RecorderState.lastSpeedKmh = location.speed * 3.6f
+        stopDetector.onFix(GeoPoint(t, location.latitude, location.longitude), location.accuracy.toDouble())
     }
 
     // --- Sound -------------------------------------------------------------------------------
@@ -261,7 +292,31 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
             .put("sound_frame_ms", 125)
             .put("sound_level_unit", "dBFS, uncalibrated; 0 dB = mean square of a full-scale signal")
             .put("sound_bands_hz", JSONArray(ThirdOctaveAnalyzer(48_000).bandLabels))
+            .put("trim_start_m", trimStartM)
+            .put("trim_end_m", trimEndM)
+        if (autoStopped) {
+            meta.put("auto_stopped", true)
+            // Everything after this is the rider standing still; export drops it
+            meta.put("still_since_utc_ms", stopDetector.stillSinceMs)
+        }
         metaFile.writeText(meta.toString(2))
+    }
+
+    private fun notifyAutoStopped() {
+        val minutes = stopDetector.idleMs / 60_000
+        val open = PendingIntent.getActivity(
+            this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE,
+        )
+        getSystemService(NotificationManager::class.java).notify(
+            AUTO_STOP_NOTIFICATION_ID,
+            Notification.Builder(this, CHANNEL_ID)
+                .setSmallIcon(android.R.drawable.ic_menu_mylocation)
+                .setContentTitle("Ride saved")
+                .setContentText("Recording stopped after $minutes minutes without moving")
+                .setContentIntent(open)
+                .setAutoCancel(true)
+                .build(),
+        )
     }
 
     private fun startInForeground() {
@@ -291,6 +346,8 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
         const val ACTION_STOP = "io.github.biofe.sensorlogger.STOP"
         private const val CHANNEL_ID = "ride"
         private const val NOTIFICATION_ID = 1
+        private const val AUTO_STOP_NOTIFICATION_ID = 2
+        private const val STOP_CHECK_MS = 30_000L
         private const val ACCEL_PERIOD_US = 10_000 // 100 Hz
         private const val GPS_INTERVAL_MS = 1000L
     }

@@ -11,6 +11,8 @@ object RecorderState {
     @Volatile var lastSpeedKmh = Float.NaN
     @Volatile var lastLaeqDb = Double.NaN
     @Volatile var error: String? = null
+    /** The last ride ended because the rider stopped moving, not by tapping Stop. */
+    @Volatile var autoStopped = false
 
     fun reset() {
         startedAtMs = System.currentTimeMillis()
@@ -21,5 +23,6 @@ object RecorderState {
         lastSpeedKmh = Float.NaN
         lastLaeqDb = Double.NaN
         error = null
+        autoStopped = false
     }
 }

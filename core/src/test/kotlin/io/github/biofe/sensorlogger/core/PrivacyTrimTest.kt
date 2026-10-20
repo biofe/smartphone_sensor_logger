@@ -3,6 +3,8 @@ package io.github.biofe.sensorlogger.core
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
+import kotlin.random.Random
 
 class PrivacyTrimTest {
 
@@ -30,5 +32,20 @@ class PrivacyTrimTest {
         val window = PrivacyTrim.keepWindow(out + back, 200.0)!!
         assertEquals(18_000L, window.first)
         assertEquals(51_000L + 32_000L, window.last)
+    }
+
+    @Test
+    fun `start and end can use different radii`() {
+        val window = PrivacyTrim.keepWindow(straightRide(100), 150.0, 250.0)!!
+        assertEquals(14_000L, window.first) // 150 m / 11.12 m -> step 14
+        assertEquals(77_000L, window.last) // 250 m -> step 23 from the end
+    }
+
+    @Test
+    fun `random radii stay between 150 and 250 m`() {
+        val r = Random(1)
+        val radii = List(10_000) { PrivacyTrim.randomRadiusM(r) }
+        assertTrue(radii.all { it >= 150.0 && it < 250.0 })
+        assertTrue(radii.min() < 151.0 && radii.max() > 249.0)
     }
 }

@@ -21,7 +21,8 @@ import java.util.zip.ZipOutputStream
  */
 object Exporter {
 
-    const val PRIVACY_RADIUS_M = 200.0
+    /** Rides recorded by 0.1.0 have no random radii stored */
+    private const val LEGACY_RADIUS_M = 200.0
 
     class Result(val uri: Uri?, val fileName: String, val exported: Int, val skipped: Int)
 
@@ -63,22 +64,31 @@ object Exporter {
         val gpsFile = File(ride, Rides.GPS_FILE)
         if (!metaFile.exists() || !gpsFile.exists()) return false
 
+        val meta = JSONObject(metaFile.readText())
+        // An auto-stopped ride ends where the rider stopped moving, not ten minutes later
+        val endMs = meta.optLong("still_since_utc_ms", Long.MAX_VALUE)
         val points = gpsFile.useLines { lines ->
             lines.drop(1).mapNotNull { line ->
                 val c = line.split(',')
                 if (c.size < 4) null else GeoPoint(c[0].toLong(), c[2].toDouble(), c[3].toDouble())
-            }.toList()
+            }.filter { it.tMs <= endMs }.toList()
         }
-        val window = PrivacyTrim.keepWindow(points, PRIVACY_RADIUS_M) ?: return false
+        val window = PrivacyTrim.keepWindow(
+            points,
+            meta.optDouble("trim_start_m", LEGACY_RADIUS_M),
+            meta.optDouble("trim_end_m", LEGACY_RADIUS_M),
+        ) ?: return false
 
-        val meta = JSONObject(metaFile.readText())
         val rideId = meta.getString("ride_id")
-        meta.put("privacy_trim_radius_m", PRIVACY_RADIUS_M)
+        meta.put("privacy_trim", "random ${PrivacyTrim.MIN_RADIUS_M.toInt()}-${PrivacyTrim.MAX_RADIUS_M.toInt()} m at each end")
         meta.put("kept_from_utc_ms", window.first)
         meta.put("kept_to_utc_ms", window.last)
-        // Exact start/stop times would undo part of the trimming
+        // Exact start/stop times and the trim radii would undo part of the trimming
         meta.remove("started_utc_ms")
         meta.remove("stopped_utc_ms")
+        meta.remove("still_since_utc_ms")
+        meta.remove("trim_start_m")
+        meta.remove("trim_end_m")
 
         zip.putNextEntry(ZipEntry("$rideId/${Rides.META_FILE}"))
         zip.write(meta.toString(2).toByteArray())

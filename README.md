@@ -21,7 +21,7 @@ Each ride is one folder with three CSVs and a `meta.json`. Every CSV starts with
 
 Tapping a ride (or **Export all rides**) writes a ZIP to `Downloads/BikeSensorLogger/` and opens the share sheet. Before export:
 
-- Everything before the rider first leaves a 200 m radius around the start point, and everything after they last enter a 200 m radius around the end point, is cut from all three CSVs. This hides homes and workplaces. Rides that never leave the radius are left out.
+- Everything before the rider first leaves a radius around the start point, and everything after they last enter a radius around the end point, is cut from all three CSVs. This hides homes and workplaces. Each radius is drawn at random between 150 and 250 m when the ride starts, separately for start and end, and is not exported, so the cut-off point doesn't reveal how far away the start was. Rides that never leave the radius are left out.
 - Folders are named by a random ride id; exact start and stop times are removed from `meta.json`.
 
 The untrimmed data stays on the phone until the ride is deleted (long-press it in the list).
@@ -31,7 +31,7 @@ The untrimmed data stays on the phone until the ride is deleted (long-press it i
 1. Download `app-debug.apk` from the repository's **Releases** page and open it. Allow installing from this source when Android asks.
 2. Open **Bike Sensor Logger**, tap **Start ride** and allow location, microphone and notifications.
 3. For reliable recording with the screen off, set the app's battery usage to **Unrestricted** (Settings → Apps → Bike Sensor Logger → Battery).
-4. Put the phone in your pocket and ride. Tap **Stop ride** at the end.
+4. Put the phone in your pocket and ride. Tap **Stop ride** at the end. If you forget, recording stops by itself after 10 minutes without moving (more than 50 m), and the standing time is left out of the export. Waits at traffic lights are far shorter and don't stop it.
 5. Tap the ride and send the ZIP.
 
 Other apps that use the microphone at the same time (e.g. NoiseCapture or a call) can block sound recording; the screen shows a warning if that happens.
@@ -47,6 +47,7 @@ Needs JDK 17+ and the Android SDK (API 35). GitHub Actions runs the same on ever
 The signal processing (`core/`) is plain Kotlin and its tests run without Android:
 
 - `ThirdOctaveAnalyzer`: Hann-windowed FFT of each 125 ms frame, summed into base-10 1/3-octave bands (50 Hz – 16 kHz) and an A-weighted total.
-- `PrivacyTrim`: computes the time window kept on export.
+- `PrivacyTrim`: draws the random trim radii and computes the time window kept on export.
+- `StopDetector`: decides when the rider has stopped moving long enough to end the recording.
 
 `app/debug.keystore` is a throwaway debug key committed on purpose so every build can be installed over the previous one.

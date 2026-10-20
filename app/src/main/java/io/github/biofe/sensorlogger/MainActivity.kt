@@ -104,6 +104,8 @@ class MainActivity : Activity() {
                 if (!s.lastLaeqDb.isNaN()) append(String.format(Locale.US, ", %.0f dBFS(A)", s.lastLaeqDb))
                 s.error?.let { append("\n⚠ $it") }
             }
+        } else if (s.autoStopped) {
+            "Not recording. The last ride stopped by itself after 10 minutes without moving and was saved."
         } else {
             "Not recording. Put the phone in your pocket after starting; the screen can be off."
         }
