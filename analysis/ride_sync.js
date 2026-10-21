@@ -3,9 +3,10 @@
 // Figures opt in with layout.meta.sync = [{xref: "x", yref: "paper", kind: "time" | "dist"}],
 // where time is in minutes and distance in km since the start of the ride.
 //
-// initRideSync({track: {t, d, lat, lon}, mapStyle})
-//   track:    per GPS fix, minutes (t), km (d), latitude and longitude
-//   mapStyle: Plotly map style name (e.g. "open-street-map") or a MapLibre style object
+// initRideSync({track: {t, d, lat, lon}, mapStyle, annotations})
+//   track:       per GPS fix, minutes (t), km (d), latitude and longitude
+//   mapStyle:    Plotly map style name (e.g. "open-street-map") or a MapLibre style object
+//   annotations: optional [{lat, lon, text}], drawn as green circles with the text on hover
 (function () {
   if (window.initRideSync) return;
 
@@ -115,7 +116,12 @@
           text: track.t.map((t, i) => `${t.toFixed(1)} min · ${track.d[i].toFixed(2)} km`), hoverinfo: "text" },
         { type: "scattermap", mode: "markers", lat: [lat[0]], lon: [lon[0]], text: ["start"], hoverinfo: "text",
           marker: { size: 16, color: cursorColor() } },
-      ], {
+      ].concat((opts.annotations || []).length ? [{
+        type: "scattermap", mode: "markers", hoverinfo: "text",
+        lat: opts.annotations.map((a) => a.lat), lon: opts.annotations.map((a) => a.lon),
+        text: opts.annotations.map((a) => a.text),
+        marker: { size: 13, color: "#40c057", opacity: 0.85 },
+      }] : []), {
         map: { style: opts.mapStyle, center: { lat: (latMin + latMax) / 2, lon: (lonMin + lonMax) / 2 }, zoom },
         margin: { l: 0, r: 0, t: 0, b: 0 }, showlegend: false, paper_bgcolor: "rgba(0,0,0,0)",
       }, { responsive: true, displaylogo: false, scrollZoom: true });
