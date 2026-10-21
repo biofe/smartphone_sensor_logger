@@ -26,7 +26,8 @@ object Exporter {
 
     class Result(val uri: Uri?, val fileName: String, val exported: Int, val skipped: Int)
 
-    fun export(context: Context, rides: List<File>): Result {
+    /** [progress] is called with (rides done, rides total) from the exporting thread. */
+    fun export(context: Context, rides: List<File>, progress: (Int, Int) -> Unit = { _, _ -> }): Result {
         val stamp = SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(Date())
         val fileName = "rides_$stamp.zip"
         val resolver = context.contentResolver
@@ -41,12 +42,27 @@ object Exporter {
 
         var exported = 0
         var skipped = 0
-        resolver.openOutputStream(uri)!!.use { out ->
-            ZipOutputStream(out).use { zip ->
-                for (ride in rides) {
-                    if (writeRide(ride, zip)) exported++ else skipped++
+        try {
+            resolver.openOutputStream(uri)!!.use { out ->
+                ZipOutputStream(out).use { zip ->
+                    rides.forEachIndexed { i, ride ->
+                        progress(i, rides.size)
+                        // One unreadable ride (e.g. cut off by a crash) must not sink the whole export
+                        val ok = runCatching { writeRide(ride, zip) }.getOrElse { runCatching { zip.closeEntry() }; false }
+                        if (ok) exported++ else skipped++
+                    }
+                    progress(rides.size, rides.size)
+                    val mapLines = Annotations.exportableMapLines(context)
+                    if (exported > 0 && mapLines.isNotEmpty()) {
+                        zip.putNextEntry(ZipEntry("map_annotations.csv"))
+                        zip.write(mapLines.joinToString("\n", postfix = "\n").toByteArray())
+                        zip.closeEntry()
+                    }
                 }
             }
+        } catch (e: Exception) {
+            resolver.delete(uri, null, null) // don't leave a hidden, half-written file behind
+            throw e
         }
         if (exported == 0) {
             resolver.delete(uri, null, null)
@@ -70,7 +86,11 @@ object Exporter {
         val points = gpsFile.useLines { lines ->
             lines.drop(1).mapNotNull { line ->
                 val c = line.split(',')
-                if (c.size < 4) null else GeoPoint(c[0].toLong(), c[2].toDouble(), c[3].toDouble())
+                if (c.size < 4) return@mapNotNull null
+                val t = c[0].toLongOrNull()
+                val lat = c[2].toDoubleOrNull()
+                val lon = c[3].toDoubleOrNull()
+                if (t == null || lat == null || lon == null) null else GeoPoint(t, lat, lon)
             }.filter { it.tMs <= endMs }.toList()
         }
         val window = PrivacyTrim.keepWindow(

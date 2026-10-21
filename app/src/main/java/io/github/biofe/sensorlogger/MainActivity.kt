@@ -55,7 +55,16 @@ class MainActivity : Activity() {
         }
         annotate = Button(this).apply {
             text = "Annotate this spot"
-            setOnClickListener { AnnotationPoll.show(this@MainActivity) { render() } }
+            setOnClickListener { AnnotationPoll.showForRide(this@MainActivity) { render() } }
+        }
+        val mapButton = Button(this).apply {
+            text = "Annotate on the map"
+            setOnClickListener { startActivity(Intent(this@MainActivity, MapActivity::class.java)) }
+        }
+        val detailedPoll = android.widget.CheckBox(this).apply {
+            text = "Detailed poll (type of way, exact surface, sounds, note)"
+            isChecked = AnnotationPoll.detailed(this@MainActivity)
+            setOnCheckedChangeListener { _, on -> AnnotationPoll.setDetailed(this@MainActivity, on) }
         }
         status = TextView(this).apply {
             typeface = Typeface.MONOSPACE
@@ -82,6 +91,8 @@ class MainActivity : Activity() {
             addView(status)
             addView(exportAll, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
             addView(manageBikes, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
+            addView(mapButton, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
+            addView(detailedPoll)
             addView(hint)
             addView(ridesView, LinearLayout.LayoutParams(MATCH_PARENT, 0, 1f))
         }
@@ -192,10 +203,23 @@ class MainActivity : Activity() {
             return
         }
         if (selection.isEmpty()) return
-        Toast.makeText(this, "Exporting…", Toast.LENGTH_SHORT).show()
+        // Long rides take a while to pack; keep a visible dialog until the file is really there
+        val text = TextView(this).apply {
+            val pad = (24 * resources.displayMetrics.density).toInt()
+            setPadding(pad, pad, pad, pad)
+            this.text = "Preparing…"
+        }
+        val dialog = AlertDialog.Builder(this).setTitle("Exporting").setView(text).setCancelable(false).show()
         Thread {
-            val result = runCatching { Exporter.export(this, selection) }
-            runOnUiThread { onExported(result) }
+            val result = runCatching {
+                Exporter.export(this, selection) { done, total ->
+                    runOnUiThread { text.text = if (done < total) "Ride ${done + 1} of $total…" else "Finishing…" }
+                }
+            }
+            runOnUiThread {
+                dialog.dismiss()
+                onExported(result)
+            }
         }.start()
     }
 
@@ -208,7 +232,7 @@ class MainActivity : Activity() {
             Toast.makeText(this, "Nothing to export: rides shorter than 400 m are removed for privacy.", Toast.LENGTH_LONG).show()
             return
         }
-        val skippedNote = if (r.skipped > 0) " (${r.skipped} too short, left out)" else ""
+        val skippedNote = if (r.skipped > 0) " (${r.skipped} left out: too short or unreadable)" else ""
         Toast.makeText(this, "Saved Downloads/BikeSensorLogger/${r.fileName}$skippedNote", Toast.LENGTH_LONG).show()
         val share = Intent(Intent.ACTION_SEND)
             .setType("application/zip")

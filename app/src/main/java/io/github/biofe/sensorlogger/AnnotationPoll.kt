@@ -2,6 +2,7 @@ package io.github.biofe.sensorlogger
 
 import android.app.Activity
 import android.app.AlertDialog
+import android.content.Context
 import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.LinearLayout
@@ -14,29 +15,48 @@ import java.io.File
 import java.util.Locale
 
 /**
- * A short poll the rider fills in after stopping somewhere, as ground truth for the analysis.
- * Answers are appended to the ride's annotations.csv with the last GPS fix and go through
- * the same privacy trim on export as the sensor data.
+ * A short poll about one spot, as ground truth for the analysis. Six one-tap questions; the
+ * detailed version (switched on in the app) adds type of way, exact surface, sounds and a note.
+ *
+ * During a ride the answers go to the ride's annotations.csv at the last GPS fix and are
+ * privacy-trimmed with the ride. Spots picked on the map go to [Annotations.mapFile].
  */
 object AnnotationPoll {
 
-    val SURFACES = listOf(
-        "asphalt", "concrete slabs", "paving stones", "cobbles", "compacted gravel", "loose gravel", "dirt",
+    class Question(val key: String, val title: String, val options: List<String>, val codes: List<String> = options)
+
+    val SIMPLE = listOf(
+        Question("overall", "How do you like cycling here?", listOf("good", "ok", "bad")),
+        Question("surface", "Surface", listOf("smooth paved", "stones, cobbles, slabs", "unpaved"),
+            listOf("smooth", "stones", "unpaved")),
+        Question("condition", "Condition of the surface", listOf("good", "ok", "bad")),
+        Question("width", "Width you can ride on", listOf("narrow (< 1.5 m)", "medium", "wide (> 3 m)"),
+            listOf("narrow", "medium", "wide")),
+        Question("traffic", "Motor traffic next to you", listOf("none", "some", "heavy")),
+        Question("noise", "Noise", listOf("quiet", "medium", "loud")),
     )
+
     val PATH_TYPES = listOf(
         "road with traffic", "quiet road", "cycle street", "painted cycle lane", "separate cycle path",
         "shared footway (in town)", "agricultural or forest track", "park path",
     )
-    val WIDTHS = listOf(
-        "narrow: under 1.5 m, one bike", "medium: 1.5-3 m, two bikes pass", "wide: over 3 m, car width",
+    val SURFACES = listOf(
+        "asphalt", "concrete slabs", "paving stones", "cobbles", "compacted gravel", "loose gravel", "dirt",
     )
-    private val WIDTH_CODES = listOf("narrow", "medium", "wide")
-    val CONDITIONS = listOf("1 very bad", "2 bad", "3 ok", "4 good", "5 very good")
     val SOUNDS = listOf("traffic", "nature", "industry", "construction", "people", "quiet")
 
-    private const val HEADER = "t_utc_ms,lat,lon,accuracy_m,path_type,width,surface,condition,sounds,note\n"
+    const val HEADER = "t_utc_ms,lat,lon,accuracy_m,source,overall,surface,condition,width,traffic,noise," +
+        "path_type,surface_detail,sounds,note\n"
 
-    fun show(activity: Activity, onSaved: () -> Unit) {
+    private const val PREFS = "poll"
+
+    fun detailed(context: Context) = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean("detailed", false)
+
+    fun setDetailed(context: Context, on: Boolean) =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean("detailed", on).apply()
+
+    /** The poll during a ride, at the last GPS fix. */
+    fun showForRide(activity: Activity, onSaved: () -> Unit) {
         val rideDir = RecorderState.rideDir
         val fix = RecorderState.lastFix
         if (!RecorderState.recording || rideDir == null) {
@@ -47,71 +67,77 @@ object AnnotationPoll {
             Toast.makeText(activity, "Waiting for GPS; try again in a moment.", Toast.LENGTH_SHORT).show()
             return
         }
+        show(activity, "Annotate this spot", fix[0], fix[1], fix[2], "ride", File(rideDir, Rides.ANNOTATIONS_FILE)) {
+            RecorderState.annotations++
+            onSaved()
+        }
+    }
+
+    fun show(
+        activity: Activity, title: String, lat: Double, lon: Double, accuracyM: Double, source: String,
+        target: File, onSaved: () -> Unit,
+    ) {
         val pad = (16 * activity.resources.displayMetrics.density).toInt()
         fun heading(text: String) = TextView(activity).apply {
             this.text = text
             setPadding(0, pad, 0, pad / 4)
             textSize = 16f
         }
-        fun radios(options: List<String>) = RadioGroup(activity).apply {
+        fun radios(options: List<String>, horizontal: Boolean) = RadioGroup(activity).apply {
+            orientation = if (horizontal) RadioGroup.HORIZONTAL else RadioGroup.VERTICAL
             options.forEachIndexed { i, o -> addView(RadioButton(activity).apply { text = o; id = i + 1 }) }
         }
-        val pathType = radios(PATH_TYPES)
-        val width = radios(WIDTHS)
-        val surface = radios(SURFACES)
-        val condition = radios(CONDITIONS)
-        val sounds = SOUNDS.map { CheckBox(activity).apply { text = it } }
-        val note = EditText(activity).apply { hint = "Note (optional)" }
+        fun picked(group: RadioGroup, codes: List<String>) = codes.getOrNull(group.checkedRadioButtonId - 1) ?: ""
 
         val form = LinearLayout(activity).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(pad, 0, pad, 0)
-            addView(heading("Type of way"))
-            addView(pathType)
-            addView(heading("Width you can ride on"))
-            addView(TextView(activity).apply {
-                text = "In your direction: your lane where lanes are marked, otherwise half the road"
-                textSize = 13f
-            })
-            addView(width)
-            addView(heading("Surface"))
-            addView(surface)
-            addView(heading("Condition"))
-            addView(condition)
-            addView(heading("What do you hear?"))
-            sounds.forEach { addView(it) }
-            addView(heading("Note"))
-            addView(note)
         }
+        val simple = SIMPLE.map { q ->
+            form.addView(heading(q.title))
+            // Three short options fit on one line; longer labels stack
+            val group = radios(q.options, horizontal = q.options.all { it.length <= 8 })
+            form.addView(group)
+            q to group
+        }
+        val detailed = detailed(activity)
+        val pathType = radios(PATH_TYPES, horizontal = false)
+        val surface = radios(SURFACES, horizontal = false)
+        val sounds = SOUNDS.map { CheckBox(activity).apply { text = it } }
+        val note = EditText(activity).apply { hint = "Note (optional)" }
+        if (detailed) {
+            form.addView(heading("Type of way"))
+            form.addView(pathType)
+            form.addView(heading("Exact surface"))
+            form.addView(surface)
+            form.addView(heading("What do you hear?"))
+            sounds.forEach { form.addView(it) }
+            form.addView(heading("Note"))
+            form.addView(note)
+        }
+
         AlertDialog.Builder(activity)
-            .setTitle("Annotate this spot")
+            .setTitle(title)
             .setView(ScrollView(activity).apply { addView(form) })
             .setPositiveButton("Save") { _, _ ->
                 val row = listOf(
                     System.currentTimeMillis().toString(),
-                    String.format(Locale.US, "%.7f", fix[0]),
-                    String.format(Locale.US, "%.7f", fix[1]),
-                    String.format(Locale.US, "%.1f", fix[2]),
-                    PATH_TYPES.getOrNull(pathType.checkedRadioButtonId - 1) ?: "",
-                    WIDTH_CODES.getOrNull(width.checkedRadioButtonId - 1) ?: "",
-                    SURFACES.getOrNull(surface.checkedRadioButtonId - 1) ?: "",
-                    (condition.checkedRadioButtonId).takeIf { it > 0 }?.toString() ?: "",
+                    String.format(Locale.US, "%.7f", lat),
+                    String.format(Locale.US, "%.7f", lon),
+                    String.format(Locale.US, "%.1f", accuracyM),
+                    source,
+                ) + simple.map { (q, g) -> picked(g, q.codes) } + listOf(
+                    if (detailed) picked(pathType, PATH_TYPES) else "",
+                    if (detailed) picked(surface, SURFACES) else "",
                     sounds.filter { it.isChecked }.joinToString(";") { it.text },
                     csvQuote(note.text.toString()),
-                ).joinToString(",")
-                append(File(rideDir, Rides.ANNOTATIONS_FILE), row)
-                RecorderState.annotations++
+                )
+                Annotations.append(target, row.joinToString(","))
                 Toast.makeText(activity, "Saved", Toast.LENGTH_SHORT).show()
                 onSaved()
             }
             .setNegativeButton("Cancel", null)
             .show()
-    }
-
-    @Synchronized
-    private fun append(file: File, row: String) {
-        if (!file.exists()) file.writeText(HEADER)
-        file.appendText(row + "\n")
     }
 
     private fun csvQuote(text: String): String {
