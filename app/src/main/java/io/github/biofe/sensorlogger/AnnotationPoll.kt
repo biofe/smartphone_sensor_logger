@@ -24,8 +24,8 @@ object AnnotationPoll {
         "asphalt", "concrete slabs", "paving stones", "cobbles", "compacted gravel", "loose gravel", "dirt",
     )
     val PATH_TYPES = listOf(
-        "road with traffic", "quiet road", "painted cycle lane", "separate cycle path",
-        "shared with pedestrians", "agricultural or forest track", "park path",
+        "road with traffic", "quiet road", "cycle street", "painted cycle lane", "separate cycle path",
+        "shared footway (in town)", "agricultural or forest track", "park path",
     )
     val WIDTHS = listOf(
         "narrow: under 1.5 m, one bike", "medium: 1.5-3 m, two bikes pass", "wide: over 3 m, car width",
@@ -69,6 +69,10 @@ object AnnotationPoll {
             addView(heading("Type of way"))
             addView(pathType)
             addView(heading("Width you can ride on"))
+            addView(TextView(activity).apply {
+                text = "In your direction: your lane where lanes are marked, otherwise half the road"
+                textSize = 13f
+            })
             addView(width)
             addView(heading("Surface"))
             addView(surface)

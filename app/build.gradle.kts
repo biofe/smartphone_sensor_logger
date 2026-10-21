@@ -12,8 +12,8 @@ android {
         // Android 10+: needed for saving exports to Downloads without storage permissions
         minSdk = 29
         targetSdk = 35
-        versionCode = 4
-        versionName = "0.4.0"
+        versionCode = 5
+        versionName = "0.5.0"
     }
 
     // A fixed debug key (committed on purpose) so CI builds can be installed over each other

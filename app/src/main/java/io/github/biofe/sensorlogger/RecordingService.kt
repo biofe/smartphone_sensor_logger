@@ -65,6 +65,7 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
     private var pressureSensorName = "none"
     private lateinit var stopDetector: StopDetector
     private var autoStopped = false
+    private var bikeType = "unknown"
 
     /** Privacy trim radii, drawn once per ride so re-exporting never reveals more. */
     private var trimStartM = 0.0
@@ -81,6 +82,7 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
             return START_NOT_STICKY
         }
         if (RecorderState.recording) return START_NOT_STICKY
+        bikeType = intent?.getStringExtra(EXTRA_BIKE_TYPE) ?: "unknown"
 
         startInForeground()
         RecorderState.reset()
@@ -323,6 +325,7 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
             .put("ride_id", rideId)
             .put("app_version", BuildConfigCompat.versionName(this))
             .put("device", "${Build.MANUFACTURER} ${Build.MODEL}")
+            .put("bike_type", bikeType)
             .put("android_sdk", Build.VERSION.SDK_INT)
             .put("started_utc_ms", RecorderState.startedAtMs)
             .put("stopped_utc_ms", stoppedAtMs ?: JSONObject.NULL)
@@ -388,6 +391,7 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
 
     companion object {
         const val ACTION_STOP = "io.github.biofe.sensorlogger.STOP"
+        const val EXTRA_BIKE_TYPE = "bike_type"
         private const val CHANNEL_ID = "ride"
         private const val NOTIFICATION_ID = 1
         private const val AUTO_STOP_NOTIFICATION_ID = 2

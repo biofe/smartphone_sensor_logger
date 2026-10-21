@@ -24,7 +24,10 @@ import java.util.Locale
 
 class MainActivity : Activity() {
 
-    private lateinit var startStop: Button
+    private lateinit var startButtons: LinearLayout
+    private lateinit var stopButton: Button
+    private var shownBikes: List<Bikes.Bike>? = null
+    private var pendingBike: Bikes.Bike? = null
     private lateinit var annotate: Button
     private lateinit var status: TextView
     private lateinit var ridesView: ListView
@@ -41,7 +44,15 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         val pad = (16 * resources.displayMetrics.density).toInt()
 
-        startStop = Button(this).apply { setOnClickListener { toggleRecording() } }
+        startButtons = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        stopButton = Button(this).apply {
+            text = "Stop ride"
+            setOnClickListener { stopRecording() }
+        }
+        val manageBikes = Button(this).apply {
+            text = "My bikes"
+            setOnClickListener { manageBikes() }
+        }
         annotate = Button(this).apply {
             text = "Annotate this spot"
             setOnClickListener { AnnotationPoll.show(this@MainActivity) { render() } }
@@ -55,21 +66,22 @@ class MainActivity : Activity() {
             setOnClickListener { export(rides) }
         }
         val hint = TextView(this).apply {
-            text = "Tap a ride to export it, long-press to delete it."
+            text = "Tap a ride to export or delete it."
             setPadding(0, pad, 0, pad / 2)
         }
         ridesView = ListView(this).apply {
-            setOnItemClickListener { _, _, pos, _ -> export(listOf(rides[pos])) }
-            setOnItemLongClickListener { _, _, pos, _ -> confirmDelete(rides[pos]); true }
+            setOnItemClickListener { _, _, pos, _ -> rideActions(rides[pos]) }
         }
 
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(pad, pad, pad, pad)
-            addView(startStop, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
+            addView(startButtons, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
+            addView(stopButton, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
             addView(annotate, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
             addView(status)
             addView(exportAll, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
+            addView(manageBikes, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
             addView(hint)
             addView(ridesView, LinearLayout.LayoutParams(MATCH_PARENT, 0, 1f))
         }
@@ -82,6 +94,7 @@ class MainActivity : Activity() {
             }
         }
         setContentView(root)
+        if (Bikes.list(this).isEmpty()) addBike(firstRun = true)
     }
 
     override fun onResume() {
@@ -97,7 +110,19 @@ class MainActivity : Activity() {
 
     private fun render() {
         val s = RecorderState
-        startStop.text = if (s.recording) "Stop ride" else "Start ride"
+        stopButton.visibility = if (s.recording) View.VISIBLE else View.GONE
+        startButtons.visibility = if (s.recording) View.GONE else View.VISIBLE
+        val bikes = Bikes.list(this)
+        if (bikes != shownBikes) {
+            shownBikes = bikes
+            startButtons.removeAllViews()
+            for (bike in bikes) {
+                startButtons.addView(Button(this).apply {
+                    text = "Start ride · ${bike.label}"
+                    setOnClickListener { requestStart(bike) }
+                }, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
+            }
+        }
         annotate.visibility = if (s.recording) View.VISIBLE else View.GONE
         status.text = if (s.recording) {
             val secs = (System.currentTimeMillis() - s.startedAtMs) / 1000
@@ -127,12 +152,14 @@ class MainActivity : Activity() {
         ridesView.adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, rides.map { Rides.describe(it) })
     }
 
-    private fun toggleRecording() {
-        if (RecorderState.recording) {
-            startService(Intent(this, RecordingService::class.java).setAction(RecordingService.ACTION_STOP))
-            ui.postDelayed({ refreshRides() }, 1500)
-            return
-        }
+    private fun stopRecording() {
+        startService(Intent(this, RecordingService::class.java).setAction(RecordingService.ACTION_STOP))
+        ui.postDelayed({ refreshRides() }, 1500)
+    }
+
+    private fun requestStart(bike: Bikes.Bike) {
+        if (RecorderState.recording) return
+        pendingBike = bike
         val missing = requiredPermissions().filter { checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED }
         if (missing.isEmpty()) startRecording() else requestPermissions(missing.toTypedArray(), REQ_PERMISSIONS)
     }
@@ -146,7 +173,10 @@ class MainActivity : Activity() {
     }
 
     private fun startRecording() {
-        startForegroundService(Intent(this, RecordingService::class.java))
+        val bike = pendingBike ?: Bikes.list(this).firstOrNull()
+        startForegroundService(
+            Intent(this, RecordingService::class.java).putExtra(RecordingService.EXTRA_BIKE_TYPE, bike?.type ?: "unknown")
+        )
         ui.postDelayed({ refreshRides() }, 500)
     }
 
@@ -185,6 +215,106 @@ class MainActivity : Activity() {
             .putExtra(Intent.EXTRA_STREAM, r.uri)
             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         startActivity(Intent.createChooser(share, "Send ride data"))
+    }
+
+    // --- Bikes -----------------------------------------------------------------------------------
+
+    private fun manageBikes() {
+        val bikes = Bikes.list(this)
+        val labels = bikes.map { "Remove ${it.label}" } + "Add a bike"
+        AlertDialog.Builder(this)
+            .setTitle("My bikes")
+            .setItems(labels.toTypedArray()) { _, which ->
+                if (which == bikes.size) addBike(firstRun = false)
+                else if (bikes.size == 1) Toast.makeText(this, "Keep at least one bike; add another first.", Toast.LENGTH_LONG).show()
+                else {
+                    Bikes.save(this, bikes.filterIndexed { i, _ -> i != which })
+                    render()
+                }
+            }
+            .setNegativeButton("Close", null)
+            .show()
+    }
+
+    /** On first launch several types can be picked at once; later one bike is added with an optional name. */
+    private fun addBike(firstRun: Boolean) {
+        val types = Bikes.TYPES.toTypedArray()
+        if (firstRun) {
+            val checked = BooleanArray(types.size)
+            AlertDialog.Builder(this)
+                .setTitle("Which bikes do you ride?")
+                .setMultiChoiceItems(types, checked) { _, i, on -> checked[i] = on }
+                .setCancelable(false)
+                .setPositiveButton("OK") { _, _ ->
+                    val picked = types.filterIndexed { i, _ -> checked[i] }.ifEmpty { listOf("other") }
+                    Bikes.save(this, picked.map { Bikes.Bike(it, "") })
+                    render()
+                }
+                .show()
+            return
+        }
+        AlertDialog.Builder(this)
+            .setTitle("Type of bike")
+            .setItems(types) { _, i ->
+                val name = android.widget.EditText(this).apply { hint = "Name (optional, stays on this phone)" }
+                AlertDialog.Builder(this)
+                    .setTitle(types[i])
+                    .setView(name)
+                    .setPositiveButton("Add") { _, _ ->
+                        Bikes.save(this, Bikes.list(this) + Bikes.Bike(types[i], name.text.toString().trim()))
+                        render()
+                    }
+                    .setNegativeButton("Cancel", null)
+                    .show()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    // --- Rides ----------------------------------------------------------------------------------
+
+    private fun rideActions(ride: File) {
+        val actions = arrayOf(
+            "Send to the project (privacy-trimmed)",
+            "Export my track as GPX (full, for my own use)",
+            "Delete",
+        )
+        AlertDialog.Builder(this)
+            .setTitle(ride.name)
+            .setItems(actions) { _, which ->
+                when (which) {
+                    0 -> export(listOf(ride))
+                    1 -> exportGpx(ride)
+                    else -> confirmDelete(ride)
+                }
+            }
+            .show()
+    }
+
+    private fun exportGpx(ride: File) {
+        if (RecorderState.recording && RecorderState.rideDir == ride) {
+            Toast.makeText(this, "Stop the ride before exporting.", Toast.LENGTH_SHORT).show()
+            return
+        }
+        Thread {
+            val result = runCatching { GpxExporter.export(this, ride) }
+            runOnUiThread {
+                val r = result.getOrElse {
+                    Toast.makeText(this, "Export failed: ${it.message}", Toast.LENGTH_LONG).show()
+                    return@runOnUiThread
+                }
+                if (r == null) {
+                    Toast.makeText(this, "This ride has no GPS points.", Toast.LENGTH_SHORT).show()
+                    return@runOnUiThread
+                }
+                Toast.makeText(this, "Saved Downloads/BikeSensorLogger/${r.fileName}", Toast.LENGTH_LONG).show()
+                val share = Intent(Intent.ACTION_SEND)
+                    .setType("application/gpx+xml")
+                    .putExtra(Intent.EXTRA_STREAM, r.uri)
+                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                startActivity(Intent.createChooser(share, "Open or send track"))
+            }
+        }.start()
     }
 
     private fun confirmDelete(ride: File) {

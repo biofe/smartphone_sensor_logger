@@ -16,23 +16,25 @@ Each ride is one folder with one CSV per sensor and a `meta.json`. Every CSV sta
 | `gps.csv` | 1 Hz | `gps_time_ms, lat, lon, alt_m, speed_mps, bearing_deg, accuracy_m` |
 | `sound.csv` | every 125 ms | `laeq_dbfs` (A-weighted level) and 26 band levels `band_50_dbfs` … `band_16000_dbfs` |
 | `annotations.csv` | when the rider fills in the poll | `lat, lon, accuracy_m` of the last GPS fix, `path_type`, `width` (narrow < 1.5 m, medium, wide > 3 m), `surface`, `condition` (1–5), `sounds` (`;`-separated), `note` |
-| `meta.json` | once | random ride id, phone model, sensor names, audio sample rate and source |
+| `meta.json` | once | random ride id, bike type, phone model, sensor names, audio sample rate and source |
 
 **Sound is never stored as audio.** Each 125 ms frame is turned into 26 band levels in memory and then discarded, so speech cannot be recovered from the files. Levels are in dBFS (0 dB = mean square of a full-scale signal) and are not calibrated. Compare them relative to each other and per phone, not as absolute dB(A). Bands below about 100 Hz are approximate (few FFT bins per band) and are dominated by wind noise while riding.
 
 ## Privacy on export
 
-Tapping a ride (or **Export all rides**) writes a ZIP to `Downloads/BikeSensorLogger/` and opens the share sheet. Before export:
+Tapping a ride and choosing **Send to the project** (or **Export all rides**) writes a ZIP to `Downloads/BikeSensorLogger/` and opens the share sheet. Before export:
 
 - Everything before the rider first leaves a radius around the start point, and everything after they last enter a radius around the end point, is cut from all CSVs, annotations included. This hides homes and workplaces. Each radius is drawn at random between 150 and 250 m when the ride starts, separately for start and end, and is not exported, so the cut-off point doesn't reveal how far away the start was. Rides that never leave the radius are left out.
 - Folders are named by a random ride id; exact start and stop times are removed from `meta.json`.
 
-The untrimmed data stays on the phone until the ride is deleted (long-press it in the list).
+The untrimmed data stays on the phone until the ride is deleted (tap it, then **Delete**).
+
+**Export my track as GPX** writes the full, untrimmed GPS track to `Downloads/BikeSensorLogger/` for your own use (Strava, Komoot, OsmAnd). It is not privacy-trimmed and is not meant for the project.
 
 ## Installing (for riders)
 
 1. Download `app-debug.apk` from the repository's **Releases** page and open it. Allow installing from this source when Android asks.
-2. Open **Bike Sensor Logger**, tap **Start ride** and allow location, microphone and notifications.
+2. Open **Bike Sensor Logger** and pick the bikes you ride (change them later under **My bikes**). Tap **Start ride** for the bike you're on and allow location, microphone and notifications.
 3. For reliable recording with the screen off, set the app's battery usage to **Unrestricted** (Settings → Apps → Bike Sensor Logger → Battery).
 4. Put the phone in your pocket and ride. Tap **Stop ride** at the end. If you forget, recording stops by itself after 10 minutes without moving (more than 50 m), and the standing time is left out of the export. Waits at traffic lights are far shorter and don't stop it.
 

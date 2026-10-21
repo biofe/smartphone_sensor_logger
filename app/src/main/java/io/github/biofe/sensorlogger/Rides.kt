@@ -30,6 +30,10 @@ object Rides {
     fun describe(ride: File): String {
         val sizeKb = ride.walkTopDown().filter { it.isFile }.sumOf { it.length() } / 1024
         val gpsFixes = File(ride, GPS_FILE).takeIf { it.exists() }?.useLines { it.count() - 1 } ?: 0
-        return "${ride.name}  ·  $gpsFixes GPS fixes  ·  $sizeKb KB"
+        val bike = runCatching {
+            org.json.JSONObject(File(ride, META_FILE).readText()).optString("bike_type", "")
+        }.getOrDefault("")
+        val bikeNote = if (bike.isEmpty() || bike == "unknown") "" else "  ·  $bike"
+        return "${ride.name}$bikeNote  ·  $gpsFixes GPS fixes  ·  $sizeKb KB"
     }
 }
