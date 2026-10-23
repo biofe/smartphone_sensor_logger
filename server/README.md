@@ -2,7 +2,7 @@
 
 A small upload-only service that receives rides from the app, checks them, and files them into a quarantine or the dataset. It has no way to list or download data over the internet; the dataset is pulled over SSH.
 
-Setup on a server (Docker, nginx, HTTPS) follows in a separate guide.
+Setting it up on a server (Docker, nginx, HTTPS): [deploy/SETUP.md](deploy/SETUP.md).
 
 ## How a ride gets in
 
