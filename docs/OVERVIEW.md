@@ -51,6 +51,8 @@ The app is Android only (Android 10+). iOS is out of scope for now.
 | "Detailed poll" tick box: type of way, exact surface, sounds, note | ✅ Tested | 0.6.0 | Appends the 0.4–0.5 questions to the short poll |
 | Type of way incl. "cycle street" and "shared footway (in town)"; width = the space you may ride in your direction | ✅ Tested | 0.5.0 | Country shared paths count as separate cycle path |
 | Annotate on the map: OSM view of own tracks and earlier answers, tap a spot to rate it | ✅ Tested | 0.6.0 | Exported as `map_annotations.csv`, minus spots within 250 m of any ride's start or end. Tiles come from tile.openstreetmap.org |
+| Wind question in the short poll (calm / some / strong) | 🔜 Planned | | Labels wind noise for the sound classifier and helps the effort estimate. Wind speed and direction also come from the weather join, so the poll answer mostly checks what the rider felt and heard |
+| Quick marks while riding: big rating buttons on the recording notification (e.g. good / bad / mark), usable without unlocking | 🔜 Planned | | Saves the position and time without stopping; the full poll for a mark can be filled in later on the map. Only for a mounted phone and a short tap at safe moments: German traffic law (§ 23 StVO) allows only brief operation of a phone that isn't held |
 
 ### Export and privacy
 
@@ -69,7 +71,10 @@ The app is Android only (Android 10+). iOS is out of scope for now.
 |---|---|---|---|
 | APK built by GitHub Actions on every push | ✅ Tested | 0.1.0 | Artifact "bike-sensor-logger-apk" |
 | Release APK on the Releases page when a `v*` tag is pushed | 🧪 Built, untested | 0.1.0 | No tag pushed yet |
-| Upload to the project server (VPS): upload-only endpoint, personal code per test rider entered once and stored | 🔜 Planned | | Needed before test riders start. Never hard-code a password (no HiDrive login in the app) |
+| Upload to the project server (VPS): HTTPS upload-only endpoint | 🔜 Planned | | Needed before test riders start. Never hard-code a password (no HiDrive login in the app). Uploads are privacy-trimmed exactly like the ZIP export |
+| Automatic upload on Wi-Fi (Android WorkManager, unmetered network), with a manual "Upload now" button and a switch to turn it off | 🔜 Planned | | Retries by itself after a lost connection; rides are uploaded only after they are finished and trimmed |
+| Open participation: no personal codes; the app makes a random install id on first launch and sends it with each upload | 🔜 Planned | | Replaces per-rider codes. The id lets a rider ask for deletion of their data and lets the server block one install that misbehaves, without knowing who anyone is |
+| Server checks on every upload: file format and columns, size limit, plausible values (rates, speeds, coordinates), rate limit per install and IP, quarantine before data enters the dataset | 🔜 Planned | | Stops broken files, spam and full disks. Can't catch realistic-looking fake rides, so outliers per install still need a look in the analysis |
 | Visual polish of the main screens | 🔜 Planned | | Last step before shipping to test riders |
 | Rider instructions and consent text | 🔜 Planned | | Test riders are data subjects under GDPR |
 
@@ -80,6 +85,7 @@ The app is Android only (Android 10+). iOS is out of scope for now.
 | "Looks like you're cycling, start recording?" notification (Play Services activity recognition) | 💤 Deferred | One tap starts the ride. Android doesn't allow the mic to start from the background, so a tap is needed |
 | On-device feature extraction (e.g. per-second roughness instead of raw 100 Hz accel) | 💤 Deferred | The first test round keeps raw accel plus band levels; data reduction is the edge-AI part of the project |
 | On-device classifier for surface and roughness | 💤 Deferred | Outlook; train offline first |
+| "Cardio factor": how physically easy a stretch is to ride | 💤 Deferred | Analysis, not app logic. Best computed from physics per segment for a standard rider (gradient from the barometer, rolling resistance from the surface class, head/tailwind from weather and riding direction), and checked against the speeds and pedalling cadence (from accel/gyro) of real riders. E-bikes are left out via the bike type. The app would only need a "trailer / heavy load" tick box at ride start. Heart rate from a Bluetooth chest strap would be the precise version (outlook) |
 | Fully automatic start | ❌ Rejected | Would record without sound (background mic restriction) |
 | Detect bike type automatically | ❌ Rejected | Too unreliable; asking is better |
 | Passing trucks from the barometer | ❌ Rejected | The pressure pulse is at the sensor's noise level; the mic catches trucks better |
