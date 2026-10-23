@@ -60,7 +60,7 @@ The app is Android only (Android 10+). iOS is out of scope for now.
 |---|---|---|---|
 | ZIP export per ride to `Downloads/BikeSensorLogger/` via share sheet | ✅ Tested | 0.1.0 | |
 | Random ride ids, start/stop times removed from `meta.json` | ✅ Tested | 0.1.0 | |
-| Readable ride names: UTC time of the first exported row plus 4 random characters, e.g. `20261021-1627Z-k3f9` | 🔜 Planned | | Easier to handle in the analysis. Uses the first row *after* the privacy trim, so it reveals nothing the CSV timestamps don't already contain. Rides exported earlier keep their old 8-character ids |
+| Readable ride names: UTC time of the first exported row plus 4 random characters, e.g. `20261021-1627Z-k3f9` | 🧪 Built, untested | 0.7.0 | Easier to handle in the analysis. Uses the first row *after* the privacy trim, so it reveals nothing the CSV timestamps don't already contain. The suffix is drawn when the ride starts, so re-exporting gives the same name. Rides recorded before 0.7.0 keep their old 8-character ids |
 | Privacy trim at a random 150–250 m radius per ride end (radii stay on the phone) | ✅ Tested | 0.2.0 | Used for the 2026-10-21 export |
 | "Export all rides" with progress window; skips unreadable rides | ✅ Tested | 0.6.0 | Fixes 0.5.0, where the export sometimes left no file |
 | Untrimmed GPX export of the full track, for the rider's own use | ✅ Tested | 0.5.0 | Never meant for the project |
@@ -117,3 +117,4 @@ The app is Android only (Android 10+). iOS is out of scope for now.
 | 0.4.0 | Barometer; type of way and width in the poll |
 | 0.5.0 | Bikes with one start button each; untrimmed GPX export; cycle street |
 | 0.6.0 | Short poll plus optional detailed poll; annotate on the map; reliable Export all |
+| 0.7.0 | Readable ride names in exports |

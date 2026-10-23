@@ -30,6 +30,7 @@ import android.os.PowerManager
 import android.os.SystemClock
 import io.github.biofe.sensorlogger.core.GeoPoint
 import io.github.biofe.sensorlogger.core.PrivacyTrim
+import io.github.biofe.sensorlogger.core.RideName
 import io.github.biofe.sensorlogger.core.StopDetector
 import io.github.biofe.sensorlogger.core.ThirdOctaveAnalyzer
 import org.json.JSONArray
@@ -71,6 +72,9 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
     private var trimStartM = 0.0
     private var trimEndM = 0.0
 
+    /** Random end of the exported ride name (see [RideName]), drawn once per ride. */
+    private var nameSuffix = ""
+
     /** UTC ms at elapsedRealtime == 0, so sensor timestamps (elapsed-realtime based) map to wall-clock time. */
     private var bootUtcMs = 0L
 
@@ -93,6 +97,7 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
         val random = kotlin.random.Random(SecureRandom().nextLong())
         trimStartM = PrivacyTrim.randomRadiusM(random)
         trimEndM = PrivacyTrim.randomRadiusM(random)
+        nameSuffix = RideName.randomSuffix(random)
         stopDetector = StopDetector(RecorderState.startedAtMs)
 
         val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
@@ -341,6 +346,7 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
             .put("sound_bands_hz", JSONArray(ThirdOctaveAnalyzer(48_000).bandLabels))
             .put("trim_start_m", trimStartM)
             .put("trim_end_m", trimEndM)
+            .put("name_suffix", nameSuffix)
         if (autoStopped) {
             meta.put("auto_stopped", true)
             // Everything after this is the rider standing still; export drops it

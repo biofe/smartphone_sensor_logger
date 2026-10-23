@@ -7,6 +7,7 @@ import android.os.Environment
 import android.provider.MediaStore
 import io.github.biofe.sensorlogger.core.GeoPoint
 import io.github.biofe.sensorlogger.core.PrivacyTrim
+import io.github.biofe.sensorlogger.core.RideName
 import org.json.JSONObject
 import java.io.File
 import java.text.SimpleDateFormat
@@ -17,7 +18,8 @@ import java.util.zip.ZipOutputStream
 
 /**
  * Packs rides into one ZIP in Downloads/BikeSensorLogger, after cutting the start and end of
- * every ride (see [PrivacyTrim]). Folders inside the ZIP are named by the random ride id only.
+ * every ride (see [PrivacyTrim]). Folders inside the ZIP are named like `20261021-1627Z-k3f9` (see
+ * [RideName]); rides recorded before 0.7.0 keep their random 8-character id.
  */
 object Exporter {
 
@@ -99,7 +101,10 @@ object Exporter {
             meta.optDouble("trim_end_m", LEGACY_RADIUS_M),
         ) ?: return false
 
-        val rideId = meta.getString("ride_id")
+        // Rides recorded before 0.7.0 have no suffix: keep their old id so earlier exports still match
+        val suffix = meta.optString("name_suffix", "")
+        val rideId = if (suffix.isEmpty()) meta.getString("ride_id") else RideName.of(window.first, suffix)
+        meta.put("ride_id", rideId)
         meta.put("privacy_trim", "random ${PrivacyTrim.MIN_RADIUS_M.toInt()}-${PrivacyTrim.MAX_RADIUS_M.toInt()} m at each end")
         meta.put("kept_from_utc_ms", window.first)
         meta.put("kept_to_utc_ms", window.last)
@@ -109,6 +114,7 @@ object Exporter {
         meta.remove("still_since_utc_ms")
         meta.remove("trim_start_m")
         meta.remove("trim_end_m")
+        meta.remove("name_suffix")
 
         zip.putNextEntry(ZipEntry("$rideId/${Rides.META_FILE}"))
         zip.write(meta.toString(2).toByteArray())

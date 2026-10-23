@@ -18,7 +18,7 @@ Each ride is one folder with one CSV per sensor and a `meta.json`. Every CSV sta
 | `gps.csv` | 1 Hz | `gps_time_ms, lat, lon, alt_m, speed_mps, bearing_deg, accuracy_m` |
 | `sound.csv` | every 125 ms | `laeq_dbfs` (A-weighted level) and 26 band levels `band_50_dbfs` … `band_16000_dbfs` |
 | `annotations.csv` | when the rider fills in the poll | `lat, lon, accuracy_m` of the last GPS fix, `source`, `overall`, `surface`, `condition`, `width`, `traffic`, `noise`, and with the detailed poll `path_type`, `surface_detail`, `sounds` (`;`-separated), `note`. Rides from 0.3–0.5 have the older columns. |
-| `meta.json` | once | random ride id, bike type, phone model, sensor names, audio sample rate and source |
+| `meta.json` | once | ride name (see below), bike type, phone model, sensor names, audio sample rate and source |
 
 **Sound is never stored as audio.** Each 125 ms frame is turned into 26 band levels in memory and then discarded, so speech cannot be recovered from the files. Levels are in dBFS (0 dB = mean square of a full-scale signal) and are not calibrated. Compare them relative to each other and per phone, not as absolute dB(A). Bands below about 100 Hz are approximate (few FFT bins per band) and are dominated by wind noise while riding.
 
@@ -27,7 +27,7 @@ Each ride is one folder with one CSV per sensor and a `meta.json`. Every CSV sta
 Tapping a ride and choosing **Send to the project** (or **Export all rides**) writes a ZIP to `Downloads/BikeSensorLogger/` and opens the share sheet. Before export:
 
 - Everything before the rider first leaves a radius around the start point, and everything after they last enter a radius around the end point, is cut from all CSVs, annotations included. This hides homes and workplaces. Each radius is drawn at random between 150 and 250 m when the ride starts, separately for start and end, and is not exported, so the cut-off point doesn't reveal how far away the start was. Rides that never leave the radius are left out.
-- Folders are named by a random ride id; exact start and stop times are removed from `meta.json`.
+- Folders are named like `20261021-1627Z-k3f9`: the UTC minute of the first row kept after the trim plus 4 random characters, so the name reveals nothing the CSV timestamps don't. Rides recorded before 0.7.0 keep their random 8-character id. Exact start and stop times are removed from `meta.json`.
 
 The untrimmed data stays on the phone until the ride is deleted (tap it, then **Delete**).
 
