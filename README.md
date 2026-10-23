@@ -1,8 +1,10 @@
 # Smartphone Sensor Logger
 
-This sensor logger app records GPS, accelerometer and microphone (1/3-octave band levels every 125 ms) to determine the quality of bicycle paths from various angles like the nature of underground and environmental noises.
+This sensor logger app records GPS, accelerometer, gyroscope, barometer and microphone (1/3-octave band levels every 125 ms, never raw audio) to determine the quality of bicycle paths from various angles, such as the surface and the surrounding noise. Riders can add ground truth with a short poll, either at the spot or later on a map.
 
 Android 10 or newer. Recording keeps running with the phone in a pocket and the screen off.
+
+For the project's purpose, planned features and the state of each one, see [docs/OVERVIEW.md](docs/OVERVIEW.md).
 
 ## What it records
 
