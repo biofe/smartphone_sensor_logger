@@ -40,17 +40,17 @@ The app is Android only (Android 10+). iOS is out of scope for now.
 | Gyroscope | ✅ Tested | 0.3.0 | Shows mount swing (~7.8 Hz on the long-arm handlebar mount), cornering |
 | Barometer at 10 Hz | ✅ Tested | 0.4.0 | Tracks GPS altitude (r = 0.99) without drift; noisy second to second |
 | Bike selection: pick bikes on first launch, add/remove (at least one), one start button per bike, bike type in `meta.json` | ✅ Tested | 0.5.0 | Only the type leaves the phone, never the bike's name |
-| Auto-stop after 10 min within 50 m | 🧪 Built, untested | 0.2.0 | Not yet seen triggering on a real ride; standing time is left out of the export |
+| Auto-stop after 10 min within 50 m | ✅ Tested | 0.2.0 | Confirmed 2026-10-22; standing time is left out of the export |
 
 ### Ground truth (annotation)
 
 | Feature | Status | Since | Notes |
 |---|---|---|---|
 | "Annotate this spot" poll while recording | ✅ Tested | 0.3.0 | 15 annotations on the 2026-10-21 handlebar ride (older detailed poll) |
-| Short poll: six one-tap questions (overall, surface, condition, width, motor traffic, noise) | 🧪 Built, untested | 0.6.0 | The default for test riders |
-| "Detailed poll" tick box: type of way, exact surface, sounds, note | 🧪 Built, untested | 0.6.0 | Same questions as the tested 0.4–0.5 poll, now optional |
-| Type of way incl. "cycle street" and "shared footway (in town)"; width = the space you may ride in your direction | 🧪 Built, untested | 0.5.0 | Country shared paths count as separate cycle path |
-| Annotate on the map: OSM view of own tracks and earlier answers, tap a spot to rate it | 🧪 Built, untested | 0.6.0 | Exported as `map_annotations.csv`, minus spots within 250 m of any ride's start or end. Tiles come from tile.openstreetmap.org |
+| Short poll: six one-tap questions (overall, surface, condition, width, motor traffic, noise) | ✅ Tested | 0.6.0 | The default for test riders |
+| "Detailed poll" tick box: type of way, exact surface, sounds, note | ✅ Tested | 0.6.0 | Appends the 0.4–0.5 questions to the short poll |
+| Type of way incl. "cycle street" and "shared footway (in town)"; width = the space you may ride in your direction | ✅ Tested | 0.5.0 | Country shared paths count as separate cycle path |
+| Annotate on the map: OSM view of own tracks and earlier answers, tap a spot to rate it | ✅ Tested | 0.6.0 | Exported as `map_annotations.csv`, minus spots within 250 m of any ride's start or end. Tiles come from tile.openstreetmap.org |
 
 ### Export and privacy
 
@@ -59,9 +59,9 @@ The app is Android only (Android 10+). iOS is out of scope for now.
 | ZIP export per ride to `Downloads/BikeSensorLogger/` via share sheet | ✅ Tested | 0.1.0 | |
 | Random ride ids, start/stop times removed from `meta.json` | ✅ Tested | 0.1.0 | |
 | Privacy trim at a random 150–250 m radius per ride end (radii stay on the phone) | ✅ Tested | 0.2.0 | Used for the 2026-10-21 export |
-| "Export all rides" with progress window; skips unreadable rides | 🧪 Built, untested | 0.6.0 | Fix for 0.5.0, where the export sometimes left no file |
-| Untrimmed GPX export of the full track, for the rider's own use | 🧪 Built, untested | 0.5.0 | Never meant for the project |
-| Delete a ride on the phone | 🧪 Built, untested | 0.1.0 | |
+| "Export all rides" with progress window; skips unreadable rides | ✅ Tested | 0.6.0 | Fixes 0.5.0, where the export sometimes left no file |
+| Untrimmed GPX export of the full track, for the rider's own use | ✅ Tested | 0.5.0 | Never meant for the project |
+| Delete a ride on the phone | ✅ Tested | 0.1.0 | |
 
 ### Distribution and upload
 
@@ -89,10 +89,8 @@ The app is Android only (Android 10+). iOS is out of scope for now.
 ## Open questions and tests
 
 - **Mic drop at annotation stops:** on 2026-10-21 the sound fell to −55 to −65 dBFS at every annotation stop, against −42 at a stop without one. Test a stop where you open the app without annotating, to see whether app use mutes the mic.
-- **First phone run of 0.6.0:** short poll, detailed poll, map annotation, Export all, GPX export.
 - **Rigid open handlebar mount** vs. the long-arm closed case (arm swing sits inside the 3–8 Hz roughness band).
 - **Furry wind cover** for the microphone: one test ride.
-- **Auto-stop:** confirm on a ride that is left running.
 
 ## Test rides so far
 
