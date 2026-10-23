@@ -60,6 +60,7 @@ The app is Android only (Android 10+). iOS is out of scope for now.
 |---|---|---|---|
 | ZIP export per ride to `Downloads/BikeSensorLogger/` via share sheet | ✅ Tested | 0.1.0 | |
 | Random ride ids, start/stop times removed from `meta.json` | ✅ Tested | 0.1.0 | |
+| Readable ride names: UTC time of the first exported row plus 4 random characters, e.g. `20261021-1627Z-k3f9` | 🔜 Planned | | Easier to handle in the analysis. Uses the first row *after* the privacy trim, so it reveals nothing the CSV timestamps don't already contain. Rides exported earlier keep their old 8-character ids |
 | Privacy trim at a random 150–250 m radius per ride end (radii stay on the phone) | ✅ Tested | 0.2.0 | Used for the 2026-10-21 export |
 | "Export all rides" with progress window; skips unreadable rides | ✅ Tested | 0.6.0 | Fixes 0.5.0, where the export sometimes left no file |
 | Untrimmed GPX export of the full track, for the rider's own use | ✅ Tested | 0.5.0 | Never meant for the project |
@@ -85,7 +86,7 @@ The app is Android only (Android 10+). iOS is out of scope for now.
 | "Looks like you're cycling, start recording?" notification (Play Services activity recognition) | 💤 Deferred | One tap starts the ride. Android doesn't allow the mic to start from the background, so a tap is needed |
 | On-device feature extraction (e.g. per-second roughness instead of raw 100 Hz accel) | 💤 Deferred | The first test round keeps raw accel plus band levels; data reduction is the edge-AI part of the project |
 | On-device classifier for surface and roughness | 💤 Deferred | Outlook; train offline first |
-| "Cardio factor": how physically easy a stretch is to ride | 💤 Deferred | Analysis, not app logic. Best computed from physics per segment for a standard rider (gradient from the barometer, rolling resistance from the surface class, head/tailwind from weather and riding direction), and checked against the speeds and pedalling cadence (from accel/gyro) of real riders. E-bikes are left out via the bike type. The app would only need a "trailer / heavy load" tick box at ride start. Heart rate from a Bluetooth chest strap would be the precise version (outlook) |
+| "Cardio factor": how physically easy a stretch is to ride | 💤 Deferred | Analysis, not app logic. Best computed from physics per segment for a standard rider (gradient from the barometer, rolling resistance from the surface class, head/tailwind from weather and riding direction), and checked against the speeds and pedalling cadence (from accel/gyro) of real riders. E-bikes are left out via the bike type. No extra tick box: unusual load (trailer, luggage) is inferred from the motion data, e.g. slower speed and acceleration at the same gradients compared with the same rider's other rides. Heart rate from a Bluetooth chest strap would be the precise version (outlook) |
 | Fully automatic start | ❌ Rejected | Would record without sound (background mic restriction) |
 | Detect bike type automatically | ❌ Rejected | Too unreliable; asking is better |
 | Passing trucks from the barometer | ❌ Rejected | The pressure pulse is at the sensor's noise level; the mic catches trucks better |
