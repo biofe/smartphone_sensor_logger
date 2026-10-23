@@ -14,7 +14,7 @@ Ready-made apps didn't fit. Sensor Logger records loudness or raw audio but no f
 - **Homes and workplaces stay hidden.** Exports cut each ride's start and end at a random 150–250 m radius, and rides get random ids.
 - **Ground truth from the rider.** A short poll at a spot (or later on a map) labels surface, condition, width, traffic and noise, which the classifier learns from.
 
-The app is Android only (Android 10+). iOS is out of scope for the course.
+The app is Android only (Android 10+). iOS is out of scope for now.
 
 ## Status legend
 
@@ -23,7 +23,7 @@ The app is Android only (Android 10+). iOS is out of scope for the course.
 | ✅ Tested | Built and confirmed working in at least one real ride |
 | 🧪 Built, untested | In the app on `master`, but not yet run on a phone (or not yet seen working) |
 | 🔜 Planned | Wanted for the version friends get; not built yet |
-| 💤 Deferred | Good idea, but parked until after the friends round or the course |
+| 💤 Deferred | Good idea, but parked until after the first friends round |
 | ❌ Rejected | Decided against, with the reason |
 
 ## Features and their state
@@ -69,8 +69,8 @@ The app is Android only (Android 10+). iOS is out of scope for the course.
 |---|---|---|---|
 | APK built by GitHub Actions on every push | ✅ Tested | 0.1.0 | Artifact "bike-sensor-logger-apk" |
 | Release APK on the Releases page when a `v*` tag is pushed | 🧪 Built, untested | 0.1.0 | No tag pushed yet |
-| Upload to Felix's VPS: upload-only endpoint, personal code per friend entered once and stored | 🔜 Planned | | Needed before friends start. Never hard-code a password (no HiDrive login in the app) |
-| Visual polish of the main screens | 🔜 Planned | | Felix's last step before shipping |
+| Upload to the project server (VPS): upload-only endpoint, personal code per friend entered once and stored | 🔜 Planned | | Needed before friends start. Never hard-code a password (no HiDrive login in the app) |
+| Visual polish of the main screens | 🔜 Planned | | Last step before shipping to friends |
 | Rider instructions and consent text | 🔜 Planned | | Friends are data subjects under GDPR |
 
 ### Later or not at all
@@ -79,12 +79,12 @@ The app is Android only (Android 10+). iOS is out of scope for the course.
 |---|---|---|
 | "Looks like you're cycling, start recording?" notification (Play Services activity recognition) | 💤 Deferred | One tap starts the ride. Android doesn't allow the mic to start from the background, so a tap is needed |
 | On-device feature extraction (e.g. per-second roughness instead of raw 100 Hz accel) | 💤 Deferred | The first friends round keeps raw accel plus band levels; data reduction is the edge-AI part of the project |
-| On-device classifier for surface and roughness | 💤 Deferred | Course outlook; train offline first |
+| On-device classifier for surface and roughness | 💤 Deferred | Outlook; train offline first |
 | Fully automatic start | ❌ Rejected | Would record without sound (background mic restriction) |
 | Detect bike type automatically | ❌ Rejected | Too unreliable; asking is better |
 | Passing trucks from the barometer | ❌ Rejected | The pressure pulse is at the sensor's noise level; the mic catches trucks better |
 | Path width from GPS spread | ❌ Rejected | GPS error drifts slowly with the same sign for minutes; use OSM instead |
-| iOS version | ❌ Rejected | Needs a paid developer account and TestFlight; too much for the course |
+| iOS version | ❌ Rejected | Needs a paid developer account and TestFlight; too much effort for now |
 
 ## Open questions and tests
 
