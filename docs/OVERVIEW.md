@@ -1,6 +1,6 @@
 # Bike Sensor Logger: project overview
 
-*Last updated: 2026-10-23 · app version on `master`: 0.6.0*
+*Last updated: 2026-10-23 · app version on `master`: 0.8.0*
 
 This page is the living overview of the logger: why it exists, what the finished app should do, and where each feature stands. Update the status tables whenever a feature changes state, and bump the date above. The [README](../README.md) stays the reference for file formats, installing and building.
 
@@ -72,12 +72,14 @@ The app is Android only (Android 10+). iOS is out of scope for now.
 |---|---|---|---|
 | APK built by GitHub Actions on every push | ✅ Tested | 0.1.0 | Artifact "bike-sensor-logger-apk" |
 | Release APK on the Releases page when a `v*` tag is pushed | 🧪 Built, untested | 0.1.0 | No tag pushed yet |
-| Upload to the project server (VPS): HTTPS upload-only endpoint | 🔜 Planned | | Needed before test riders start. Never hard-code a password (no HiDrive login in the app). Uploads are privacy-trimmed exactly like the ZIP export |
-| Automatic upload on Wi-Fi (Android WorkManager, unmetered network), with a manual "Upload now" button and a switch to turn it off | 🔜 Planned | | Retries by itself after a lost connection; rides are uploaded only after they are finished and trimmed |
-| Open participation: no personal codes; the app makes a random install id on first launch and sends it with each upload | 🔜 Planned | | Replaces per-rider codes. The id lets a rider ask for deletion of their data and lets the server block one install that misbehaves, without knowing who anyone is |
-| Server checks on every upload: file format and columns, size limit, plausible values (rates, speeds, coordinates), rate limit per install and IP, quarantine before data enters the dataset | 🔜 Planned | | Stops broken files, spam and full disks. Can't catch realistic-looking fake rides, so outliers per install still need a look in the analysis |
+| Upload to the project server: HTTPS upload-only service on the VPS (`server/`, Docker behind nginx, `upload.velowind.de`) | 🧪 Built, untested | 0.8.0 | Tested locally with real rides, through nginx over HTTPS; not yet set up on the VPS. No password in the app. Uploads are privacy-trimmed exactly like the ZIP export. Setup: [server/deploy/SETUP.md](../server/deploy/SETUP.md) |
+| Automatic upload on Wi-Fi (Android JobScheduler, unmetered network), with an "Upload now" button and a switch to turn it off | 🧪 Built, untested | 0.8.0 | On by default once the rider agrees to the consent text. Retries with back-off; "Upload now" asks before using mobile data. Each ride shows "uploaded", "waiting" or why the server didn't accept it |
+| Open participation: the app makes a random install id and secret on first launch | 🧪 Built, untested | 0.8.0 | The server stores only a hash of the secret, so nobody can upload or delete under someone else's id. "Delete my data on the server" in Upload settings removes everything an install sent |
+| Server checks on every upload: ZIP safety, untrimmed fields, columns, time window, sample rates, gravity, speed; rate limits per IP and install; free-space floor | 🧪 Built, untested | 0.8.0 | Can't catch realistic-looking fake rides, so outliers per install still need a look in the analysis. Every rejection is logged with details and the file kept for 30 days |
+| Automatic promotion: rides fully in Germany, France or Switzerland go straight into the dataset; trusted installs from anywhere; the rest wait in quarantine | 🧪 Built, untested | 0.8.0 | An install becomes trusted after 5 automatically promoted rides. Untrusted and blocked installs are never promoted automatically. Admin commands: report, promote, trust, block, delete |
+| Filter rides by location on the server | 💤 Deferred | | No area limit for now |
 | Visual polish of the main screens | 🔜 Planned | | Last step before shipping to test riders |
-| Rider instructions and consent text | 🔜 Planned | | Test riders are data subjects under GDPR |
+| Rider instructions and consent text | 🔜 Planned | | A first consent text is in the app (0.8.0) and needs a check: who runs the project, a contact address, how long data is kept. Test riders are data subjects under GDPR |
 
 ### Later or not at all
 
@@ -118,3 +120,4 @@ The app is Android only (Android 10+). iOS is out of scope for now.
 | 0.5.0 | Bikes with one start button each; untrimmed GPX export; cycle street |
 | 0.6.0 | Short poll plus optional detailed poll; annotate on the map; reliable Export all |
 | 0.7.0 | Readable ride names in exports |
+| 0.8.0 | Upload to the project server: consent, automatic upload on Wi-Fi, Upload now, upload settings with server-side delete |

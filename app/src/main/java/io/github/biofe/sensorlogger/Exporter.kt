@@ -50,8 +50,8 @@ object Exporter {
                     rides.forEachIndexed { i, ride ->
                         progress(i, rides.size)
                         // One unreadable ride (e.g. cut off by a crash) must not sink the whole export
-                        val ok = runCatching { writeRide(ride, zip) }.getOrElse { runCatching { zip.closeEntry() }; false }
-                        if (ok) exported++ else skipped++
+                        val name = runCatching { writeRide(ride, zip) }.getOrElse { runCatching { zip.closeEntry() }; null }
+                        if (name != null) exported++ else skipped++
                     }
                     progress(rides.size, rides.size)
                     val mapLines = Annotations.exportableMapLines(context)
@@ -76,11 +76,21 @@ object Exporter {
         return Result(uri, fileName, exported, skipped)
     }
 
-    /** Returns false if the ride has nothing left after privacy trimming. */
-    private fun writeRide(ride: File, zip: ZipOutputStream): Boolean {
+    /**
+     * Packs one ride, trimmed exactly as in [export], into [target] for the upload.
+     * Returns the exported ride name, or null if nothing is left after trimming.
+     */
+    fun packRide(ride: File, target: File): String? {
+        val name = ZipOutputStream(target.outputStream().buffered()).use { writeRide(ride, it) }
+        if (name == null) target.delete()
+        return name
+    }
+
+    /** Returns the exported ride name, or null if the ride has nothing left after privacy trimming. */
+    private fun writeRide(ride: File, zip: ZipOutputStream): String? {
         val metaFile = File(ride, Rides.META_FILE)
         val gpsFile = File(ride, Rides.GPS_FILE)
-        if (!metaFile.exists() || !gpsFile.exists()) return false
+        if (!metaFile.exists() || !gpsFile.exists()) return null
 
         val meta = JSONObject(metaFile.readText())
         // An auto-stopped ride ends where the rider stopped moving, not ten minutes later
@@ -99,7 +109,7 @@ object Exporter {
             points,
             meta.optDouble("trim_start_m", LEGACY_RADIUS_M),
             meta.optDouble("trim_end_m", LEGACY_RADIUS_M),
-        ) ?: return false
+        ) ?: return null
 
         // Rides recorded before 0.7.0 have no suffix: keep their old id so earlier exports still match
         val suffix = meta.optString("name_suffix", "")
@@ -137,6 +147,6 @@ object Exporter {
             writer.flush() // don't close: that would close the whole ZIP stream
             zip.closeEntry()
         }
-        return true
+        return rideId
     }
 }

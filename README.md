@@ -31,6 +31,15 @@ Tapping a ride and choosing **Send to the project** (or **Export all rides**) wr
 
 The untrimmed data stays on the phone until the ride is deleted (tap it, then **Delete**).
 
+## Upload to the project
+
+From 0.8.0 the app can send rides to the project server itself instead of the share sheet. It asks once whether you agree; after that, every finished ride is uploaded on Wi-Fi in the background, trimmed exactly like the ZIP above. The ride list shows for each ride whether it was uploaded, is waiting, or why the server didn't accept it. Uploaded rides stay on the phone.
+
+- **Upload now** sends waiting rides right away, and asks first when you're not on Wi-Fi.
+- **Upload settings** turns automatic upload off, shows what is sent, shows this phone's short id, and has **Delete my data on the server**, which removes everything this phone sent.
+
+The phone identifies itself with a random id and secret made on first launch; there are no accounts or passwords. The server side is in [`server/`](server/README.md).
+
 **Export my track as GPX** writes the full, untrimmed GPS track to `Downloads/BikeSensorLogger/` for your own use (Strava, Komoot, OsmAnd). It is not privacy-trimmed and is not meant for the project.
 
 ## Installing (for riders)
@@ -43,7 +52,7 @@ The untrimmed data stays on the phone until the ride is deleted (tap it, then **
 To record ground truth, stop, open the app and tap **Annotate this spot** while the ride is recording. The poll has six one-tap questions (overall, surface, condition, width, motor traffic, noise) and is saved with your position. Ticking **Detailed poll** adds type of way, exact surface, what you hear and a note.
 
 **Annotate on the map** shows your recorded tracks and earlier answers on OpenStreetMap; tap any spot to rate it without going there. These spots are exported as `map_annotations.csv`, except those within 250 m of any ride's start or end. Map tiles are loaded from tile.openstreetmap.org, which sees the map area you look at.
-5. Tap the ride and send the ZIP.
+5. Rides upload by themselves on Wi-Fi once you've agreed. Without upload, tap the ride and send the ZIP.
 
 Other apps that use the microphone at the same time (e.g. NoiseCapture or a call) can block sound recording; the screen shows a warning if that happens.
 
