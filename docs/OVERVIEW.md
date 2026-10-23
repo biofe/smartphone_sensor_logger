@@ -22,8 +22,8 @@ The app is Android only (Android 10+). iOS is out of scope for now.
 |---|---|
 | ✅ Tested | Built and confirmed working in at least one real ride |
 | 🧪 Built, untested | In the app on `master`, but not yet run on a phone (or not yet seen working) |
-| 🔜 Planned | Wanted for the version friends get; not built yet |
-| 💤 Deferred | Good idea, but parked until after the first friends round |
+| 🔜 Planned | Wanted for the version test riders get; not built yet |
+| 💤 Deferred | Good idea, but parked until after the first test round |
 | ❌ Rejected | Decided against, with the reason |
 
 ## Features and their state
@@ -47,7 +47,7 @@ The app is Android only (Android 10+). iOS is out of scope for now.
 | Feature | Status | Since | Notes |
 |---|---|---|---|
 | "Annotate this spot" poll while recording | ✅ Tested | 0.3.0 | 15 annotations on the 2026-10-21 handlebar ride (older detailed poll) |
-| Short poll: six one-tap questions (overall, surface, condition, width, motor traffic, noise) | 🧪 Built, untested | 0.6.0 | The default for friends |
+| Short poll: six one-tap questions (overall, surface, condition, width, motor traffic, noise) | 🧪 Built, untested | 0.6.0 | The default for test riders |
 | "Detailed poll" tick box: type of way, exact surface, sounds, note | 🧪 Built, untested | 0.6.0 | Same questions as the tested 0.4–0.5 poll, now optional |
 | Type of way incl. "cycle street" and "shared footway (in town)"; width = the space you may ride in your direction | 🧪 Built, untested | 0.5.0 | Country shared paths count as separate cycle path |
 | Annotate on the map: OSM view of own tracks and earlier answers, tap a spot to rate it | 🧪 Built, untested | 0.6.0 | Exported as `map_annotations.csv`, minus spots within 250 m of any ride's start or end. Tiles come from tile.openstreetmap.org |
@@ -69,16 +69,16 @@ The app is Android only (Android 10+). iOS is out of scope for now.
 |---|---|---|---|
 | APK built by GitHub Actions on every push | ✅ Tested | 0.1.0 | Artifact "bike-sensor-logger-apk" |
 | Release APK on the Releases page when a `v*` tag is pushed | 🧪 Built, untested | 0.1.0 | No tag pushed yet |
-| Upload to the project server (VPS): upload-only endpoint, personal code per friend entered once and stored | 🔜 Planned | | Needed before friends start. Never hard-code a password (no HiDrive login in the app) |
-| Visual polish of the main screens | 🔜 Planned | | Last step before shipping to friends |
-| Rider instructions and consent text | 🔜 Planned | | Friends are data subjects under GDPR |
+| Upload to the project server (VPS): upload-only endpoint, personal code per test rider entered once and stored | 🔜 Planned | | Needed before test riders start. Never hard-code a password (no HiDrive login in the app) |
+| Visual polish of the main screens | 🔜 Planned | | Last step before shipping to test riders |
+| Rider instructions and consent text | 🔜 Planned | | Test riders are data subjects under GDPR |
 
 ### Later or not at all
 
 | Feature | Status | Notes |
 |---|---|---|
 | "Looks like you're cycling, start recording?" notification (Play Services activity recognition) | 💤 Deferred | One tap starts the ride. Android doesn't allow the mic to start from the background, so a tap is needed |
-| On-device feature extraction (e.g. per-second roughness instead of raw 100 Hz accel) | 💤 Deferred | The first friends round keeps raw accel plus band levels; data reduction is the edge-AI part of the project |
+| On-device feature extraction (e.g. per-second roughness instead of raw 100 Hz accel) | 💤 Deferred | The first test round keeps raw accel plus band levels; data reduction is the edge-AI part of the project |
 | On-device classifier for surface and roughness | 💤 Deferred | Outlook; train offline first |
 | Fully automatic start | ❌ Rejected | Would record without sound (background mic restriction) |
 | Detect bike type automatically | ❌ Rejected | Too unreliable; asking is better |
