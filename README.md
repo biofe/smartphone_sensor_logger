@@ -4,6 +4,8 @@ This sensor logger app records GPS, accelerometer and microphone (1/3-octave ban
 
 Android 10 or newer. Recording keeps running with the phone in a pocket and the screen off.
 
+For the project's purpose, planned features and the state of each one, see [docs/OVERVIEW.md](docs/OVERVIEW.md).
+
 ## What it records
 
 Each ride is one folder with one CSV per sensor and a `meta.json`. Every CSV starts with `t_utc_ms`, a UTC timestamp in milliseconds from the phone clock, so the files (and data from other apps on the same phone) can be joined on time.
