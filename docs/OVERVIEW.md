@@ -6,7 +6,7 @@ This page is the living overview of the logger: why it exists, what the finished
 
 ## Purpose
 
-The logger collects data for a **crowdsourced map of cycle path quality**, the final project of a Data Science course (ends 2026-12-18). Felix and a few friends carry it on their normal rides. Each ride records how rough the surface is, how loud the surroundings are, and where and when the ride happened. Later steps outside the app add weather and map-match the rides to OpenStreetMap ways, so the map can show quality by surface, noise, time of day and weather.
+The logger collects data for a **crowdsourced map of cycle path quality**. Each ride records how rough the surface is, how loud the surroundings are, and where and when the ride happened. Later steps outside the app add weather and map-match the rides to OpenStreetMap ways, so the map can show quality by surface, noise, time of day and weather.
 
 Ready-made apps didn't fit. Sensor Logger records loudness or raw audio but no frequency bands, and NoiseCapture has no accelerometer and can't share the microphone with another app. The custom logger records everything in one app, on one clock, and is built for privacy from the start:
 
