@@ -1,0 +1,4 @@
+# Ride exports contain location traces; keep them out of git
+*.zip
+.ipynb_checkpoints/
+*.gpx
