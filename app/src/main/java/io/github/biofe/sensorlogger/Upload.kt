@@ -28,6 +28,9 @@ object Upload {
     private const val CONNECT_TIMEOUT_MS = 15_000
     private const val READ_TIMEOUT_MS = 120_000
 
+    /** The server's limit; a valid ride stays far below it (about 10 MB per hour). */
+    private const val MAX_RIDE_BYTES = 100L * 1024 * 1024
+
     enum class State { WAITING, UPLOADED, REJECTED, EMPTY }
 
     class Status(val state: State, val reason: String = "")
@@ -148,6 +151,11 @@ object Upload {
                 }
                 if (name == null) {
                     setStatus(ride, State.EMPTY)
+                    return@forEachIndexed
+                }
+                if (zip.length() > MAX_RIDE_BYTES) {
+                    setStatus(ride, State.REJECTED, "too large to upload", name)
+                    rejected++
                     return@forEachIndexed
                 }
                 val answer = try {

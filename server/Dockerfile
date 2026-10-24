@@ -1,7 +1,7 @@
 FROM python:3.13-slim-bookworm
 
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 VELOWIND_DATA_DIR=/data
-RUN useradd --system --uid 10001 --no-create-home velowind
+RUN groupadd --system --gid 10001 velowind && useradd --system --uid 10001 --gid 10001 --no-create-home velowind
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt

@@ -20,9 +20,16 @@ chmod +x /etc/letsencrypt/renewal-hooks/deploy/reload-nginx.sh
 
 ```
 git clone https://github.com/biofe/smartphone_sensor_logger.git /opt/velowind
+# A name for the container's user (uid 10001); it can't log in
+groupadd --system --gid 10001 velowind
+useradd --system --uid 10001 --gid 10001 --no-create-home --shell /usr/sbin/nologin velowind
 mkdir -p /srv/velowind/data
-chown 10001:10001 /srv/velowind/data   # the container's user
+# The service writes, your own group can read (for rsync), other accounts on the VPS see nothing
+chown velowind:<your group> /srv/velowind/data
+chmod 750 /srv/velowind/data
 ```
+
+Use your own account with `sudo` for all of this, not the website's deploy user. Don't add other users to the `docker` group: access to Docker is the same as root.
 
 The repository is private, so the clone needs a GitHub login or a deploy key. Copying the `server/` folder over with `scp` works too.
 
