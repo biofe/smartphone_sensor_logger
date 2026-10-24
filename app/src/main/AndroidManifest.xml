@@ -9,8 +9,11 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <!-- Map tiles for annotating on the map -->
+    <!-- Map tiles for annotating on the map, and uploading rides -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Upload only on Wi-Fi, and keep the upload job scheduled after a reboot -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <uses-feature android:name="android.hardware.location.gps" android:required="false" />
     <uses-feature android:name="android.hardware.microphone" android:required="false" />
@@ -39,5 +42,10 @@
             android:name=".RecordingService"
             android:exported="false"
             android:foregroundServiceType="location|microphone" />
+
+        <service
+            android:name=".UploadJob"
+            android:exported="false"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
     </application>
 </manifest>

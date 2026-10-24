@@ -155,6 +155,7 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
             RecorderState.recording = false
             RecorderState.autoStopped = autoStopped
             if (autoStopped) notifyAutoStopped()
+            UploadJob.schedule(this)
         }
         super.onDestroy()
     }

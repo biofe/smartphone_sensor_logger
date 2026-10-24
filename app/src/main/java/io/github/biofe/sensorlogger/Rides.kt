@@ -34,6 +34,6 @@ object Rides {
             org.json.JSONObject(File(ride, META_FILE).readText()).optString("bike_type", "")
         }.getOrDefault("")
         val bikeNote = if (bike.isEmpty() || bike == "unknown") "" else "  ·  $bike"
-        return "${ride.name}$bikeNote  ·  $gpsFixes GPS fixes  ·  $sizeKb KB"
+        return "${ride.name}$bikeNote  ·  $gpsFixes GPS fixes  ·  $sizeKb KB\n${Upload.label(ride)}"
     }
 }

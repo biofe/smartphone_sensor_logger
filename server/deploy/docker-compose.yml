@@ -1,0 +1,21 @@
+# Run from the server/ folder: docker compose -f deploy/docker-compose.yml up -d --build
+services:
+  upload:
+    build: ..
+    restart: unless-stopped
+    # Reachable only from the VPS itself; nginx forwards to it
+    ports:
+      - "127.0.0.1:8737:8080"
+    volumes:
+      - /srv/velowind/data:/data
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"

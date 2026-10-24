@@ -30,6 +30,7 @@ class MainActivity : Activity() {
     private var pendingBike: Bikes.Bike? = null
     private lateinit var annotate: Button
     private lateinit var status: TextView
+    private lateinit var uploadStatus: TextView
     private lateinit var ridesView: ListView
     private var rides: List<File> = emptyList()
     private val ui = Handler(Looper.getMainLooper())
@@ -70,12 +71,21 @@ class MainActivity : Activity() {
             typeface = Typeface.MONOSPACE
             setPadding(0, pad / 2, 0, pad)
         }
+        uploadStatus = TextView(this).apply { setPadding(0, pad / 2, 0, 0) }
+        val uploadNow = Button(this).apply {
+            text = "Upload now"
+            setOnClickListener { uploadNow() }
+        }
+        val uploadSettings = Button(this).apply {
+            text = "Upload settings"
+            setOnClickListener { uploadSettings() }
+        }
         val exportAll = Button(this).apply {
             text = "Export all rides"
             setOnClickListener { export(rides) }
         }
         val hint = TextView(this).apply {
-            text = "Tap a ride to export or delete it."
+            text = "Tap a ride to export or delete it. Uploading doesn't delete rides from the phone."
             setPadding(0, pad, 0, pad / 2)
         }
         ridesView = ListView(this).apply {
@@ -89,6 +99,11 @@ class MainActivity : Activity() {
             addView(stopButton, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
             addView(annotate, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
             addView(status)
+            addView(uploadStatus)
+            addView(LinearLayout(this@MainActivity).apply {
+                addView(uploadNow, LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f))
+                addView(uploadSettings, LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f))
+            }, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
             addView(exportAll, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
             addView(manageBikes, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
             addView(mapButton, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
@@ -106,12 +121,15 @@ class MainActivity : Activity() {
         }
         setContentView(root)
         if (Bikes.list(this).isEmpty()) addBike(firstRun = true)
+        UploadJob.schedule(this)
     }
 
     override fun onResume() {
         super.onResume()
         refreshRides()
         ui.post(tick)
+        // Ask once, after the bikes are set up and not in the middle of a ride
+        if (!Upload.consentAsked(this) && Bikes.list(this).isNotEmpty() && !RecorderState.recording) askConsent {}
     }
 
     override fun onPause() {
@@ -161,6 +179,17 @@ class MainActivity : Activity() {
     private fun refreshRides() {
         rides = Rides.list(this)
         ridesView.adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, rides.map { Rides.describe(it) })
+        renderUpload()
+    }
+
+    private fun renderUpload() {
+        val waiting = Upload.pending(this).size
+        uploadStatus.text = when {
+            !Upload.consented(this) -> "Upload: off. Tap Upload settings to read what would be sent."
+            waiting == 0 -> "Upload: all rides uploaded."
+            !Upload.auto(this) -> "Upload: $waiting ${if (waiting == 1) "ride" else "rides"} not uploaded; automatic upload is off."
+            else -> "Upload: $waiting ${if (waiting == 1) "ride" else "rides"} waiting for Wi-Fi."
+        }
     }
 
     private fun stopRecording() {
@@ -239,6 +268,140 @@ class MainActivity : Activity() {
             .putExtra(Intent.EXTRA_STREAM, r.uri)
             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         startActivity(Intent.createChooser(share, "Send ride data"))
+    }
+
+    // --- Upload ------------------------------------------------------------------------------------
+
+    private fun askConsent(onAgreed: () -> Unit) {
+        val text = TextView(this).apply {
+            val pad = (24 * resources.displayMetrics.density).toInt()
+            setPadding(pad, pad / 2, pad, 0)
+            this.text = CONSENT_TEXT
+        }
+        val scroll = android.widget.ScrollView(this).apply { addView(text) }
+        if (Upload.consented(this)) {
+            // Already agreed: just show what is sent; turning upload off is in the settings
+            AlertDialog.Builder(this).setTitle("What is sent").setView(scroll).setPositiveButton("Close", null).show()
+            return
+        }
+        AlertDialog.Builder(this)
+            .setTitle("Send your rides to the project?")
+            .setView(scroll)
+            .setCancelable(false)
+            .setPositiveButton("Agree") { _, _ ->
+                Upload.setConsent(this, true)
+                renderUpload()
+                onAgreed()
+            }
+            .setNegativeButton("Not now") { _, _ ->
+                Upload.setConsent(this, false)
+                renderUpload()
+            }
+            .show()
+    }
+
+    private fun uploadNow() {
+        if (!Upload.consented(this)) {
+            askConsent { uploadNow() }
+            return
+        }
+        val waiting = Upload.pending(this)
+        val network = getSystemService(android.net.ConnectivityManager::class.java)
+        if (network.activeNetwork == null) {
+            Toast.makeText(this, "No internet connection.", Toast.LENGTH_SHORT).show()
+            return
+        }
+        if (network.isActiveNetworkMetered && waiting.isNotEmpty()) {
+            // Zipped CSVs are about a third of their size on the phone
+            val mb = waiting.sumOf { r -> r.walkTopDown().filter { it.isFile }.sumOf { it.length() } } / 3 / 1_000_000
+            AlertDialog.Builder(this)
+                .setMessage("You're not on Wi-Fi. Upload ${waiting.size} ${if (waiting.size == 1) "ride" else "rides"} (about ${maxOf(mb, 1)} MB) over mobile data?")
+                .setPositiveButton("Upload") { _, _ -> runUpload() }
+                .setNegativeButton("Wait for Wi-Fi", null)
+                .show()
+        } else {
+            runUpload()
+        }
+    }
+
+    private fun runUpload() {
+        val text = TextView(this).apply {
+            val pad = (24 * resources.displayMetrics.density).toInt()
+            setPadding(pad, pad, pad, pad)
+            this.text = "Connecting…"
+        }
+        val dialog = AlertDialog.Builder(this).setTitle("Uploading").setView(text).setCancelable(false).show()
+        Thread {
+            val result = runCatching {
+                Upload.uploadAll(this) { done, total ->
+                    runOnUiThread { text.text = if (done < total) "Ride ${done + 1} of $total…" else "Finishing…" }
+                }
+            }
+            runOnUiThread {
+                dialog.dismiss()
+                refreshRides()
+                val r = result.getOrElse {
+                    Toast.makeText(this, "Upload failed: ${it.message}", Toast.LENGTH_LONG).show()
+                    return@runOnUiThread
+                }
+                val parts = buildList {
+                    if (r.uploaded > 0) add("${r.uploaded} uploaded")
+                    if (r.rejected > 0) add("${r.rejected} not accepted (see the ride list)")
+                    r.message?.let { add(it) }
+                }
+                Toast.makeText(this, parts.joinToString(". ").ifEmpty { "Nothing new to upload." }, Toast.LENGTH_LONG).show()
+            }
+        }.start()
+    }
+
+    private fun uploadSettings() {
+        val pad = (24 * resources.displayMetrics.density).toInt()
+        val auto = android.widget.CheckBox(this).apply {
+            text = "Upload automatically on Wi-Fi"
+            isChecked = Upload.auto(this@MainActivity)
+            isEnabled = Upload.consented(this@MainActivity)
+            setOnCheckedChangeListener { _, on ->
+                Upload.setAuto(this@MainActivity, on)
+                renderUpload()
+            }
+        }
+        val id = TextView(this).apply {
+            text = "This phone's id: ${Upload.shortInstallId(this@MainActivity)}\nQuote it if you write to the project about your data."
+            setPadding(0, pad / 2, 0, pad / 2)
+        }
+        val view = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(pad, pad / 2, pad, 0)
+            addView(auto)
+            addView(id)
+        }
+        AlertDialog.Builder(this)
+            .setTitle("Upload settings")
+            .setView(view)
+            .setPositiveButton("Close", null)
+            .setNeutralButton("What is sent") { _, _ -> askConsent {} }
+            .setNegativeButton("Delete my data on the server") { _, _ -> confirmServerDelete() }
+            .show()
+    }
+
+    private fun confirmServerDelete() {
+        AlertDialog.Builder(this)
+            .setMessage("Delete every ride and map annotation this phone has sent to the project server? Automatic upload will be turned off. Rides on this phone stay.")
+            .setPositiveButton("Delete") { _, _ ->
+                Thread {
+                    val result = runCatching { Upload.deleteOnServer(this) }
+                    runOnUiThread {
+                        renderUpload()
+                        val msg = result.fold(
+                            { "Deleted $it ${if (it == 1) "ride" else "rides"} from the server. Upload is off." },
+                            { "Couldn't delete: ${it.message}. Check the connection and try again." },
+                        )
+                        Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
+                    }
+                }.start()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     // --- Bikes -----------------------------------------------------------------------------------
@@ -354,5 +517,15 @@ class MainActivity : Activity() {
 
     companion object {
         private const val REQ_PERMISSIONS = 1
+
+        private const val CONSENT_TEXT =
+            "Your rides help build a map of how comfortable cycle paths are. If you agree, the app sends each " +
+                "finished ride to the project server when you're on Wi-Fi.\n\n" +
+                "What is sent: the motion sensor data, the GPS track, sound levels in frequency bands (never audio), " +
+                "your poll answers, the bike type, the phone model and app version, and a random id for this app " +
+                "install. The first and last 150 to 250 m of every ride are cut off, so your home or work isn't in the data.\n\n" +
+                "What is not sent: your name, contact details, bike names, or the full track you can export as GPX.\n\n" +
+                "The data is used for research in this project. You can turn automatic upload off at any time, " +
+                "and delete everything this phone sent under Upload settings."
     }
 }
