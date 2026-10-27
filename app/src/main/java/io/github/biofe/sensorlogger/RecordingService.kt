@@ -31,6 +31,7 @@ import android.os.SystemClock
 import io.github.biofe.sensorlogger.core.GeoPoint
 import io.github.biofe.sensorlogger.core.PrivacyTrim
 import io.github.biofe.sensorlogger.core.RideName
+import io.github.biofe.sensorlogger.core.SensorClock
 import io.github.biofe.sensorlogger.core.StopDetector
 import io.github.biofe.sensorlogger.core.ThirdOctaveAnalyzer
 import org.json.JSONArray
@@ -78,6 +79,11 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
     /** UTC ms at elapsedRealtime == 0, so sensor timestamps (elapsed-realtime based) map to wall-clock time. */
     private var bootUtcMs = 0L
 
+    /** One per sensor: corrects phones whose sensor clock isn't elapsed realtime (see [SensorClock]). */
+    private lateinit var accelClock: SensorClock
+    private lateinit var gyroClock: SensorClock
+    private lateinit var pressureClock: SensorClock
+
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -92,6 +98,9 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
         RecorderState.reset()
         RecorderState.recording = true
         bootUtcMs = System.currentTimeMillis() - SystemClock.elapsedRealtime()
+        accelClock = SensorClock(bootUtcMs)
+        gyroClock = SensorClock(bootUtcMs)
+        pressureClock = SensorClock(bootUtcMs)
         rideDir = Rides.newRideDir(this)
         RecorderState.rideDir = rideDir
         val random = kotlin.random.Random(SecureRandom().nextLong())
@@ -200,14 +209,14 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
     override fun onSensorChanged(event: SensorEvent) {
         if (event.sensor.type == Sensor.TYPE_PRESSURE) {
             val w = pressureWriter ?: return
-            val t = bootUtcMs + event.timestamp / 1_000_000.0
+            val t = pressureClock.utcMs(event.timestamp, SystemClock.elapsedRealtimeNanos())
             w.write(String.format(Locale.US, "%.1f,%.3f\n", t, event.values[0]))
             RecorderState.pressureSamples++
             return
         }
         val isGyro = event.sensor.type == Sensor.TYPE_GYROSCOPE
         val w = (if (isGyro) gyroWriter else accelWriter) ?: return
-        val t = bootUtcMs + event.timestamp / 1_000_000.0
+        val t = (if (isGyro) gyroClock else accelClock).utcMs(event.timestamp, SystemClock.elapsedRealtimeNanos())
         w.write(String.format(Locale.US, "%.1f,%.4f,%.4f,%.4f\n", t, event.values[0], event.values[1], event.values[2]))
         if (isGyro) RecorderState.gyroSamples++ else RecorderState.accelSamples++
     }
@@ -348,6 +357,15 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
             .put("trim_start_m", trimStartM)
             .put("trim_end_m", trimEndM)
             .put("name_suffix", nameSuffix)
+            // Marks rides whose sensor times are already corrected, so the export doesn't realign them again
+            .put("sensor_clock_checked", true)
+        if (::accelClock.isInitialized) {
+            val fixes = JSONObject()
+            for ((file, clock) in listOf(Rides.ACCEL_FILE to accelClock, Rides.GYRO_FILE to gyroClock, Rides.PRESSURE_FILE to pressureClock)) {
+                if (clock.correctionMs != 0.0) fixes.put(file, Math.round(clock.correctionMs))
+            }
+            if (fixes.length() > 0) meta.put("sensor_clock_correction_ms", fixes)
+        }
         if (autoStopped) {
             meta.put("auto_stopped", true)
             // Everything after this is the rider standing still; export drops it
