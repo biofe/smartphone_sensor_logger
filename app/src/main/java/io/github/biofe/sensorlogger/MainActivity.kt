@@ -35,8 +35,12 @@ class MainActivity : Activity() {
     private var rides: List<File> = emptyList()
     private val ui = Handler(Looper.getMainLooper())
     private val tick = object : Runnable {
+        private var count = 0
+
         override fun run() {
             render()
+            // Show rides turning "uploaded" while a background upload runs
+            if (++count % 3 == 0 && Upload.isRunning) refreshRides()
             ui.postDelayed(this, 1000)
         }
     }
@@ -325,33 +329,8 @@ class MainActivity : Activity() {
     }
 
     private fun runUpload() {
-        val text = TextView(this).apply {
-            val pad = (24 * resources.displayMetrics.density).toInt()
-            setPadding(pad, pad, pad, pad)
-            this.text = "Connecting…"
-        }
-        val dialog = AlertDialog.Builder(this).setTitle("Uploading").setView(text).setCancelable(false).show()
-        Thread {
-            val result = runCatching {
-                Upload.uploadAll(this) { done, total ->
-                    runOnUiThread { text.text = if (done < total) "Ride ${done + 1} of $total…" else "Finishing…" }
-                }
-            }
-            runOnUiThread {
-                dialog.dismiss()
-                refreshRides()
-                val r = result.getOrElse {
-                    Toast.makeText(this, "Upload failed: ${it.message}", Toast.LENGTH_LONG).show()
-                    return@runOnUiThread
-                }
-                val parts = buildList {
-                    if (r.uploaded > 0) add("${r.uploaded} uploaded")
-                    if (r.rejected > 0) add("${r.rejected} not accepted (see the ride list)")
-                    r.message?.let { add(it) }
-                }
-                Toast.makeText(this, parts.joinToString(". ").ifEmpty { "Nothing new to upload." }, Toast.LENGTH_LONG).show()
-            }
-        }.start()
+        UploadJob.uploadNow(this)
+        Toast.makeText(this, "Uploading in the background; the notification shows how far it got.", Toast.LENGTH_LONG).show()
     }
 
     private fun uploadSettings() {

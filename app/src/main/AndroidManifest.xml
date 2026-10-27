@@ -14,6 +14,8 @@
     <!-- Upload only on Wi-Fi, and keep the upload job scheduled after a reboot -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- "Upload now" keeps running with the app closed (Android 14+) -->
+    <uses-permission android:name="android.permission.RUN_USER_INITIATED_JOBS" />
 
     <uses-feature android:name="android.hardware.location.gps" android:required="false" />
     <uses-feature android:name="android.hardware.microphone" android:required="false" />
