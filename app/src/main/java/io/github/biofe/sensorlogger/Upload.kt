@@ -10,7 +10,8 @@ import java.net.URL
 import java.security.MessageDigest
 import java.security.SecureRandom
 import java.util.UUID
-import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.ReentrantLock
 
 /**
  * Sends finished rides to the project server, trimmed exactly like the ZIP export.
@@ -39,9 +40,15 @@ object Upload {
     /** What a run achieved; [retry] means something is left that a later run may manage. */
     class Summary(val uploaded: Int, val rejected: Int, val retry: Boolean, val message: String?)
 
-    private val running = AtomicBoolean(false)
+    private val lock = ReentrantLock()
+    @Volatile private var stopRequested = false
 
-    val isRunning: Boolean get() = running.get()
+    val isRunning: Boolean get() = lock.isLocked
+
+    /** Asks a running upload to stop after the ride in flight (Android stopped its job, or "Upload now" takes over). */
+    fun requestStop() {
+        stopRequested = true
+    }
 
     private fun prefs(context: Context) = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
@@ -136,15 +143,16 @@ object Upload {
 
     /**
      * Uploads every waiting ride, then the map annotations if they changed. Runs on a background
-     * thread; only one run at a time (a second call returns at once with a message).
+     * thread, one run at a time: a second call waits up to [waitMs] for the first to finish.
      */
-    fun uploadAll(context: Context, progress: (Int, Int) -> Unit = { _, _ -> }): Summary {
+    fun uploadAll(context: Context, waitMs: Long = 0, progress: (Int, Int) -> Unit = { _, _ -> }): Summary {
         if (!consented(context)) return Summary(0, 0, false, "Uploading needs your consent first.")
-        if (!running.compareAndSet(false, true)) return Summary(0, 0, false, "An upload is already running.")
+        if (!lock.tryLock(waitMs, TimeUnit.MILLISECONDS)) return Summary(0, 0, true, "An upload is already running.")
+        stopRequested = false
         try {
             return run(context, progress)
         } finally {
-            running.set(false)
+            lock.unlock()
         }
     }
 
@@ -154,6 +162,7 @@ object Upload {
         var uploaded = 0
         var rejected = 0
         rides.forEachIndexed { i, ride ->
+            if (stopRequested) return Summary(uploaded, rejected, true, null)
             progress(i, rides.size)
             val zip = File(context.cacheDir, "upload-${ride.name}.zip")
             try {

@@ -28,10 +28,14 @@ class UploadJob : JobService() {
     override fun onStartJob(params: JobParameters): Boolean {
         val now = params.jobId == NOW
         if (if (now) !Upload.consented(this) else !Upload.auto(this)) return false
-        if (now) notify(params, "Preparing…", 0, 0)
+        if (now) {
+            notify(params, "Preparing…", 0, 0)
+            // An automatic upload may be running (or stuck in a frozen app): let it stop after its ride, then take over
+            Upload.requestStop()
+        }
         worker = Thread {
             val summary = runCatching {
-                Upload.uploadAll(this) { done, total ->
+                Upload.uploadAll(this, waitMs = if (now) TAKE_OVER_WAIT_MS else 0) { done, total ->
                     if (now && done < total) notify(params, "Ride ${done + 1} of $total", done, total)
                 }
             }.getOrNull()
@@ -41,8 +45,11 @@ class UploadJob : JobService() {
         return true
     }
 
-    /** The network went away mid-upload: the ride in flight stays "waiting" and is sent next time. */
-    override fun onStopJob(params: JobParameters): Boolean = true
+    /** Android stopped the job (e.g. the network went away): finish the ride in flight, the rest waits for next time. */
+    override fun onStopJob(params: JobParameters): Boolean {
+        Upload.requestStop()
+        return true
+    }
 
     private fun notification(text: String, done: Int, total: Int, ongoing: Boolean): Notification {
         val nm = getSystemService(NotificationManager::class.java)
@@ -93,6 +100,9 @@ class UploadJob : JobService() {
         private const val CHANNEL_ID = "upload"
         private const val NOTIFICATION_ID = 2
 
+        /** One ride takes seconds on Wi-Fi; two minutes cover a slow connection. */
+        private const val TAKE_OVER_WAIT_MS = 2 * 60 * 1000L
+
         /** Call after a ride ends and whenever the upload settings change. */
         fun schedule(context: Context) {
             val scheduler = context.getSystemService(JobScheduler::class.java)
@@ -102,13 +112,16 @@ class UploadJob : JobService() {
                 return
             }
             val service = ComponentName(context, UploadJob::class.java)
-            scheduler.schedule(
-                JobInfo.Builder(SOON, service)
-                    .setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED)
-                    .setBackoffCriteria(10 * 60 * 1000L, JobInfo.BACKOFF_POLICY_EXPONENTIAL)
-                    .setPersisted(true)
-                    .build()
-            )
+            // Scheduling an id again would stop that job if it's running, so leave a pending or running one alone
+            if (scheduler.getPendingJob(SOON) == null) {
+                scheduler.schedule(
+                    JobInfo.Builder(SOON, service)
+                        .setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED)
+                        .setBackoffCriteria(10 * 60 * 1000L, JobInfo.BACKOFF_POLICY_EXPONENTIAL)
+                        .setPersisted(true)
+                        .build()
+                )
+            }
             // A safety net in case a run was cut short and its retry got lost
             if (scheduler.getPendingJob(PERIODIC) == null) {
                 scheduler.schedule(
@@ -127,6 +140,8 @@ class UploadJob : JobService() {
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
                 .setBackoffCriteria(30 * 1000L, JobInfo.BACKOFF_POLICY_EXPONENTIAL)
             val scheduler = context.getSystemService(JobScheduler::class.java)
+            // Tapped again while it runs: scheduling the same id would stop it
+            if (scheduler.getPendingJob(NOW) != null) return
             // Best kind of job first; fall back if this Android version or state doesn't allow it
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE &&
                 runCatching { scheduler.schedule(builder.setUserInitiated(true).build()) }.isSuccess

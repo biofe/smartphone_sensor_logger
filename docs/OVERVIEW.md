@@ -1,6 +1,6 @@
 # Bike Sensor Logger: project overview
 
-*Last updated: 2026-10-23 · app version on `master`: 0.8.2*
+*Last updated: 2026-10-23 · app version on `master`: 0.8.3*
 
 This page is the living overview of the logger: why it exists, what the finished app should do, and where each feature stands. Update the status tables whenever a feature changes state, and bump the date above. The [README](../README.md) stays the reference for file formats, installing and building.
 
@@ -125,3 +125,4 @@ The app is Android only (Android 10+). iOS is out of scope for now.
 | 0.8.0 | Upload to the project server: consent, automatic upload on Wi-Fi, Upload now, upload settings with server-side delete |
 | 0.8.1 | Sensor clock fix: accelerometer, gyroscope and barometer times are checked against the real time while recording; older rides with drifted times are realigned on export. Rides the server refused are sent again after an app update |
 | 0.8.2 | "Upload now" runs as a background job with a progress notification, so it continues with the app closed |
+| 0.8.3 | Opening the app no longer restarts a running automatic upload; "Upload now" takes over from a running upload instead of giving up |
