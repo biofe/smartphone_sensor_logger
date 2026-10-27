@@ -1,6 +1,6 @@
 # Bike Sensor Logger: project overview
 
-*Last updated: 2026-10-23 · app version on `master`: 0.8.0*
+*Last updated: 2026-10-23 · app version on `master`: 0.8.1*
 
 This page is the living overview of the logger: why it exists, what the finished app should do, and where each feature stands. Update the status tables whenever a feature changes state, and bump the date above. The [README](../README.md) stays the reference for file formats, installing and building.
 
@@ -97,6 +97,8 @@ The app is Android only (Android 10+). iOS is out of scope for now.
 
 ## Open questions and tests
 
+- **Sensor clock drift (found 2026-10-27):** on the test phone, rides recorded on 25 and 26 Oct had accelerometer, gyroscope and barometer times far from the GPS and sound times, so the privacy trim removed all of their rows (the first uploads were rejected for that). 0.8.1 corrects it while recording and realigns older rides on export, to within a few milliseconds of the ride start. Check that the re-uploaded rides line up, e.g. a bump visible in both accel and sound.
+
 - **Mic drop at annotation stops:** on 2026-10-21 the sound fell to −55 to −65 dBFS at every annotation stop, against −42 at a stop without one. Test a stop where you open the app without annotating, to see whether app use mutes the mic.
 - **Rigid open handlebar mount** vs. the long-arm closed case (arm swing sits inside the 3–8 Hz roughness band).
 - **Furry wind cover** for the microphone: one test ride.
@@ -121,3 +123,4 @@ The app is Android only (Android 10+). iOS is out of scope for now.
 | 0.6.0 | Short poll plus optional detailed poll; annotate on the map; reliable Export all |
 | 0.7.0 | Readable ride names in exports |
 | 0.8.0 | Upload to the project server: consent, automatic upload on Wi-Fi, Upload now, upload settings with server-side delete |
+| 0.8.1 | Sensor clock fix: accelerometer, gyroscope and barometer times are checked against the real time while recording; older rides with drifted times are realigned on export. Rides the server refused are sent again after an app update |

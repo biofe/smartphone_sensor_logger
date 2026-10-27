@@ -33,7 +33,8 @@ object Upload {
 
     enum class State { WAITING, UPLOADED, REJECTED, EMPTY }
 
-    class Status(val state: State, val reason: String = "")
+    /** [appVersion]: the app version that set the state; a rejection is retried once the app is updated. */
+    class Status(val state: State, val reason: String = "", val appVersion: String = "")
 
     /** What a run achieved; [retry] means something is left that a later run may manage. */
     class Summary(val uploaded: Int, val rejected: Int, val retry: Boolean, val message: String?)
@@ -92,12 +93,13 @@ object Upload {
         if (!file.exists()) return Status(State.WAITING)
         return runCatching {
             val json = JSONObject(file.readText())
-            Status(State.valueOf(json.getString("state")), json.optString("reason", ""))
+            Status(State.valueOf(json.getString("state")), json.optString("reason", ""), json.optString("app_version", ""))
         }.getOrDefault(Status(State.WAITING))
     }
 
-    private fun setStatus(ride: File, state: State, reason: String = "", name: String? = null) {
+    private fun setStatus(context: Context, ride: File, state: State, reason: String = "", name: String? = null) {
         val json = JSONObject().put("state", state.name).put("utc_ms", System.currentTimeMillis())
+            .put("app_version", versionName(context))
         if (reason.isNotEmpty()) json.put("reason", reason)
         if (name != null) json.put("name", name)
         File(ride, STATE_FILE).writeText(json.toString())
@@ -116,8 +118,17 @@ object Upload {
 
     private fun isRecording(ride: File) = RecorderState.recording && RecorderState.rideDir == ride
 
-    fun pending(context: Context): List<File> =
-        Rides.list(context).filter { status(it).state == State.WAITING && !isRecording(it) }
+    /** Waiting rides, plus rides refused under an older app version: an update may have fixed the cause. */
+    fun pending(context: Context): List<File> {
+        val version = versionName(context)
+        return Rides.list(context).filter {
+            val s = status(it)
+            !isRecording(it) && (s.state == State.WAITING || s.state == State.REJECTED && s.appVersion != version)
+        }
+    }
+
+    private fun versionName(context: Context): String =
+        context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "?"
 
     // --- Uploading ---------------------------------------------------------------------------
 
@@ -145,16 +156,16 @@ object Upload {
             val zip = File(context.cacheDir, "upload-${ride.name}.zip")
             try {
                 val name = runCatching { Exporter.packRide(ride, zip) }.getOrElse {
-                    setStatus(ride, State.REJECTED, "can't be read on the phone")
+                    setStatus(context, ride, State.REJECTED, "can't be read on the phone")
                     rejected++
                     return@forEachIndexed
                 }
                 if (name == null) {
-                    setStatus(ride, State.EMPTY)
+                    setStatus(context, ride, State.EMPTY)
                     return@forEachIndexed
                 }
                 if (zip.length() > MAX_RIDE_BYTES) {
-                    setStatus(ride, State.REJECTED, "too large to upload", name)
+                    setStatus(context, ride, State.REJECTED, "too large to upload", name)
                     rejected++
                     return@forEachIndexed
                 }
@@ -165,15 +176,15 @@ object Upload {
                 }
                 when (answer.code) {
                     200, 201 -> {
-                        setStatus(ride, State.UPLOADED, name = name)
+                        setStatus(context, ride, State.UPLOADED, name = name)
                         uploaded++
                     }
                     400, 413 -> {
-                        setStatus(ride, State.REJECTED, answer.reason, name)
+                        setStatus(context, ride, State.REJECTED, answer.reason, name)
                         rejected++
                     }
                     403 -> {
-                        setStatus(ride, State.REJECTED, answer.reason, name)
+                        setStatus(context, ride, State.REJECTED, answer.reason, name)
                         return Summary(uploaded, rejected + 1, false, "The server doesn't accept uploads from this phone.")
                     }
                     // 401, 422 (damaged transfer), 429, 5xx: the same ride can succeed later

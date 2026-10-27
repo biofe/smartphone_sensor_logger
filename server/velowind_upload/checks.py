@@ -257,7 +257,9 @@ def _check_csv(zf, info, name: str, t0: int, t1: int, report: Report):
     if name == "annotations.csv":
         report.annotations = count
         return
-    span_s = (last - first) / 1000 if count > 1 else 0
+    if count < 2:
+        raise Rejected(f"{name} has no data inside the ride's time window", f"{count} rows")
+    span_s = (last - first) / 1000
     low, high = RATES[name]
     rate = (count - 1) / span_s if span_s > 0 else 0
     report.rates_hz[name] = round(rate, 2)

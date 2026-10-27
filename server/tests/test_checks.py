@@ -51,6 +51,7 @@ def test_ride_outside_area_passes_but_says_so(tmp_path):
         (ride_zip(meta_extra={"kept_from_utc_ms": 1_600_000_000_000}), "Ride time is implausible"),
         (ride_zip(speed_mps=30), "Ride is too fast for a bike"),
         (ride_zip(accel_hz=10), "accel.csv sample rate is implausible"),
+        (ride_zip(files_extra={"accel.csv": "t_utc_ms,ax,ay,az\n"}), "accel.csv has no data inside the ride's time window"),
         (ride_zip(accel_g=0.0), "Accelerometer values are implausible"),
         (ride_zip(files_extra={"accel.csv": "t_utc_ms,x,y,z\n"}), "accel.csv has unexpected columns"),
         (ride_zip(files_extra={"gyro.csv": f"t_utc_ms,gx,gy,gz\n{T0},1,2\n"}), "gyro.csv has rows of the wrong length"),

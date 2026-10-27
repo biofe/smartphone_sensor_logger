@@ -8,6 +8,8 @@ import android.provider.MediaStore
 import io.github.biofe.sensorlogger.core.GeoPoint
 import io.github.biofe.sensorlogger.core.PrivacyTrim
 import io.github.biofe.sensorlogger.core.RideName
+import io.github.biofe.sensorlogger.core.SensorClock
+import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import java.text.SimpleDateFormat
@@ -86,6 +88,26 @@ object Exporter {
         return name
     }
 
+    /**
+     * Rides recorded before 0.8.1 on a phone whose sensor clock drifted have accelerometer, gyroscope
+     * and barometer times far from the real time (see [SensorClock]). Their first row is moved onto
+     * the ride start, which is accurate to the few milliseconds the first event takes to arrive.
+     */
+    private fun sensorShifts(ride: File, meta: JSONObject): Map<String, Double> {
+        if (meta.optBoolean("sensor_clock_checked", false)) return emptyMap()
+        val started = meta.optLong("started_utc_ms", 0L).takeIf { it > 0 } ?: return emptyMap()
+        val shifts = mutableMapOf<String, Double>()
+        for (name in listOf(Rides.ACCEL_FILE, Rides.GYRO_FILE, Rides.PRESSURE_FILE)) {
+            val file = File(ride, name)
+            if (!file.exists()) continue
+            val first = file.useLines { lines -> lines.drop(1).firstNotNullOfOrNull { it.substringBefore(',').toDoubleOrNull() } }
+                ?: continue
+            val shift = SensorClock.realignShiftMs(first, started)
+            if (shift != 0.0) shifts[name] = shift
+        }
+        return shifts
+    }
+
     /** Returns the exported ride name, or null if the ride has nothing left after privacy trimming. */
     private fun writeRide(ride: File, zip: ZipOutputStream): String? {
         val metaFile = File(ride, Rides.META_FILE)
@@ -118,6 +140,8 @@ object Exporter {
         meta.put("privacy_trim", "random ${PrivacyTrim.MIN_RADIUS_M.toInt()}-${PrivacyTrim.MAX_RADIUS_M.toInt()} m at each end")
         meta.put("kept_from_utc_ms", window.first)
         meta.put("kept_to_utc_ms", window.last)
+        val shifts = sensorShifts(ride, meta)
+        if (shifts.isNotEmpty()) meta.put("sensor_times_realigned", JSONArray(shifts.keys.sorted()))
         // Exact start/stop times and the trim radii would undo part of the trimming
         meta.remove("started_utc_ms")
         meta.remove("stopped_utc_ms")
@@ -135,13 +159,16 @@ object Exporter {
             if (!file.exists()) continue
             zip.putNextEntry(ZipEntry("$rideId/$name"))
             val writer = zip.bufferedWriter()
+            val shift = shifts[name] ?: 0.0
             file.useLines { lines ->
                 val it = lines.iterator()
                 if (it.hasNext()) writer.write(it.next() + "\n")
                 while (it.hasNext()) {
                     val line = it.next()
-                    val t = line.substringBefore(',').toDoubleOrNull() ?: continue
-                    if (t >= window.first && t <= window.last) writer.write(line + "\n")
+                    val t = (line.substringBefore(',').toDoubleOrNull() ?: continue) + shift
+                    if (t < window.first || t > window.last) continue
+                    if (shift == 0.0) writer.write(line + "\n")
+                    else writer.write(String.format(Locale.US, "%.1f", t) + line.substring(line.indexOf(',')) + "\n")
                 }
             }
             writer.flush() // don't close: that would close the whole ZIP stream
