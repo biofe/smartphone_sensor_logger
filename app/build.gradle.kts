@@ -12,8 +12,8 @@ android {
         // Android 10+: needed for saving exports to Downloads without storage permissions
         minSdk = 29
         targetSdk = 35
-        versionCode = 12
-        versionName = "0.9.0"
+        versionCode = 13
+        versionName = "0.9.1"
         manifestPlaceholders["appLabel"] = "Bike Sensor Logger"
     }
 
