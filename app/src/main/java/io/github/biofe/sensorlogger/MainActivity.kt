@@ -8,6 +8,10 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
+import android.view.WindowManager
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -42,6 +46,12 @@ class UiState {
     var consented by mutableStateOf(false)
     var autoUpload by mutableStateOf(false)
     var detailedPoll by mutableStateOf(false)
+    var keepScreenOn by mutableStateOf(false)
+    /** Non-undone taps per [Labels.Choice.key] on the running ride */
+    var labelCounts by mutableStateOf<Map<String, Int>>(emptyMap())
+    /** The last poll tap, shown with Undo for a few seconds */
+    var lastTap by mutableStateOf<Labels.Tap?>(null)
+    var lastTapUndone by mutableStateOf(false)
     var installId by mutableStateOf("")
     var versionName by mutableStateOf("")
     var updaterEnabled by mutableStateOf(false)
@@ -62,7 +72,8 @@ class BikeEdit(val bike: Bikes.Bike?) {
 class AppActions(
     val startRide: (Bikes.Bike) -> Unit,
     val stopRide: () -> Unit,
-    val annotateSpot: () -> Unit,
+    val tapLabel: (Labels.Choice) -> Unit,
+    val undoLabel: () -> Unit,
     val openMap: () -> Unit,
     val openSettings: () -> Unit,
     val openRides: () -> Unit,
@@ -78,6 +89,7 @@ class AppActions(
     val deleteServerData: () -> Unit,
     val exportAll: () -> Unit,
     val setDetailedPoll: (Boolean) -> Unit,
+    val setKeepScreenOn: (Boolean) -> Unit,
 )
 
 class MainActivity : ComponentActivity() {
@@ -104,7 +116,8 @@ class MainActivity : ComponentActivity() {
     private val actions = AppActions(
         startRide = ::requestStart,
         stopRide = ::stopRecording,
-        annotateSpot = { AnnotationPoll.showForRide(this) { renderRecording() } },
+        tapLabel = ::tapLabel,
+        undoLabel = ::undoLabel,
         openMap = { startActivity(Intent(this, MapActivity::class.java)) },
         openSettings = { ui.screen = Screen.SETTINGS },
         openRides = { ui.screen = Screen.RIDES },
@@ -120,6 +133,11 @@ class MainActivity : ComponentActivity() {
         deleteServerData = ::confirmServerDelete,
         exportAll = { export(Rides.list(this)) },
         setDetailedPoll = { AnnotationPoll.setDetailed(this, it); ui.detailedPoll = it },
+        setKeepScreenOn = {
+            getSharedPreferences(PREFS, MODE_PRIVATE).edit().putBoolean(KEY_SCREEN_ON, it).apply()
+            ui.keepScreenOn = it
+            applyRideWindow()
+        },
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -128,6 +146,7 @@ class MainActivity : ComponentActivity() {
         ui.bikes = Bikes.list(this)
         ui.firstRun = ui.bikes.isEmpty()
         ui.detailedPoll = AnnotationPoll.detailed(this)
+        ui.keepScreenOn = getSharedPreferences(PREFS, MODE_PRIVATE).getBoolean(KEY_SCREEN_ON, false)
         ui.installId = Upload.shortInstallId(this)
         ui.versionName = packageManager.getPackageInfo(packageName, 0).versionName ?: "?"
         ui.updaterEnabled = Updater.enabled(this)
@@ -161,8 +180,14 @@ class MainActivity : ComponentActivity() {
         val s = RecorderState
         val now = System.currentTimeMillis()
         if (ui.recording && !s.recording) refreshRides() // the ride just ended
+        val changed = ui.recording != s.recording
         ui.now = now
         ui.recording = s.recording
+        if (changed) {
+            applyRideWindow()
+            ui.lastTap = null
+            ui.labelCounts = s.rideDir?.takeIf { s.recording }?.let { Labels.counts(it) } ?: emptyMap()
+        }
         ui.autoStopped = s.autoStopped
         if (!s.recording) {
             lastCounts.clear()
@@ -234,6 +259,49 @@ class MainActivity : ComponentActivity() {
     }
 
     // --- Recording ---------------------------------------------------------------------------
+
+    /** During a ride the screen shows over the lock screen, and stays on if the rider wants. */
+    private fun applyRideWindow() {
+        setShowWhenLocked(ui.recording)
+        if (ui.recording && ui.keepScreenOn) window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        else window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+    }
+
+    private fun tapLabel(choice: Labels.Choice) {
+        val tap = Labels.tapLive(choice) ?: return
+        buzz(VibrationEffect.EFFECT_CLICK)
+        ui.labelCounts = ui.labelCounts + (choice.key to (ui.labelCounts[choice.key] ?: 0) + 1)
+        showTap(tap, undone = false)
+    }
+
+    private fun undoLabel() {
+        val tap = ui.lastTap ?: return
+        if (ui.lastTapUndone) return
+        Labels.undo(tap)
+        buzz(VibrationEffect.EFFECT_DOUBLE_CLICK)
+        ui.labelCounts = ui.labelCounts + (tap.choice.key to ((ui.labelCounts[tap.choice.key] ?: 1) - 1).coerceAtLeast(0))
+        showTap(tap, undone = true)
+    }
+
+    /** Shows the tap (with Undo) under the buttons for a few seconds. */
+    private fun showTap(tap: Labels.Tap, undone: Boolean) {
+        ui.lastTap = tap
+        ui.lastTapUndone = undone
+        handler.removeCallbacks(clearTap)
+        handler.postDelayed(clearTap, if (undone) UNDONE_SHOWN_MS else UNDO_SHOWN_MS)
+    }
+
+    private val clearTap = Runnable { ui.lastTap = null }
+
+    private fun buzz(effect: Int) {
+        val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            getSystemService(VibratorManager::class.java).defaultVibrator
+        } else {
+            @Suppress("DEPRECATION")
+            getSystemService(Vibrator::class.java)
+        }
+        vibrator?.vibrate(VibrationEffect.createPredefined(effect))
+    }
 
     private fun stopRecording() {
         startService(Intent(this, RecordingService::class.java).setAction(RecordingService.ACTION_STOP))
@@ -501,6 +569,13 @@ class MainActivity : ComponentActivity() {
 
         /** A sensor that sent nothing for this long gets a warning on the recording screen */
         private const val SENSOR_STALE_MS = 5_000L
+
+        /** How long the last poll tap stays on screen with Undo, and the "Removed" note after Undo */
+        private const val UNDO_SHOWN_MS = 5_000L
+        private const val UNDONE_SHOWN_MS = 2_000L
+
+        private const val PREFS = "ride_screen"
+        private const val KEY_SCREEN_ON = "keep_screen_on"
 
         private const val CONSENT_TEXT =
             "Your rides help build a map of how comfortable cycle paths are. If you agree, the app sends each " +

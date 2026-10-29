@@ -38,9 +38,34 @@
     <!-- Recording -->
     <string name="recording">Recording</string>
     <string name="recording_on">Recording · %1$s</string>
-    <string name="annotate_spot">Annotate this spot</string>
-    <string name="annotations_count">Spots annotated on this ride: %1$d</string>
+    <string name="poll_noise">Noise</string>
+    <string name="poll_quiet">Quiet</string>
+    <string name="poll_far_traffic">Far traffic</string>
+    <string name="poll_loud_traffic">Loud traffic</string>
+    <string name="poll_wind">Wind</string>
+    <string name="poll_surface">Surface</string>
+    <string name="poll_smooth">Smooth</string>
+    <string name="poll_bumpy">Bumpy</string>
+    <string name="poll_rough">Rough</string>
+    <string name="poll_width">Width</string>
+    <string name="poll_narrow">Narrow</string>
+    <string name="poll_medium">Medium</string>
+    <string name="poll_wide">Wide</string>
+    <string name="poll_comfort">Riding</string>
+    <string name="poll_nice">Nice</string>
+    <string name="poll_unpleasant">Unpleasant</string>
+    <string name="poll_saved">Saved: %1$s</string>
+    <string name="poll_undone">Removed: %1$s</string>
+    <string name="poll_hint">Tap what you notice. Only time and place are saved.</string>
+    <string name="undo">Undo</string>
+    <string name="poll_count">%1$s, %2$s, tapped %3$d times</string>
     <string name="hold_to_stop">Hold to stop</string>
+    <string name="notification_recording">Recording ride</string>
+    <string name="notification_recording_text">GPS, motion and sound levels</string>
+    <string name="notification_stop">Stop</string>
+    <string name="notification_stop_confirm">Yes, stop</string>
+    <string name="notification_stop_question">Stop the ride?</string>
+    <string name="notification_stop_question_text">Tap \"Yes, stop\" to end and save the ride.</string>
     <string name="sensor_gps">GPS</string>
     <string name="sensor_gps_accuracy">GPS ±%1$d m</string>
     <string name="sensor_motion">Motion</string>
@@ -67,6 +92,9 @@
     </plurals>
     <string name="my_bikes">My bikes</string>
     <string name="edit_bike">Edit %1$s</string>
+    <string name="during_rides">During rides</string>
+    <string name="keep_screen_on">Keep the screen on</string>
+    <string name="keep_screen_on_note">Uses more battery. The ride screen also shows over the lock screen, so the poll is one tap away.</string>
     <string name="annotating">Annotating</string>
     <string name="detailed_poll">Detailed poll</string>
     <string name="detailed_poll_note">Adds type of way, exact surface, sounds and a note</string>

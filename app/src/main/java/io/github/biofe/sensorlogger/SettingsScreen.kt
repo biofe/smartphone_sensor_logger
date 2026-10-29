@@ -94,6 +94,10 @@ fun SettingsScreen(ui: UiState, actions: AppActions) {
                 }
             }
 
+            SectionCard(stringResource(R.string.during_rides)) {
+                SwitchRow(stringResource(R.string.keep_screen_on), stringResource(R.string.keep_screen_on_note), ui.keepScreenOn, actions.setKeepScreenOn)
+            }
+
             SectionCard(stringResource(R.string.annotating)) {
                 SwitchRow(stringResource(R.string.detailed_poll), stringResource(R.string.detailed_poll_note), ui.detailedPoll, actions.setDetailedPoll)
             }

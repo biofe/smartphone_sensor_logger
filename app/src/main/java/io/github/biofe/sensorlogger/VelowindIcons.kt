@@ -69,4 +69,30 @@ object VelowindIcons {
     val Map = icon("map", "M12 21s-6-5.5-6-11a6 6 0 1 1 12 0c0 5.5-6 11-6 11z", circle(12f, 10f, 2f))
     val Pin = icon("pin", "M12 21s-6-5.5-6-11a6 6 0 1 1 12 0c0 5.5-6 11-6 11z")
     val Stop = icon("stop", "M6 6h12v12H6z")
+    val Undo = icon("undo", "M9 14L4 9l5-5", "M4 9h10.5a5.5 5.5 0 0 1 0 11H11")
+
+    // Poll buttons: a wheel on the ground for surface, the way's edges for width
+    private const val SPEAKER = "M3 9.5h3.5L11 5.5v13l-4.5-4H3z"
+    private const val CAR = "M2.5 18v-3.5L5 10h9l3 4.5h2.5V18z"
+    private val ground = circle(12f, 8f, 4.5f)
+    private fun arrows(from: Float, to: Float) = "M$from 12H${to}M$from 12l2-2M$from 12l2 2M$to 12l-2-2M$to 12l-2 2"
+    private val face = circle(12f, 12f, 9f)
+    private const val EYES = "M9 9.5h.01M15 9.5h.01"
+
+    private val POLL = mapOf(
+        "noise/quiet" to icon("quiet", SPEAKER, "M15 10.5a2 2 0 0 1 0 3"),
+        "noise/far_traffic" to icon("far_traffic", "M8 15v-2l1.5-3h5l1.5 3v2z", "M2 21l5-5M22 21l-5-5M12 21v-2"),
+        "noise/loud_traffic" to icon("loud_traffic", CAR, circle(6.5f, 18f, 1.8f) + circle(15.5f, 18f, 1.8f), "M17 3.5a4 4 0 0 1 0 5M20 1.5a7 7 0 0 1 0 9"),
+        "noise/wind" to icon("wind", "M3 8h10a2.5 2.5 0 1 0-2.5-2.5M3 12h15a2.5 2.5 0 1 1-2.5 2.5M3 16h7"),
+        "surface/smooth" to icon("smooth", ground, "M2 15h20"),
+        "surface/bumpy" to icon("bumpy", ground, "M2 16q2.5-3 5 0t5 0t5 0t5 0"),
+        "surface/rough" to icon("rough", ground, "M2 17l2.5-2.5 2 2 3-3.5 2.5 3 2-2.5 3 3.5 2.5-2 2.5 2"),
+        "width/narrow" to icon("narrow", "M9 3v18M15 3v18"),
+        "width/medium" to icon("medium", "M6 3v18M18 3v18", arrows(9f, 15f)),
+        "width/wide" to icon("wide", "M2.5 3v18M21.5 3v18", arrows(5.5f, 18.5f)),
+        "comfort/nice" to icon("nice", face, EYES, "M8 14a5 5 0 0 0 8 0"),
+        "comfort/unpleasant" to icon("unpleasant", face, EYES, "M8 16.5a5 5 0 0 1 8 0"),
+    )
+
+    fun poll(key: String): ImageVector = POLL[key] ?: Check
 }

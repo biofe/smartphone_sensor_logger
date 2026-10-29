@@ -26,6 +26,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.IBinder
+import android.os.Looper
 import android.os.PowerManager
 import android.os.SystemClock
 import io.github.biofe.sensorlogger.core.GeoPoint
@@ -93,6 +94,15 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
             stopSelf()
             return START_NOT_STICKY
         }
+        if (intent?.action == ACTION_STOP_ASK) {
+            // A stray tap in a pocket shouldn't end the ride: Stop in the notification needs a second tap
+            if (RecorderState.recording) {
+                showRideNotification(confirming = true)
+                mainHandler.removeCallbacks(resetNotification)
+                mainHandler.postDelayed(resetNotification, STOP_CONFIRM_MS)
+            }
+            return START_NOT_STICKY
+        }
         if (RecorderState.recording) return START_NOT_STICKY
         bikeType = intent?.getStringExtra(EXTRA_BIKE_TYPE) ?: "unknown"
         val bikeId = intent?.getStringExtra(EXTRA_BIKE_ID)
@@ -145,6 +155,7 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
     }
 
     override fun onDestroy() {
+        mainHandler.removeCallbacks(resetNotification)
         if (RecorderState.recording) {
             (getSystemService(Context.SENSOR_SERVICE) as SensorManager).unregisterListener(this)
             (getSystemService(Context.LOCATION_SERVICE) as LocationManager).removeUpdates(this)
@@ -403,21 +414,40 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
         )
     }
 
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private val resetNotification = Runnable { if (RecorderState.recording) showRideNotification(confirming = false) }
+
+    private fun rideNotification(confirming: Boolean): Notification {
+        val open = PendingIntent.getActivity(
+            this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE,
+        )
+        val stop = PendingIntent.getService(
+            this, if (confirming) 2 else 1,
+            Intent(this, RecordingService::class.java).setAction(if (confirming) ACTION_STOP else ACTION_STOP_ASK),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
+        val stopLabel = getString(if (confirming) R.string.notification_stop_confirm else R.string.notification_stop)
+        return Notification.Builder(this, CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_stat_ride)
+            .setContentTitle(getString(if (confirming) R.string.notification_stop_question else R.string.notification_recording))
+            .setContentText(getString(if (confirming) R.string.notification_stop_question_text else R.string.notification_recording_text))
+            .setContentIntent(open)
+            .setOngoing(true)
+            .setOnlyAlertOnce(true)
+            .addAction(Notification.Action.Builder(null, stopLabel, stop).build())
+            .build()
+    }
+
+    private fun showRideNotification(confirming: Boolean) {
+        getSystemService(NotificationManager::class.java).notify(NOTIFICATION_ID, rideNotification(confirming))
+    }
+
     private fun startInForeground() {
         val nm = getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(
             NotificationChannel(CHANNEL_ID, "Ride recording", NotificationManager.IMPORTANCE_LOW)
         )
-        val open = PendingIntent.getActivity(
-            this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE,
-        )
-        val notification = Notification.Builder(this, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_stat_ride)
-            .setContentTitle("Recording ride")
-            .setContentText("GPS, accelerometer and sound levels")
-            .setContentIntent(open)
-            .setOngoing(true)
-            .build()
+        val notification = rideNotification(confirming = false)
         val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
         } else {
@@ -428,6 +458,9 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
 
     companion object {
         const val ACTION_STOP = "io.github.biofe.sensorlogger.STOP"
+        /** First tap on Stop in the notification; turns the button into a confirming one for a few seconds */
+        const val ACTION_STOP_ASK = "io.github.biofe.sensorlogger.STOP_ASK"
+        private const val STOP_CONFIRM_MS = 5_000L
         const val EXTRA_BIKE_TYPE = "bike_type"
         const val EXTRA_BIKE_ID = "bike_id"
         private const val CHANNEL_ID = "ride"

@@ -17,6 +17,7 @@ Each ride is one folder with one CSV per sensor and a `meta.json`. Every CSV sta
 | `pressure.csv` | 10 Hz | `pressure_hpa`, air pressure (if the phone has a barometer); gives elevation changes more precisely than GPS |
 | `gps.csv` | 1 Hz | `gps_time_ms, lat, lon, alt_m, speed_mps, bearing_deg, accuracy_m` |
 | `sound.csv` | every 125 ms | `laeq_dbfs` (A-weighted level) and 26 band levels `band_50_dbfs` … `band_16000_dbfs` |
+| `labels.csv` | when the rider taps a poll button during the ride | `t_utc_ms`, `lat, lon, accuracy_m` of the last GPS fix (empty before the first fix), `source` (`live`), `category` (`noise`, `surface`, `width`, `comfort`), `value` (e.g. `far_traffic`, `bumpy`), `undone` (`1` if Undo was pressed) |
 | `annotations.csv` | when the rider fills in the poll | `lat, lon, accuracy_m` of the last GPS fix, `source`, `overall`, `surface`, `condition`, `width`, `traffic`, `noise`, and with the detailed poll `path_type`, `surface_detail`, `sounds` (`;`-separated), `note`. Rides from 0.3–0.5 have the older columns. |
 | `meta.json` | once | ride name (see below), bike type, phone model, sensor names, audio sample rate and source |
 

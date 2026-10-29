@@ -9,6 +9,8 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- One short buzz confirms a poll tap without looking -->
+    <uses-permission android:name="android.permission.VIBRATE" />
     <!-- Map tiles for annotating on the map, and uploading rides -->
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Upload only on Wi-Fi, and keep the upload job scheduled after a reboot -->

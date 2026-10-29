@@ -80,3 +80,35 @@ def test_map_annotations():
         check_map_annotations((header + f"{T0},151.5,9.9,,map,good\n").encode())
     with pytest.raises(Rejected):
         check_map_annotations(b"lat,lon\n1,2\n")
+
+
+LABELS_HEADER = "t_utc_ms,lat,lon,accuracy_m,source,category,value,undone\n"
+
+
+def test_labels_pass_with_count(tmp_path):
+    labels = LABELS_HEADER + (
+        f"{T0 + 90_000},51.5300000,9.9310000,4.0,live,surface,bumpy,\n"
+        f"{T0 + 30_000},,,,live,noise,quiet,1\n"  # before the first fix, undone, out of order
+        f"{T0 + 120_000},51.5300000,9.9320000,,later,width,narrow,\n"
+    )
+    assert check(tmp_path, ride_zip(files_extra={"labels.csv": labels})).labels == 3
+
+
+@pytest.mark.parametrize(
+    "row, reason",
+    [
+        (f"{T0 + 9_000_000},51.53,9.93,4.0,live,surface,bumpy,", "labels.csv has rows outside the ride's time window"),
+        (f"{T0 + 60_000},151.53,9.93,4.0,live,surface,bumpy,", "Label position is invalid"),
+        (f"{T0 + 60_000},51.53,9.93,4.0,radio,surface,bumpy,", "labels.csv has an invalid row"),
+        (f"{T0 + 60_000},51.53,9.93,4.0,live,surface,Bumpy!,", "labels.csv has an invalid row"),
+        (f"{T0 + 60_000},51.53,9.93,4.0,live,surface,bumpy,yes", "labels.csv has an invalid row"),
+        (f"{T0 + 60_000},51.53,9.93,4.0,live,surface", "labels.csv has rows of the wrong length"),
+    ],
+)
+def test_bad_labels_are_rejected(tmp_path, row, reason):
+    assert rejected(tmp_path, ride_zip(files_extra={"labels.csv": LABELS_HEADER + row + "\n"})) == reason
+
+
+def test_labels_with_wrong_header_are_rejected(tmp_path):
+    data = ride_zip(files_extra={"labels.csv": "t_utc_ms,lat,lon,label\n"})
+    assert rejected(tmp_path, data) == "labels.csv has unexpected columns"
