@@ -128,3 +128,4 @@ The app is Android only (Android 10+). iOS is out of scope for now.
 | 0.8.2 | "Upload now" runs as a background job with a progress notification, so it continues with the app closed |
 | 0.8.3 | Opening the app no longer restarts a running automatic upload; "Upload now" takes over from a running upload instead of giving up |
 | 0.9.0 | Updates itself from apk.velowind.de (with the rider's confirmation); release builds signed with a private key; test builds install as a separate "dev" app |
+| 0.9.1 | No app changes; first test of the self-update (0.9.0 also has "Check for updates" in Upload settings) |
