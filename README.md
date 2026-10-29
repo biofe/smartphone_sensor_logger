@@ -17,6 +17,7 @@ Each ride is one folder with one CSV per sensor and a `meta.json`. Every CSV sta
 | `pressure.csv` | 10 Hz | `pressure_hpa`, air pressure (if the phone has a barometer); gives elevation changes more precisely than GPS |
 | `gps.csv` | 1 Hz | `gps_time_ms, lat, lon, alt_m, speed_mps, bearing_deg, accuracy_m` |
 | `sound.csv` | every 125 ms | `laeq_dbfs` (A-weighted level) and 26 band levels `band_50_dbfs` … `band_16000_dbfs` |
+| `labels.csv` | when the rider taps a poll button during the ride | `t_utc_ms`, `lat, lon, accuracy_m` of the last GPS fix (empty before the first fix), `source` (`live`), `category` (`noise`, `surface`, `width`, `comfort`), `value` (e.g. `far_traffic`, `bumpy`), `undone` (`1` if Undo was pressed) |
 | `annotations.csv` | when the rider fills in the poll | `lat, lon, accuracy_m` of the last GPS fix, `source`, `overall`, `surface`, `condition`, `width`, `traffic`, `noise`, and with the detailed poll `path_type`, `surface_detail`, `sounds` (`;`-separated), `note`. Rides from 0.3–0.5 have the older columns. |
 | `meta.json` | once | ride name (see below), bike type, phone model, sensor names, audio sample rate and source |
 
@@ -36,7 +37,7 @@ The untrimmed data stays on the phone until the ride is deleted (tap it, then **
 From 0.8.0 the app can send rides to the project server itself instead of the share sheet. It asks once whether you agree; after that, every finished ride is uploaded on Wi-Fi in the background, trimmed exactly like the ZIP above. The ride list shows for each ride whether it was uploaded, is waiting, or why the server didn't accept it. Uploaded rides stay on the phone.
 
 - **Upload now** sends waiting rides right away, and asks first when you're not on Wi-Fi.
-- **Upload settings** turns automatic upload off, shows what is sent, shows this phone's short id, and has **Delete my data on the server**, which removes everything this phone sent.
+- **Settings → Upload** and **Privacy and storage** turn automatic upload off, shows what is sent, shows this phone's short id, and has **Delete my data on the server**, which removes everything this phone sent.
 
 The phone identifies itself with a random id and secret made on first launch; there are no accounts or passwords. The server side is in [`server/`](server/README.md).
 
@@ -45,8 +46,8 @@ The phone identifies itself with a random id and secret made on first launch; th
 ## Installing (for riders)
 
 1. Open `https://apk.velowind.de/` on the phone to download the app, and open the file. Allow installing from this source when Android asks. The app then updates itself: it asks before installing a new version.
-2. Open **Bike Sensor Logger** and pick the bikes you ride (change them later under **My bikes**). Tap **Start ride** for the bike you're on and allow location, microphone and notifications.
-3. For reliable recording with the screen off, set the app's battery usage to **Unrestricted** (Settings → Apps → Bike Sensor Logger → Battery).
+2. Open **Velowind** and pick the bikes you ride (change them later under **Settings → My bikes**). Tap **Start ride** for the bike you're on and allow location, microphone and notifications.
+3. For reliable recording with the screen off, set the app's battery usage to **Unrestricted** (Settings → Apps → Velowind → Battery).
 4. Put the phone in your pocket and ride. Tap **Stop ride** at the end. If you forget, recording stops by itself after 10 minutes without moving (more than 50 m), and the standing time is left out of the export. Waits at traffic lights are far shorter and don't stop it.
 
 To record ground truth, stop, open the app and tap **Annotate this spot** while the ride is recording. The poll has six one-tap questions (overall, surface, condition, width, motor traffic, noise) and is saved with your position. Ticking **Detailed poll** adds type of way, exact surface, what you hear and a note.
@@ -62,7 +63,7 @@ Other apps that use the microphone at the same time (e.g. NoiseCapture or a call
 ./gradlew :core:test :app:assembleDebug
 ```
 
-Needs JDK 17+ and the Android SDK (API 35). GitHub Actions runs the same on every push and pull request and uploads the test APK ("Bike Logger (dev)", a separate app next to the release one) as a build artifact. Pushing a tag like `v0.9.0` builds the signed release APK, publishes it as a release and copies it to the update server; see [docs/RELEASES.md](docs/RELEASES.md).
+Needs JDK 17+ and the Android SDK (API 35). GitHub Actions runs the same on every push and pull request and uploads the test APK ("Velowind (dev)", a separate app next to the release one) as a build artifact. Pushing a tag like `v0.9.0` builds the signed release APK, publishes it as a release and copies it to the update server; see [docs/RELEASES.md](docs/RELEASES.md).
 
 The signal processing (`core/`) is plain Kotlin and its tests run without Android:
 

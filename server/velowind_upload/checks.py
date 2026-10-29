@@ -20,6 +20,7 @@ HEADERS = {
     "gyro.csv": ["t_utc_ms", "gx", "gy", "gz"],
     "pressure.csv": ["t_utc_ms", "pressure_hpa"],
     "gps.csv": ["t_utc_ms", "gps_time_ms", "lat", "lon", "alt_m", "speed_mps", "bearing_deg", "accuracy_m"],
+    "labels.csv": ["t_utc_ms", "lat", "lon", "accuracy_m", "source", "category", "value", "undone"],
 }
 SOUND_BANDS = 26
 REQUIRED = {"meta.json", "gps.csv", "accel.csv"}
@@ -32,6 +33,9 @@ EARLIEST_UTC_MS = 1_704_067_200_000  # 2024-01-01
 MIN_DURATION_S = 120
 MAX_DURATION_S = 8 * 3600
 MAX_ANNOTATIONS = 1000
+MAX_LABELS = 5000
+LABEL_SOURCES = {"live", "later"}
+LABEL_WORD = re.compile(r"^[a-z_]{1,32}$")
 
 # Rows per second, (low, high); a GPS without fix in a tunnel or under trees gives fewer rows
 RATES = {
@@ -68,6 +72,7 @@ class Report:
     bbox: list = field(default_factory=list)  # [min lat, min lon, max lat, max lon]
     area_fraction: float = 0.0
     annotations: int = 0
+    labels: int = 0
 
     def to_json(self) -> str:
         return json.dumps(self.__dict__, indent=2)
@@ -97,7 +102,7 @@ def check_ride_zip(path, ride_name: str, settings: Settings, now_ms: int | None 
         t0, t1 = meta["kept_from_utc_ms"], meta["kept_to_utc_ms"]
         report.duration_s = round((t1 - t0) / 1000, 1)
 
-        for name in ("gps.csv", "accel.csv", "gyro.csv", "pressure.csv", "sound.csv", "annotations.csv"):
+        for name in ("gps.csv", "accel.csv", "gyro.csv", "pressure.csv", "sound.csv", "annotations.csv", "labels.csv"):
             if name in files:
                 _check_csv(zf, files[name], name, t0, t1, report)
     return report
@@ -217,6 +222,11 @@ def _check_csv(zf, info, name: str, t0: int, t1: int, report: Report):
                 if not (-90 <= lat <= 90 and -180 <= lon <= 180):
                     raise Rejected("Annotation position is invalid", f"{lat}, {lon}")
                 continue
+            if name == "labels.csv":
+                if count > MAX_LABELS:
+                    raise Rejected("Too many labels", f"more than {MAX_LABELS}")
+                _check_label(row, count, width, t0, t1)
+                continue
             if len(row) != width:
                 raise Rejected(f"{name} has rows of the wrong length", f"row {count}: {len(row)} columns, expected {width}")
             t = _number(row[0], name, "t_utc_ms")
@@ -257,6 +267,9 @@ def _check_csv(zf, info, name: str, t0: int, t1: int, report: Report):
     if name == "annotations.csv":
         report.annotations = count
         return
+    if name == "labels.csv":
+        report.labels = count
+        return
     if count < 2:
         raise Rejected(f"{name} has no data inside the ride's time window", f"{count} rows")
     span_s = (last - first) / 1000
@@ -280,6 +293,25 @@ def _check_csv(zf, info, name: str, t0: int, t1: int, report: Report):
         lons = [p[1] for p in points]
         report.bbox = [round(min(lats), 3), round(min(lons), 3), round(max(lats), 3), round(max(lons), 3)]
         report.area_fraction = round(geo.area_fraction(points), 3)
+
+
+def _check_label(row: list[str], count: int, width: int, t0: int, t1: int):
+    """One poll tap. Rows aren't in time order (Undo and later annotations append), and a tap
+    before the first GPS fix has no position."""
+    name = "labels.csv"
+    if len(row) != width:
+        raise Rejected(f"{name} has rows of the wrong length", f"row {count}: {len(row)} columns, expected {width}")
+    t = _number(row[0], name, "t_utc_ms")
+    if not t0 - 1000 <= t <= t1 + 1000:
+        raise Rejected(f"{name} has rows outside the ride's time window", f"row {count}: t={t:.0f}")
+    if row[1] or row[2]:
+        lat, lon = _number(row[1], name, "lat"), _number(row[2], name, "lon")
+        if not (-90 <= lat <= 90 and -180 <= lon <= 180):
+            raise Rejected("Label position is invalid", f"row {count}: {lat}, {lon}")
+    if row[3]:
+        _number(row[3], name, "accuracy_m")
+    if row[4] not in LABEL_SOURCES or not LABEL_WORD.match(row[5]) or not LABEL_WORD.match(row[6]) or row[7] not in ("", "1"):
+        raise Rejected(f"{name} has an invalid row", f"row {count}: {','.join(row[4:])[:80]}")
 
 
 def _distance_m(a, b) -> float:

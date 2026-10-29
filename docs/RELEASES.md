@@ -1,10 +1,10 @@
 # Releases and app updates
 
-Riders install the **release** app ("Bike Sensor Logger") from `https://apk.velowind.de/`. It checks `https://apk.velowind.de/latest.json` once a day and whenever it is opened (at most every 6 hours); **Upload settings → Check for updates** checks right away. When that file names a newer version, the app shows a notification and an **Install update** button. Tapping it downloads the APK, checks its SHA-256 and opens Android's installer, which asks the rider to confirm. The first time, Android also asks whether the app may install apps ("Allow from this source"). Rides and settings are kept. While a ride is recording, the update waits.
+Riders install the **release** app ("Velowind") from `https://apk.velowind.de/`. It checks `https://apk.velowind.de/latest.json` once a day and whenever it is opened (at most every 6 hours); **Settings → Check for updates** checks right away. When that file names a newer version, the app shows a notification and an **Install update** button. Tapping it downloads the APK, checks its SHA-256 and opens Android's installer, which asks the rider to confirm. The first time, Android also asks whether the app may install apps ("Allow from this source"). Rides and settings are kept. While a ride is recording, the update waits.
 
 Android only installs an update that is signed with the same key as the installed app. The release key is private: it exists only on your own backup and as a GitHub secret. A file swapped on the server is therefore refused by Android, whatever `latest.json` says.
 
-Test builds from pull requests and `master` (the "bike-sensor-logger-apk" artifact) are a separate app, **Bike Logger (dev)**, signed with the public debug key in the repo. They install next to the release app, never update themselves, and have their own rides and install id.
+Test builds from pull requests and `master` (the "bike-sensor-logger-apk" artifact) are a separate app, **Velowind (dev)**, signed with the public debug key in the repo. They install next to the release app, never update themselves, and have their own rides and install id.
 
 ## One-time setup
 
@@ -81,4 +81,4 @@ Apps installed before 0.9.0 were signed with the debug key, so the release app c
 2. Uninstall the old app. This deletes its rides from the phone.
 3. Install `https://apk.velowind.de/` and agree to the upload again.
 
-The new install has a new install id, so the server treats it as a new phone. Trust it with `velowind trust <short id>` (shown under Upload settings), or let it earn trust with 5 rides.
+The new install has a new install id, so the server treats it as a new phone. Trust it with `velowind trust <short id>` (shown under Settings → Phone ID), or let it earn trust with 5 rides.

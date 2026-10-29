@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("org.jetbrains.kotlin.plugin.compose")
 }
 
 android {
@@ -14,7 +15,7 @@ android {
         targetSdk = 35
         versionCode = 13
         versionName = "0.9.1"
-        manifestPlaceholders["appLabel"] = "Bike Sensor Logger"
+        manifestPlaceholders["appLabel"] = "Velowind"
     }
 
     // Release builds (what riders install, and what updates itself) are signed with a private key
@@ -49,7 +50,7 @@ android {
             // A separate app next to the release one, so trying a test build doesn't mean uninstalling
             applicationIdSuffix = ".dev"
             versionNameSuffix = "-dev"
-            manifestPlaceholders["appLabel"] = "Bike Logger (dev)"
+            manifestPlaceholders["appLabel"] = "Velowind (dev)"
         }
     }
 
@@ -61,8 +62,19 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+
+    buildFeatures {
+        compose = true
+    }
 }
 
 dependencies {
     implementation(project(":core"))
+
+    // The screens: Jetpack Compose with Material 3. Plain libraries packed into the APK; they need
+    // neither Google Play Services nor a network connection.
+    implementation(platform("androidx.compose:compose-bom:2024.12.01"))
+    implementation("androidx.compose.material3:material3")
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.activity:activity-compose:1.9.3")
 }

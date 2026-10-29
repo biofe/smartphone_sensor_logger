@@ -1,137 +1,156 @@
 package io.github.biofe.sensorlogger
 
 import android.Manifest
-import android.app.Activity
 import android.app.AlertDialog
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Typeface
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.view.View
-import android.view.ViewGroup.LayoutParams.MATCH_PARENT
-import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
-import android.widget.ArrayAdapter
-import android.widget.Button
-import android.widget.LinearLayout
-import android.widget.ListView
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
+import android.view.WindowManager
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import java.io.File
-import java.util.Locale
 
-class MainActivity : Activity() {
+/** Everything the screens show; the activity updates it, Compose redraws what changed. */
+class UiState {
+    var screen by mutableStateOf(Screen.MAIN)
+    var now by mutableLongStateOf(System.currentTimeMillis())
+    var bikes by mutableStateOf<List<Bikes.Bike>>(emptyList())
+    var rides by mutableStateOf<List<Rides.Info>>(emptyList())
+    var recording by mutableStateOf(false)
+    var recordingBike by mutableStateOf<String?>(null)
+    var autoStopped by mutableStateOf(false)
+    var sensors by mutableStateOf<List<SensorHealth>>(emptyList())
+    var update by mutableStateOf<Updater.Info?>(null)
+    var uploadLine by mutableStateOf("")
+    var consented by mutableStateOf(false)
+    var autoUpload by mutableStateOf(false)
+    var detailedPoll by mutableStateOf(false)
+    var keepScreenOn by mutableStateOf(false)
+    /** Non-undone taps per [Labels.Choice.key] on the running ride */
+    var labelCounts by mutableStateOf<Map<String, Int>>(emptyMap())
+    /** The last poll tap, shown with Undo for a few seconds */
+    var lastTap by mutableStateOf<Labels.Tap?>(null)
+    var lastTapUndone by mutableStateOf(false)
+    var installId by mutableStateOf("")
+    var versionName by mutableStateOf("")
+    var updaterEnabled by mutableStateOf(false)
+    /** The bike being edited; [BikeEdit.NEW] adds one */
+    var bikeEdit by mutableStateOf<BikeEdit?>(null)
+    var firstRun by mutableStateOf(false)
+}
 
-    private lateinit var startButtons: LinearLayout
-    private lateinit var stopButton: Button
-    private var shownBikes: List<Bikes.Bike>? = null
+enum class Screen { MAIN, SETTINGS, RIDES }
+
+class BikeEdit(val bike: Bikes.Bike?) {
+    companion object {
+        val NEW = BikeEdit(null)
+    }
+}
+
+/** What the screens can ask for. */
+class AppActions(
+    val startRide: (Bikes.Bike) -> Unit,
+    val stopRide: () -> Unit,
+    val tapLabel: (Labels.Choice) -> Unit,
+    val undoLabel: () -> Unit,
+    val openMap: () -> Unit,
+    val openSettings: () -> Unit,
+    val openRides: () -> Unit,
+    val back: () -> Unit,
+    val rideActions: (File) -> Unit,
+    val addBike: () -> Unit,
+    val editBike: (Bikes.Bike) -> Unit,
+    val installUpdate: () -> Unit,
+    val checkForUpdates: () -> Unit,
+    val uploadNow: () -> Unit,
+    val setAutoUpload: (Boolean) -> Unit,
+    val showWhatIsSent: () -> Unit,
+    val deleteServerData: () -> Unit,
+    val exportAll: () -> Unit,
+    val setDetailedPoll: (Boolean) -> Unit,
+    val setKeepScreenOn: (Boolean) -> Unit,
+)
+
+class MainActivity : ComponentActivity() {
+
+    private val ui = UiState()
     private var pendingBike: Bikes.Bike? = null
-    private lateinit var annotate: Button
-    private lateinit var status: TextView
-    private lateinit var uploadStatus: TextView
-    private lateinit var ridesView: ListView
-    private lateinit var updateButton: Button
     private var updateOffered = false
-    private var rides: List<File> = emptyList()
-    private val ui = Handler(Looper.getMainLooper())
+    private val handler = Handler(Looper.getMainLooper())
+
+    /** Per sensor: the last count seen and when it last grew, for the sensor chips. */
+    private val lastCounts = mutableMapOf<String, Pair<Long, Long>>()
+
     private val tick = object : Runnable {
         private var count = 0
 
         override fun run() {
-            render()
+            renderRecording()
             // Show rides turning "uploaded" while a background upload runs
             if (++count % 3 == 0 && Upload.isRunning) refreshRides()
-            ui.postDelayed(this, 1000)
+            handler.postDelayed(this, 1000)
         }
     }
 
+    private val actions = AppActions(
+        startRide = ::requestStart,
+        stopRide = ::stopRecording,
+        tapLabel = ::tapLabel,
+        undoLabel = ::undoLabel,
+        openMap = { startActivity(Intent(this, MapActivity::class.java)) },
+        openSettings = { ui.screen = Screen.SETTINGS },
+        openRides = { ui.screen = Screen.RIDES },
+        back = { ui.screen = Screen.MAIN },
+        rideActions = ::rideActions,
+        addBike = { ui.bikeEdit = BikeEdit.NEW },
+        editBike = { ui.bikeEdit = BikeEdit(it) },
+        installUpdate = { Updater.available(this)?.let { Updater.offer(this, it) } },
+        checkForUpdates = ::checkForUpdate,
+        uploadNow = ::uploadNow,
+        setAutoUpload = { Upload.setAuto(this, it); renderUpload() },
+        showWhatIsSent = { askConsent {} },
+        deleteServerData = ::confirmServerDelete,
+        exportAll = { export(Rides.list(this)) },
+        setDetailedPoll = { AnnotationPoll.setDetailed(this, it); ui.detailedPoll = it },
+        setKeepScreenOn = {
+            getSharedPreferences(PREFS, MODE_PRIVATE).edit().putBoolean(KEY_SCREEN_ON, it).apply()
+            ui.keepScreenOn = it
+            applyRideWindow()
+        },
+    )
+
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        val pad = (16 * resources.displayMetrics.density).toInt()
-
-        updateButton = Button(this).apply {
-            visibility = View.GONE
-            setOnClickListener { Updater.available(this@MainActivity)?.let { Updater.offer(this@MainActivity, it) } }
-        }
-        startButtons = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        stopButton = Button(this).apply {
-            text = "Stop ride"
-            setOnClickListener { stopRecording() }
-        }
-        val manageBikes = Button(this).apply {
-            text = "My bikes"
-            setOnClickListener { manageBikes() }
-        }
-        annotate = Button(this).apply {
-            text = "Annotate this spot"
-            setOnClickListener { AnnotationPoll.showForRide(this@MainActivity) { render() } }
-        }
-        val mapButton = Button(this).apply {
-            text = "Annotate on the map"
-            setOnClickListener { startActivity(Intent(this@MainActivity, MapActivity::class.java)) }
-        }
-        val detailedPoll = android.widget.CheckBox(this).apply {
-            text = "Detailed poll (type of way, exact surface, sounds, note)"
-            isChecked = AnnotationPoll.detailed(this@MainActivity)
-            setOnCheckedChangeListener { _, on -> AnnotationPoll.setDetailed(this@MainActivity, on) }
-        }
-        status = TextView(this).apply {
-            typeface = Typeface.MONOSPACE
-            setPadding(0, pad / 2, 0, pad)
-        }
-        uploadStatus = TextView(this).apply { setPadding(0, pad / 2, 0, 0) }
-        val uploadNow = Button(this).apply {
-            text = "Upload now"
-            setOnClickListener { uploadNow() }
-        }
-        val uploadSettings = Button(this).apply {
-            text = "Upload settings"
-            setOnClickListener { uploadSettings() }
-        }
-        val exportAll = Button(this).apply {
-            text = "Export all rides"
-            setOnClickListener { export(rides) }
-        }
-        val hint = TextView(this).apply {
-            text = "Tap a ride to export or delete it. Uploading doesn't delete rides from the phone."
-            setPadding(0, pad, 0, pad / 2)
-        }
-        ridesView = ListView(this).apply {
-            setOnItemClickListener { _, _, pos, _ -> rideActions(rides[pos]) }
-        }
-
-        val root = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(pad, pad, pad, pad)
-            addView(updateButton, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
-            addView(startButtons, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
-            addView(stopButton, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
-            addView(annotate, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
-            addView(status)
-            addView(uploadStatus)
-            addView(LinearLayout(this@MainActivity).apply {
-                addView(uploadNow, LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f))
-                addView(uploadSettings, LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f))
-            }, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
-            addView(exportAll, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
-            addView(manageBikes, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
-            addView(mapButton, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
-            addView(detailedPoll)
-            addView(hint)
-            addView(ridesView, LinearLayout.LayoutParams(MATCH_PARENT, 0, 1f))
-        }
-        // targetSdk 35 draws edge-to-edge: keep content clear of the status and navigation bars
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            root.setOnApplyWindowInsetsListener { v, insets ->
-                val bars = insets.getInsets(android.view.WindowInsets.Type.systemBars())
-                v.setPadding(pad + bars.left, pad + bars.top, pad + bars.right, pad + bars.bottom)
-                insets
-            }
-        }
-        setContentView(root)
-        if (Bikes.list(this).isEmpty()) addBike(firstRun = true)
+        ui.bikes = Bikes.list(this)
+        ui.firstRun = ui.bikes.isEmpty()
+        ui.detailedPoll = AnnotationPoll.detailed(this)
+        ui.keepScreenOn = getSharedPreferences(PREFS, MODE_PRIVATE).getBoolean(KEY_SCREEN_ON, false)
+        ui.installId = Upload.shortInstallId(this)
+        ui.versionName = packageManager.getPackageInfo(packageName, 0).versionName ?: "?"
+        ui.updaterEnabled = Updater.enabled(this)
+        setContent { VelowindTheme { VelowindApp(ui, actions, ::saveBike, ::removeBike, ::saveFirstBikes) } }
         UploadJob.schedule(this)
         UpdateJob.schedule(this)
     }
@@ -144,11 +163,185 @@ class MainActivity : Activity() {
     override fun onResume() {
         super.onResume()
         refreshRides()
-        ui.post(tick)
+        handler.post(tick)
         // Ask once, after the bikes are set up and not in the middle of a ride
         if (!Upload.consentAsked(this) && Bikes.list(this).isNotEmpty() && !RecorderState.recording) askConsent {}
         resumeUpdate()
     }
+
+    override fun onPause() {
+        handler.removeCallbacks(tick)
+        super.onPause()
+    }
+
+    // --- Rendering ---------------------------------------------------------------------------
+
+    private fun renderRecording() {
+        val s = RecorderState
+        val now = System.currentTimeMillis()
+        if (ui.recording && !s.recording) refreshRides() // the ride just ended
+        val changed = ui.recording != s.recording
+        ui.now = now
+        ui.recording = s.recording
+        if (changed) {
+            applyRideWindow()
+            ui.lastTap = null
+            ui.labelCounts = s.rideDir?.takeIf { s.recording }?.let { Labels.counts(it) } ?: emptyMap()
+        }
+        ui.autoStopped = s.autoStopped
+        if (!s.recording) {
+            lastCounts.clear()
+            return
+        }
+        fun fresh(key: String, count: Long): Boolean {
+            val (seen, at) = lastCounts[key] ?: (-1L to s.startedAtMs)
+            if (count != seen) lastCounts[key] = count to (if (count > 0) now else at)
+            val since = lastCounts.getValue(key).second
+            return count > 0 && now - since < SENSOR_STALE_MS
+        }
+        val gpsOk = fresh("gps", s.gpsFixes)
+        ui.sensors = buildList {
+            add(SensorHealth(if (gpsOk && !s.lastGpsAccuracyM.isNaN()) getString(R.string.sensor_gps_accuracy, s.lastGpsAccuracyM.toInt()) else getString(R.string.sensor_gps), gpsOk))
+            add(SensorHealth(getString(R.string.sensor_motion), fresh("accel", s.accelSamples)))
+            val soundOk = fresh("sound", s.soundFrames)
+            add(SensorHealth(getString(if (soundOk) R.string.sensor_sound else R.string.sensor_no_sound), soundOk))
+            if (s.hasBarometer) add(SensorHealth(getString(R.string.sensor_baro), fresh("baro", s.pressureSamples)))
+        }
+    }
+
+    private fun refreshRides() {
+        ui.bikes = Bikes.list(this)
+        renderUpload()
+        renderUpdate()
+        Thread {
+            val infos = Rides.list(this).mapNotNull { runCatching { Rides.info(this, it) }.getOrNull() }
+            handler.post { ui.rides = infos }
+        }.start()
+    }
+
+    private fun renderUpload() {
+        val waiting = Upload.pending(this).size
+        ui.consented = Upload.consented(this)
+        ui.autoUpload = Upload.auto(this)
+        ui.uploadLine = when {
+            !ui.consented -> getString(R.string.upload_line_off)
+            waiting == 0 -> getString(R.string.upload_line_done)
+            !ui.autoUpload -> resources.getQuantityString(R.plurals.upload_line_manual, waiting, waiting)
+            else -> resources.getQuantityString(R.plurals.upload_line_waiting, waiting, waiting)
+        }
+    }
+
+    private fun renderUpdate() {
+        ui.update = Updater.available(this)
+    }
+
+    // --- Bikes -------------------------------------------------------------------------------
+
+    private fun saveBike(bike: Bikes.Bike) {
+        val bikes = Bikes.list(this)
+        val updated = if (bikes.any { it.id == bike.id }) bikes.map { if (it.id == bike.id) bike else it } else bikes + bike
+        Bikes.save(this, updated)
+        ui.bikeEdit = null
+        refreshRides()
+    }
+
+    private fun removeBike(bike: Bikes.Bike) {
+        Bikes.save(this, Bikes.list(this).filter { it.id != bike.id })
+        ui.bikeEdit = null
+        refreshRides()
+    }
+
+    private fun saveFirstBikes(types: List<String>) {
+        Bikes.save(this, Bikes.fromTypes(types))
+        ui.firstRun = false
+        refreshRides()
+        if (!Upload.consentAsked(this)) askConsent {}
+    }
+
+    // --- Recording ---------------------------------------------------------------------------
+
+    /** During a ride the screen shows over the lock screen, and stays on if the rider wants. */
+    private fun applyRideWindow() {
+        setShowWhenLocked(ui.recording)
+        if (ui.recording && ui.keepScreenOn) window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        else window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+    }
+
+    private fun tapLabel(choice: Labels.Choice) {
+        val tap = Labels.tapLive(choice) ?: return
+        buzz(VibrationEffect.EFFECT_CLICK)
+        ui.labelCounts = ui.labelCounts + (choice.key to (ui.labelCounts[choice.key] ?: 0) + 1)
+        showTap(tap, undone = false)
+    }
+
+    private fun undoLabel() {
+        val tap = ui.lastTap ?: return
+        if (ui.lastTapUndone) return
+        Labels.undo(tap)
+        buzz(VibrationEffect.EFFECT_DOUBLE_CLICK)
+        ui.labelCounts = ui.labelCounts + (tap.choice.key to ((ui.labelCounts[tap.choice.key] ?: 1) - 1).coerceAtLeast(0))
+        showTap(tap, undone = true)
+    }
+
+    /** Shows the tap (with Undo) under the buttons for a few seconds. */
+    private fun showTap(tap: Labels.Tap, undone: Boolean) {
+        ui.lastTap = tap
+        ui.lastTapUndone = undone
+        handler.removeCallbacks(clearTap)
+        handler.postDelayed(clearTap, if (undone) UNDONE_SHOWN_MS else UNDO_SHOWN_MS)
+    }
+
+    private val clearTap = Runnable { ui.lastTap = null }
+
+    private fun buzz(effect: Int) {
+        val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            getSystemService(VibratorManager::class.java).defaultVibrator
+        } else {
+            @Suppress("DEPRECATION")
+            getSystemService(Vibrator::class.java)
+        }
+        vibrator?.vibrate(VibrationEffect.createPredefined(effect))
+    }
+
+    private fun stopRecording() {
+        startService(Intent(this, RecordingService::class.java).setAction(RecordingService.ACTION_STOP))
+        handler.postDelayed({ refreshRides() }, 1500)
+    }
+
+    private fun requestStart(bike: Bikes.Bike) {
+        if (RecorderState.recording) return
+        pendingBike = bike
+        val missing = requiredPermissions().filter { checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED }
+        if (missing.isEmpty()) startRecording() else requestPermissions(missing.toTypedArray(), REQ_PERMISSIONS)
+    }
+
+    @Suppress("OVERRIDE_DEPRECATION") // the activity result API isn't worth it for one request
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode != REQ_PERMISSIONS) return
+        val locationOk = checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        if (locationOk) startRecording()
+        else Toast.makeText(this, R.string.location_needed, Toast.LENGTH_LONG).show()
+    }
+
+    private fun startRecording() {
+        val bike = pendingBike ?: Bikes.list(this).firstOrNull()
+        ui.recordingBike = bike?.label
+        startForegroundService(
+            Intent(this, RecordingService::class.java)
+                .putExtra(RecordingService.EXTRA_BIKE_TYPE, bike?.type ?: "unknown")
+                .putExtra(RecordingService.EXTRA_BIKE_ID, bike?.id),
+        )
+        handler.postDelayed({ refreshRides() }, 500)
+    }
+
+    private fun requiredPermissions(): List<String> = buildList {
+        add(Manifest.permission.ACCESS_FINE_LOCATION)
+        add(Manifest.permission.RECORD_AUDIO)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) add(Manifest.permission.POST_NOTIFICATIONS)
+    }
+
+    // --- Updates -----------------------------------------------------------------------------
 
     /** Offers a new version once per app start (or when its notification is tapped), and looks for one now and then. */
     private fun resumeUpdate() {
@@ -166,133 +359,34 @@ class MainActivity : Activity() {
         if (Updater.checkDue(this)) {
             Thread {
                 runCatching { Updater.check(this) }
-                ui.post { if (!isFinishing) renderUpdate() }
+                handler.post { if (!isFinishing) renderUpdate() }
             }.start()
         }
     }
 
     private fun checkForUpdate() {
-        Toast.makeText(this, "Checking for updates…", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, R.string.checking_updates, Toast.LENGTH_SHORT).show()
         Thread {
             val result = runCatching { Updater.check(this) }
-            ui.post {
+            handler.post {
                 if (isFinishing) return@post
                 renderUpdate()
                 result.fold(
                     { info ->
                         if (info != null) Updater.offer(this, info)
-                        else Toast.makeText(this, "The app is up to date.", Toast.LENGTH_SHORT).show()
+                        else Toast.makeText(this, R.string.up_to_date, Toast.LENGTH_SHORT).show()
                     },
-                    { Toast.makeText(this, "Couldn't reach the update server.", Toast.LENGTH_LONG).show() },
+                    { Toast.makeText(this, R.string.update_server_unreachable, Toast.LENGTH_LONG).show() },
                 )
             }
         }.start()
     }
 
-    private fun renderUpdate() {
-        val info = Updater.available(this)
-        updateButton.visibility = if (info != null) View.VISIBLE else View.GONE
-        if (info != null) updateButton.text = "Install update ${info.versionName}"
-    }
-
-    override fun onPause() {
-        ui.removeCallbacks(tick)
-        super.onPause()
-    }
-
-    private fun render() {
-        val s = RecorderState
-        stopButton.visibility = if (s.recording) View.VISIBLE else View.GONE
-        startButtons.visibility = if (s.recording) View.GONE else View.VISIBLE
-        val bikes = Bikes.list(this)
-        if (bikes != shownBikes) {
-            shownBikes = bikes
-            startButtons.removeAllViews()
-            for (bike in bikes) {
-                startButtons.addView(Button(this).apply {
-                    text = "Start ride · ${bike.label}"
-                    setOnClickListener { requestStart(bike) }
-                }, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
-            }
-        }
-        annotate.visibility = if (s.recording) View.VISIBLE else View.GONE
-        status.text = if (s.recording) {
-            val secs = (System.currentTimeMillis() - s.startedAtMs) / 1000
-            buildString {
-                append(String.format(Locale.US, "Recording %d:%02d\n", secs / 60, secs % 60))
-                append("Accelerometer  ${s.accelSamples} samples\n")
-                append("Gyroscope      ${s.gyroSamples} samples\n")
-                append("Barometer      ${s.pressureSamples} samples\n")
-                append("GPS            ${s.gpsFixes} fixes")
-                if (!s.lastGpsAccuracyM.isNaN()) {
-                    append(String.format(Locale.US, ", ±%.0f m, %.0f km/h", s.lastGpsAccuracyM, s.lastSpeedKmh))
-                }
-                append("\nSound          ${s.soundFrames} frames")
-                if (!s.lastLaeqDb.isNaN()) append(String.format(Locale.US, ", %.0f dBFS(A)", s.lastLaeqDb))
-                if (s.annotations > 0) append("\nAnnotations    ${s.annotations}")
-                s.error?.let { append("\n⚠ $it") }
-            }
-        } else if (s.autoStopped) {
-            "Not recording. The last ride stopped by itself after 10 minutes without moving and was saved."
-        } else {
-            "Not recording. Put the phone in your pocket after starting; the screen can be off."
-        }
-    }
-
-    private fun refreshRides() {
-        rides = Rides.list(this)
-        ridesView.adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, rides.map { Rides.describe(it) })
-        renderUpload()
-        renderUpdate()
-    }
-
-    private fun renderUpload() {
-        val waiting = Upload.pending(this).size
-        uploadStatus.text = when {
-            !Upload.consented(this) -> "Upload: off. Tap Upload settings to read what would be sent."
-            waiting == 0 -> "Upload: all rides uploaded."
-            !Upload.auto(this) -> "Upload: $waiting ${if (waiting == 1) "ride" else "rides"} not uploaded; automatic upload is off."
-            else -> "Upload: $waiting ${if (waiting == 1) "ride" else "rides"} waiting for Wi-Fi."
-        }
-    }
-
-    private fun stopRecording() {
-        startService(Intent(this, RecordingService::class.java).setAction(RecordingService.ACTION_STOP))
-        ui.postDelayed({ refreshRides() }, 1500)
-    }
-
-    private fun requestStart(bike: Bikes.Bike) {
-        if (RecorderState.recording) return
-        pendingBike = bike
-        val missing = requiredPermissions().filter { checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED }
-        if (missing.isEmpty()) startRecording() else requestPermissions(missing.toTypedArray(), REQ_PERMISSIONS)
-    }
-
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode != REQ_PERMISSIONS) return
-        val locationOk = checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-        if (locationOk) startRecording()
-        else Toast.makeText(this, "Precise location is needed to record a ride.", Toast.LENGTH_LONG).show()
-    }
-
-    private fun startRecording() {
-        val bike = pendingBike ?: Bikes.list(this).firstOrNull()
-        startForegroundService(
-            Intent(this, RecordingService::class.java).putExtra(RecordingService.EXTRA_BIKE_TYPE, bike?.type ?: "unknown")
-        )
-        ui.postDelayed({ refreshRides() }, 500)
-    }
-
-    private fun requiredPermissions(): List<String> = buildList {
-        add(Manifest.permission.ACCESS_FINE_LOCATION)
-        add(Manifest.permission.RECORD_AUDIO)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) add(Manifest.permission.POST_NOTIFICATIONS)
-    }
+    // --- Export ------------------------------------------------------------------------------
 
     private fun export(selection: List<File>) {
         if (RecorderState.recording) {
-            Toast.makeText(this, "Stop the ride before exporting.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, R.string.stop_before_export, Toast.LENGTH_SHORT).show()
             return
         }
         if (selection.isEmpty()) return
@@ -334,7 +428,7 @@ class MainActivity : Activity() {
         startActivity(Intent.createChooser(share, "Send ride data"))
     }
 
-    // --- Upload ------------------------------------------------------------------------------------
+    // --- Upload ------------------------------------------------------------------------------
 
     private fun askConsent(onAgreed: () -> Unit) {
         val text = TextView(this).apply {
@@ -393,47 +487,6 @@ class MainActivity : Activity() {
         Toast.makeText(this, "Uploading in the background; the notification shows how far it got.", Toast.LENGTH_LONG).show()
     }
 
-    private fun uploadSettings() {
-        val pad = (24 * resources.displayMetrics.density).toInt()
-        val auto = android.widget.CheckBox(this).apply {
-            text = "Upload automatically on Wi-Fi"
-            isChecked = Upload.auto(this@MainActivity)
-            isEnabled = Upload.consented(this@MainActivity)
-            setOnCheckedChangeListener { _, on ->
-                Upload.setAuto(this@MainActivity, on)
-                renderUpload()
-            }
-        }
-        val id = TextView(this).apply {
-            text = "This phone's id: ${Upload.shortInstallId(this@MainActivity)}\nQuote it if you write to the project about your data."
-            setPadding(0, pad / 2, 0, pad / 2)
-        }
-        val version = TextView(this).apply {
-            val name = packageManager.getPackageInfo(packageName, 0).versionName
-            text = if (Updater.enabled(this@MainActivity)) "App version $name" else "App version $name (test build, doesn't update itself)"
-        }
-        val checkUpdate = Button(this).apply {
-            text = "Check for updates"
-            visibility = if (Updater.enabled(this@MainActivity)) View.VISIBLE else View.GONE
-            setOnClickListener { checkForUpdate() }
-        }
-        val view = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(pad, pad / 2, pad, 0)
-            addView(auto)
-            addView(id)
-            addView(version)
-            addView(checkUpdate, LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT))
-        }
-        AlertDialog.Builder(this)
-            .setTitle("Upload settings")
-            .setView(view)
-            .setPositiveButton("Close", null)
-            .setNeutralButton("What is sent") { _, _ -> askConsent {} }
-            .setNegativeButton("Delete my data on the server") { _, _ -> confirmServerDelete() }
-            .show()
-    }
-
     private fun confirmServerDelete() {
         AlertDialog.Builder(this)
             .setMessage("Delete every ride and map annotation this phone has sent to the project server? Automatic upload will be turned off. Rides on this phone stay.")
@@ -454,61 +507,7 @@ class MainActivity : Activity() {
             .show()
     }
 
-    // --- Bikes -----------------------------------------------------------------------------------
-
-    private fun manageBikes() {
-        val bikes = Bikes.list(this)
-        val labels = bikes.map { "Remove ${it.label}" } + "Add a bike"
-        AlertDialog.Builder(this)
-            .setTitle("My bikes")
-            .setItems(labels.toTypedArray()) { _, which ->
-                if (which == bikes.size) addBike(firstRun = false)
-                else if (bikes.size == 1) Toast.makeText(this, "Keep at least one bike; add another first.", Toast.LENGTH_LONG).show()
-                else {
-                    Bikes.save(this, bikes.filterIndexed { i, _ -> i != which })
-                    render()
-                }
-            }
-            .setNegativeButton("Close", null)
-            .show()
-    }
-
-    /** On first launch several types can be picked at once; later one bike is added with an optional name. */
-    private fun addBike(firstRun: Boolean) {
-        val types = Bikes.TYPES.toTypedArray()
-        if (firstRun) {
-            val checked = BooleanArray(types.size)
-            AlertDialog.Builder(this)
-                .setTitle("Which bikes do you ride?")
-                .setMultiChoiceItems(types, checked) { _, i, on -> checked[i] = on }
-                .setCancelable(false)
-                .setPositiveButton("OK") { _, _ ->
-                    val picked = types.filterIndexed { i, _ -> checked[i] }.ifEmpty { listOf("other") }
-                    Bikes.save(this, picked.map { Bikes.Bike(it, "") })
-                    render()
-                }
-                .show()
-            return
-        }
-        AlertDialog.Builder(this)
-            .setTitle("Type of bike")
-            .setItems(types) { _, i ->
-                val name = android.widget.EditText(this).apply { hint = "Name (optional, stays on this phone)" }
-                AlertDialog.Builder(this)
-                    .setTitle(types[i])
-                    .setView(name)
-                    .setPositiveButton("Add") { _, _ ->
-                        Bikes.save(this, Bikes.list(this) + Bikes.Bike(types[i], name.text.toString().trim()))
-                        render()
-                    }
-                    .setNegativeButton("Cancel", null)
-                    .show()
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
-    }
-
-    // --- Rides ----------------------------------------------------------------------------------
+    // --- Rides -------------------------------------------------------------------------------
 
     private fun rideActions(ride: File) {
         val actions = arrayOf(
@@ -530,7 +529,7 @@ class MainActivity : Activity() {
 
     private fun exportGpx(ride: File) {
         if (RecorderState.recording && RecorderState.rideDir == ride) {
-            Toast.makeText(this, "Stop the ride before exporting.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, R.string.stop_before_export, Toast.LENGTH_SHORT).show()
             return
         }
         Thread {
@@ -568,14 +567,55 @@ class MainActivity : Activity() {
     companion object {
         private const val REQ_PERMISSIONS = 1
 
+        /** A sensor that sent nothing for this long gets a warning on the recording screen */
+        private const val SENSOR_STALE_MS = 5_000L
+
+        /** How long the last poll tap stays on screen with Undo, and the "Removed" note after Undo */
+        private const val UNDO_SHOWN_MS = 5_000L
+        private const val UNDONE_SHOWN_MS = 2_000L
+
+        private const val PREFS = "ride_screen"
+        private const val KEY_SCREEN_ON = "keep_screen_on"
+
         private const val CONSENT_TEXT =
             "Your rides help build a map of how comfortable cycle paths are. If you agree, the app sends each " +
                 "finished ride to the project server when you're on Wi-Fi.\n\n" +
                 "What is sent: the motion sensor data, the GPS track, sound levels in frequency bands (never audio), " +
                 "your poll answers, the bike type, the phone model and app version, and a random id for this app " +
                 "install. The first and last 150 to 250 m of every ride are cut off, so your home or work isn't in the data.\n\n" +
-                "What is not sent: your name, contact details, bike names, or the full track you can export as GPX.\n\n" +
+                "What is not sent: your name, contact details, bike names or colours, or the full track you can export as GPX.\n\n" +
                 "The data is used for research in this project. You can turn automatic upload off at any time, " +
-                "and delete everything this phone sent under Upload settings."
+                "and delete everything this phone sent, under Settings."
+    }
+}
+
+/** Picks the screen; a running ride always shows the recording screen. */
+@Composable
+fun VelowindApp(
+    ui: UiState,
+    actions: AppActions,
+    saveBike: (Bikes.Bike) -> Unit,
+    removeBike: (Bikes.Bike) -> Unit,
+    saveFirstBikes: (List<String>) -> Unit,
+) {
+    BackHandler(enabled = ui.screen != Screen.MAIN && !ui.recording) { actions.back() }
+    Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).safeDrawingPadding()) {
+        when {
+            ui.recording -> RecordingScreen(ui, actions)
+            ui.screen == Screen.SETTINGS -> SettingsScreen(ui, actions)
+            ui.screen == Screen.RIDES -> RidesScreen(ui, actions)
+            else -> MainScreen(ui, actions)
+        }
+    }
+    if (ui.firstRun) FirstBikesDialog(saveFirstBikes)
+    ui.bikeEdit?.let { edit ->
+        val bike = edit.bike
+        BikeEditor(
+            bike = bike,
+            newColor = Bikes.nextColor(ui.bikes),
+            onSave = saveBike,
+            onRemove = if (bike != null && ui.bikes.size > 1) ({ removeBike(bike) }) else null,
+            onDismiss = { ui.bikeEdit = null },
+        )
     }
 }

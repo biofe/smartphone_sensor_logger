@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bike with a gust of wind, drawn on a 24 grid and scaled into the 66 dp safe zone of an adaptive icon -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:scaleX="2.75"
+        android:scaleY="2.75"
+        android:translateX="21"
+        android:translateY="21">
+        <path
+            android:pathData="M2,16a3.5,3.5 0,1 0,7 0a3.5,3.5 0,1 0,-7 0M15,16a3.5,3.5 0,1 0,7 0a3.5,3.5 0,1 0,-7 0M5.5,16L9,10h6.5l3,6M9,10l3,6H5.5M15.5,10l-1,-3h-2"
+            android:strokeWidth="1.8"
+            android:strokeColor="#FFFFFF"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round" />
+        <path
+            android:pathData="M2,6.5h8.5a2.2,2.2 0,1 0,-2.2 -2.2M13.5,4h6.5"
+            android:strokeWidth="1.8"
+            android:strokeColor="#FFFFFF"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round" />
+    </group>
+</vector>
