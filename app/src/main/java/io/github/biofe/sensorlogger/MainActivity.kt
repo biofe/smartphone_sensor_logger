@@ -171,6 +171,24 @@ class MainActivity : Activity() {
         }
     }
 
+    private fun checkForUpdate() {
+        Toast.makeText(this, "Checking for updates…", Toast.LENGTH_SHORT).show()
+        Thread {
+            val result = runCatching { Updater.check(this) }
+            ui.post {
+                if (isFinishing) return@post
+                renderUpdate()
+                result.fold(
+                    { info ->
+                        if (info != null) Updater.offer(this, info)
+                        else Toast.makeText(this, "The app is up to date.", Toast.LENGTH_SHORT).show()
+                    },
+                    { Toast.makeText(this, "Couldn't reach the update server.", Toast.LENGTH_LONG).show() },
+                )
+            }
+        }.start()
+    }
+
     private fun renderUpdate() {
         val info = Updater.available(this)
         updateButton.visibility = if (info != null) View.VISIBLE else View.GONE
@@ -390,11 +408,22 @@ class MainActivity : Activity() {
             text = "This phone's id: ${Upload.shortInstallId(this@MainActivity)}\nQuote it if you write to the project about your data."
             setPadding(0, pad / 2, 0, pad / 2)
         }
+        val version = TextView(this).apply {
+            val name = packageManager.getPackageInfo(packageName, 0).versionName
+            text = if (Updater.enabled(this@MainActivity)) "App version $name" else "App version $name (test build, doesn't update itself)"
+        }
+        val checkUpdate = Button(this).apply {
+            text = "Check for updates"
+            visibility = if (Updater.enabled(this@MainActivity)) View.VISIBLE else View.GONE
+            setOnClickListener { checkForUpdate() }
+        }
         val view = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(pad, pad / 2, pad, 0)
             addView(auto)
             addView(id)
+            addView(version)
+            addView(checkUpdate, LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT))
         }
         AlertDialog.Builder(this)
             .setTitle("Upload settings")
