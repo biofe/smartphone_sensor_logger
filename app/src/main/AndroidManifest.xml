@@ -24,9 +24,9 @@
 
     <application
         android:allowBackup="false"
-        android:icon="@android:drawable/ic_menu_compass"
+        android:icon="@mipmap/ic_launcher"
         android:label="${appLabel}"
-        android:theme="@android:style/Theme.DeviceDefault.DayNight">
+        android:theme="@style/Theme.Velowind">
 
         <activity
             android:name=".MainActivity"
@@ -40,7 +40,8 @@
 
         <activity
             android:name=".MapActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@android:style/Theme.DeviceDefault.DayNight" />
 
         <service
             android:name=".RecordingService"

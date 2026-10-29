@@ -31,6 +31,7 @@ import android.os.SystemClock
 import io.github.biofe.sensorlogger.core.GeoPoint
 import io.github.biofe.sensorlogger.core.PrivacyTrim
 import io.github.biofe.sensorlogger.core.RideName
+import io.github.biofe.sensorlogger.core.RideStats
 import io.github.biofe.sensorlogger.core.SensorClock
 import io.github.biofe.sensorlogger.core.StopDetector
 import io.github.biofe.sensorlogger.core.ThirdOctaveAnalyzer
@@ -68,6 +69,7 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
     private lateinit var stopDetector: StopDetector
     private var autoStopped = false
     private var bikeType = "unknown"
+    private var lastPoint: GeoPoint? = null
 
     /** Privacy trim radii, drawn once per ride so re-exporting never reveals more. */
     private var trimStartM = 0.0
@@ -93,6 +95,7 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
         }
         if (RecorderState.recording) return START_NOT_STICKY
         bikeType = intent?.getStringExtra(EXTRA_BIKE_TYPE) ?: "unknown"
+        val bikeId = intent?.getStringExtra(EXTRA_BIKE_ID)
 
         startInForeground()
         RecorderState.reset()
@@ -103,6 +106,8 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
         pressureClock = SensorClock(bootUtcMs)
         rideDir = Rides.newRideDir(this)
         RecorderState.rideDir = rideDir
+        Rides.writeBike(rideDir, Bikes.list(this).firstOrNull { it.id == bikeId })
+        lastPoint = null
         val random = kotlin.random.Random(SecureRandom().nextLong())
         trimStartM = PrivacyTrim.randomRadiusM(random)
         trimEndM = PrivacyTrim.randomRadiusM(random)
@@ -199,6 +204,7 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
     private fun startBarometer() {
         val sm = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         val baro = sm.getDefaultSensor(Sensor.TYPE_PRESSURE) ?: return
+        RecorderState.hasBarometer = true
         pressureSensorName = "${baro.vendor} ${baro.name}"
         pressureWriter = File(rideDir, Rides.PRESSURE_FILE).bufferedWriter().apply {
             write("t_utc_ms,pressure_hpa\n")
@@ -253,7 +259,13 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
         RecorderState.lastGpsAccuracyM = location.accuracy
         RecorderState.lastSpeedKmh = location.speed * 3.6f
         RecorderState.lastFix = doubleArrayOf(location.latitude, location.longitude, location.accuracy.toDouble())
-        stopDetector.onFix(GeoPoint(t, location.latitude, location.longitude), location.accuracy.toDouble())
+        val point = GeoPoint(t, location.latitude, location.longitude)
+        // Only reasonably precise fixes count towards the distance shown while riding
+        if (location.accuracy <= DISTANCE_ACCURACY_M) {
+            lastPoint?.let { RecorderState.distanceM += RideStats.stepM(it, point) }
+            lastPoint = point
+        }
+        stopDetector.onFix(point, location.accuracy.toDouble())
     }
 
     // --- Sound -------------------------------------------------------------------------------
@@ -382,7 +394,7 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
         getSystemService(NotificationManager::class.java).notify(
             AUTO_STOP_NOTIFICATION_ID,
             Notification.Builder(this, CHANNEL_ID)
-                .setSmallIcon(android.R.drawable.ic_menu_mylocation)
+                .setSmallIcon(R.drawable.ic_stat_ride)
                 .setContentTitle("Ride saved")
                 .setContentText("Recording stopped after $minutes minutes without moving")
                 .setContentIntent(open)
@@ -400,7 +412,7 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
             this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE,
         )
         val notification = Notification.Builder(this, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_menu_mylocation)
+            .setSmallIcon(R.drawable.ic_stat_ride)
             .setContentTitle("Recording ride")
             .setContentText("GPS, accelerometer and sound levels")
             .setContentIntent(open)
@@ -417,6 +429,7 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
     companion object {
         const val ACTION_STOP = "io.github.biofe.sensorlogger.STOP"
         const val EXTRA_BIKE_TYPE = "bike_type"
+        const val EXTRA_BIKE_ID = "bike_id"
         private const val CHANNEL_ID = "ride"
         private const val NOTIFICATION_ID = 1
         private const val AUTO_STOP_NOTIFICATION_ID = 2
@@ -424,6 +437,7 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
         private const val ACCEL_PERIOD_US = 10_000 // 100 Hz
         private const val GPS_INTERVAL_MS = 1000L
         private const val PRESSURE_PERIOD_US = 100_000 // 10 Hz
+        private const val DISTANCE_ACCURACY_M = 25f
     }
 }
 

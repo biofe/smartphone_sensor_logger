@@ -16,6 +16,10 @@ object RecorderState {
     @Volatile var lastGpsAccuracyM = Float.NaN
     @Volatile var lastSpeedKmh = Float.NaN
     @Volatile var lastLaeqDb = Double.NaN
+    /** Distance ridden so far, for the recording screen */
+    @Volatile var distanceM = 0.0
+    /** Phones without a barometer still record; the screen just doesn't expect pressure data */
+    @Volatile var hasBarometer = false
     @Volatile var error: String? = null
     /** The last ride ended because the rider stopped moving, not by tapping Stop. */
     @Volatile var autoStopped = false
@@ -32,6 +36,8 @@ object RecorderState {
         lastGpsAccuracyM = Float.NaN
         lastSpeedKmh = Float.NaN
         lastLaeqDb = Double.NaN
+        distanceM = 0.0
+        hasBarometer = false
         error = null
         autoStopped = false
     }

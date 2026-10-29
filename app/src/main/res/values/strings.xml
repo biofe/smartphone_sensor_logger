@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- All texts of the Compose screens, so a German translation is a values-de/strings.xml away -->
+<resources>
+    <string name="brand">Velowind</string>
+    <string name="settings">Settings</string>
+    <string name="back">Back</string>
+    <string name="ok">OK</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+
+    <!-- Main screen -->
+    <string name="start_a_ride">Start a ride</string>
+    <string name="start">Start</string>
+    <string name="start_ride_on">Start ride on %1$s</string>
+    <string name="start_hint">One tap starts recording.</string>
+    <string name="start_hint_swipe">Swipe for more bikes. One tap starts recording.</string>
+    <string name="add_bike">Add a bike</string>
+    <string name="install_update">Install update %1$s</string>
+    <string name="auto_stopped">The last ride stopped by itself after 10 minutes without moving and was saved.</string>
+    <string name="my_rides">My rides</string>
+    <string name="see_all">See all %1$d</string>
+    <string name="no_rides_yet">No rides yet. Tap a bike above to record your first one.</string>
+    <string name="annotate_on_map">Annotate on the map</string>
+    <string name="date_today">Today, %1$s</string>
+    <string name="date_yesterday">Yesterday, %1$s</string>
+    <plurals name="rides">
+        <item quantity="one">%1$d ride</item>
+        <item quantity="other">%1$d rides</item>
+    </plurals>
+
+    <!-- Ride states -->
+    <string name="ride_recording">Recording</string>
+    <string name="ride_uploaded">Uploaded</string>
+    <string name="ride_waiting">Waiting</string>
+    <string name="ride_rejected">Not accepted</string>
+    <string name="ride_too_short">Too short</string>
+
+    <!-- Recording -->
+    <string name="recording">Recording</string>
+    <string name="recording_on">Recording · %1$s</string>
+    <string name="annotate_spot">Annotate this spot</string>
+    <string name="annotations_count">Spots annotated on this ride: %1$d</string>
+    <string name="hold_to_stop">Hold to stop</string>
+    <string name="sensor_gps">GPS</string>
+    <string name="sensor_gps_accuracy">GPS ±%1$d m</string>
+    <string name="sensor_motion">Motion</string>
+    <string name="sensor_sound">Sound</string>
+    <string name="sensor_no_sound">No sound</string>
+    <string name="sensor_baro">Baro</string>
+    <string name="location_needed">Precise location is needed to record a ride.</string>
+
+    <!-- Settings -->
+    <string name="upload">Upload</string>
+    <string name="upload_auto">Upload automatically on Wi-Fi</string>
+    <string name="upload_now">Upload now</string>
+    <string name="upload_off">Your rides stay on this phone. Read what would be sent before turning upload on.</string>
+    <string name="upload_turn_on">Read what is sent and turn on</string>
+    <string name="upload_line_off">Upload is off.</string>
+    <string name="upload_line_done">All rides uploaded.</string>
+    <plurals name="upload_line_manual">
+        <item quantity="one">%1$d ride not uploaded; automatic upload is off.</item>
+        <item quantity="other">%1$d rides not uploaded; automatic upload is off.</item>
+    </plurals>
+    <plurals name="upload_line_waiting">
+        <item quantity="one">%1$d ride waiting for Wi-Fi.</item>
+        <item quantity="other">%1$d rides waiting for Wi-Fi.</item>
+    </plurals>
+    <string name="my_bikes">My bikes</string>
+    <string name="edit_bike">Edit %1$s</string>
+    <string name="annotating">Annotating</string>
+    <string name="detailed_poll">Detailed poll</string>
+    <string name="detailed_poll_note">Adds type of way, exact surface, sounds and a note</string>
+    <string name="privacy_storage">Privacy and storage</string>
+    <string name="what_is_sent">What is sent, and what isn\'t</string>
+    <string name="phone_id">Phone ID</string>
+    <string name="phone_id_note">Random, not linked to you</string>
+    <string name="storage">On this phone</string>
+    <string name="export_all">Export all rides as ZIP</string>
+    <string name="export_all_note">Privacy-trimmed, to Downloads</string>
+    <string name="delete_server_data">Delete my data on the server</string>
+    <string name="app">App</string>
+    <string name="version">Version</string>
+    <string name="test_build_note">Test build, doesn\'t update itself</string>
+    <string name="check_updates">Check for updates</string>
+    <string name="checking_updates">Checking for updates…</string>
+    <string name="up_to_date">The app is up to date.</string>
+    <string name="update_server_unreachable">Couldn\'t reach the update server.</string>
+    <string name="stop_before_export">Stop the ride before exporting.</string>
+
+    <!-- Bikes -->
+    <string name="edit_bike_title">Edit bike</string>
+    <string name="bike_name">Name (optional)</string>
+    <string name="bike_name_note">Stays on this phone</string>
+    <string name="bike_type">Type</string>
+    <string name="bike_colour">Colour</string>
+    <string name="colour_n">Colour %1$d</string>
+    <string name="remove_bike">Remove this bike</string>
+    <string name="which_bikes">Which bikes do you ride?</string>
+    <string name="which_bikes_note">Pick all that apply. Each gets its own start button and colour; you can change them later in Settings.</string>
+</resources>
