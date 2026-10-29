@@ -9,3 +9,5 @@ captures/
 __pycache__/
 .venv/
 .pytest_cache/
+apks_test/
+velowind-release.jks
