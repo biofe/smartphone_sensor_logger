@@ -1,6 +1,6 @@
 # Releases and app updates
 
-Riders install the **release** app ("Bike Sensor Logger") from `https://apk.velowind.de/`. It checks `https://apk.velowind.de/latest.json` once a day and whenever it is opened (at most every 6 hours). When that file names a newer version, the app shows a notification and an **Install update** button. Tapping it downloads the APK, checks its SHA-256 and opens Android's installer, which asks the rider to confirm. The first time, Android also asks whether the app may install apps ("Allow from this source"). Rides and settings are kept. While a ride is recording, the update waits.
+Riders install the **release** app ("Bike Sensor Logger") from `https://apk.velowind.de/`. It checks `https://apk.velowind.de/latest.json` once a day and whenever it is opened (at most every 6 hours); **Upload settings → Check for updates** checks right away. When that file names a newer version, the app shows a notification and an **Install update** button. Tapping it downloads the APK, checks its SHA-256 and opens Android's installer, which asks the rider to confirm. The first time, Android also asks whether the app may install apps ("Allow from this source"). Rides and settings are kept. While a ride is recording, the update waits.
 
 Android only installs an update that is signed with the same key as the installed app. The release key is private: it exists only on your own backup and as a GitHub secret. A file swapped on the server is therefore refused by Android, whatever `latest.json` says.
 
