@@ -44,7 +44,7 @@ The phone identifies itself with a random id and secret made on first launch; th
 
 ## Installing (for riders)
 
-1. Download `app-debug.apk` from the repository's **Releases** page and open it. Allow installing from this source when Android asks.
+1. Open `https://apk.velowind.de/` on the phone to download the app, and open the file. Allow installing from this source when Android asks. The app then updates itself: it asks before installing a new version.
 2. Open **Bike Sensor Logger** and pick the bikes you ride (change them later under **My bikes**). Tap **Start ride** for the bike you're on and allow location, microphone and notifications.
 3. For reliable recording with the screen off, set the app's battery usage to **Unrestricted** (Settings → Apps → Bike Sensor Logger → Battery).
 4. Put the phone in your pocket and ride. Tap **Stop ride** at the end. If you forget, recording stops by itself after 10 minutes without moving (more than 50 m), and the standing time is left out of the export. Waits at traffic lights are far shorter and don't stop it.
@@ -62,7 +62,7 @@ Other apps that use the microphone at the same time (e.g. NoiseCapture or a call
 ./gradlew :core:test :app:assembleDebug
 ```
 
-Needs JDK 17+ and the Android SDK (API 35). GitHub Actions runs the same on every push and pull request and uploads the APK as a build artifact; pushing a tag like `v0.1.0` publishes the APK as a release.
+Needs JDK 17+ and the Android SDK (API 35). GitHub Actions runs the same on every push and pull request and uploads the test APK ("Bike Logger (dev)", a separate app next to the release one) as a build artifact. Pushing a tag like `v0.9.0` builds the signed release APK, publishes it as a release and copies it to the update server; see [docs/RELEASES.md](docs/RELEASES.md).
 
 The signal processing (`core/`) is plain Kotlin and its tests run without Android:
 
@@ -70,4 +70,4 @@ The signal processing (`core/`) is plain Kotlin and its tests run without Androi
 - `PrivacyTrim`: draws the random trim radii and computes the time window kept on export.
 - `StopDetector`: decides when the rider has stopped moving long enough to end the recording.
 
-`app/debug.keystore` is a throwaway debug key committed on purpose so every build can be installed over the previous one.
+`app/debug.keystore` is a throwaway debug key committed on purpose so every test build can be installed over the previous one. Release builds use a private key that only GitHub Actions has.

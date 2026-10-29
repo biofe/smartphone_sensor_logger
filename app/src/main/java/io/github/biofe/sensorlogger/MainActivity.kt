@@ -32,6 +32,8 @@ class MainActivity : Activity() {
     private lateinit var status: TextView
     private lateinit var uploadStatus: TextView
     private lateinit var ridesView: ListView
+    private lateinit var updateButton: Button
+    private var updateOffered = false
     private var rides: List<File> = emptyList()
     private val ui = Handler(Looper.getMainLooper())
     private val tick = object : Runnable {
@@ -49,6 +51,10 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         val pad = (16 * resources.displayMetrics.density).toInt()
 
+        updateButton = Button(this).apply {
+            visibility = View.GONE
+            setOnClickListener { Updater.available(this@MainActivity)?.let { Updater.offer(this@MainActivity, it) } }
+        }
         startButtons = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         stopButton = Button(this).apply {
             text = "Stop ride"
@@ -99,6 +105,7 @@ class MainActivity : Activity() {
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(pad, pad, pad, pad)
+            addView(updateButton, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
             addView(startButtons, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
             addView(stopButton, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
             addView(annotate, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
@@ -126,6 +133,12 @@ class MainActivity : Activity() {
         setContentView(root)
         if (Bikes.list(this).isEmpty()) addBike(firstRun = true)
         UploadJob.schedule(this)
+        UpdateJob.schedule(this)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
     }
 
     override fun onResume() {
@@ -134,6 +147,34 @@ class MainActivity : Activity() {
         ui.post(tick)
         // Ask once, after the bikes are set up and not in the middle of a ride
         if (!Upload.consentAsked(this) && Bikes.list(this).isNotEmpty() && !RecorderState.recording) askConsent {}
+        resumeUpdate()
+    }
+
+    /** Offers a new version once per app start (or when its notification is tapped), and looks for one now and then. */
+    private fun resumeUpdate() {
+        val fromNotification = intent.getBooleanExtra(UpdateJob.EXTRA_SHOW_UPDATE, false)
+        intent.removeExtra(UpdateJob.EXTRA_SHOW_UPDATE)
+        val info = Updater.available(this)
+        if (info != null && Updater.awaitingPermission && packageManager.canRequestPackageInstalls()) {
+            // Back from allowing installs: carry on where the rider left off
+            Updater.awaitingPermission = false
+            Updater.install(this, info)
+        } else if (info != null && (fromNotification || !updateOffered && !RecorderState.recording)) {
+            updateOffered = true
+            Updater.offer(this, info)
+        }
+        if (Updater.checkDue(this)) {
+            Thread {
+                runCatching { Updater.check(this) }
+                ui.post { if (!isFinishing) renderUpdate() }
+            }.start()
+        }
+    }
+
+    private fun renderUpdate() {
+        val info = Updater.available(this)
+        updateButton.visibility = if (info != null) View.VISIBLE else View.GONE
+        if (info != null) updateButton.text = "Install update ${info.versionName}"
     }
 
     override fun onPause() {
@@ -184,6 +225,7 @@ class MainActivity : Activity() {
         rides = Rides.list(this)
         ridesView.adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, rides.map { Rides.describe(it) })
         renderUpload()
+        renderUpdate()
     }
 
     private fun renderUpload() {

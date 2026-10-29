@@ -82,3 +82,64 @@ cd server && docker compose -f deploy/docker-compose.yml up -d --build
 ```
 
 Back up `/srv/velowind/data/` (the `dataset/` folder and `index.sqlite3` are what matter). `quarantine/` and `rejected/` can be rebuilt from new uploads.
+
+## 7. App updates: apk.velowind.de
+
+The app looks for new versions at `https://apk.velowind.de/latest.json`. nginx serves that file and the APKs from `/srv/velowind/publish/apk`; GitHub Actions copies them there over SFTP when a version is tagged ([docs/RELEASES.md](../../docs/RELEASES.md)). The account it uses can only put files into that one folder: no shell, no other files.
+
+DNS and certificate, as in step 1:
+
+```
+certbot certonly --nginx -d apk.velowind.de
+```
+
+Upload account and folder. SFTP's chroot needs a root-owned folder above the writable one:
+
+```
+useradd --system --create-home --home-dir /home/velowind-publish --shell /usr/sbin/nologin velowind-publish
+mkdir -p /srv/velowind/publish/apk
+chown root:root /srv/velowind/publish
+chmod 755 /srv/velowind/publish
+chown velowind-publish:velowind-publish /srv/velowind/publish/apk
+chmod 755 /srv/velowind/publish/apk
+```
+
+Add this at the **end** of `/etc/ssh/sshd_config` (a `Match` block applies to everything below it, so it must come last):
+
+```
+Match User velowind-publish
+    ForceCommand internal-sftp
+    ChrootDirectory /srv/velowind/publish
+    PasswordAuthentication no
+    AllowTcpForwarding no
+    X11Forwarding no
+    PermitTTY no
+```
+
+If `sshd_config` has an `AllowUsers` or `AllowGroups` line, add `velowind-publish` to it. Then check and reload, keeping your current SSH session open until a new login works:
+
+```
+sshd -t && systemctl reload ssh
+```
+
+(Debian's default `UsePAM yes` lets this account log in with a key although it has no password. If you set `UsePAM no`, also run `usermod -p '*' velowind-publish`.)
+
+A key pair for GitHub Actions, made on the VPS. The private half goes into the `VPS_SSH_KEY` secret, then is deleted here:
+
+```
+ssh-keygen -t ed25519 -N "" -C "github-actions publish" -f /root/velowind-publish
+install -d -m 700 -o velowind-publish -g velowind-publish /home/velowind-publish/.ssh
+install -m 600 -o velowind-publish -g velowind-publish /root/velowind-publish.pub /home/velowind-publish/.ssh/authorized_keys
+cat /root/velowind-publish     # paste into the VPS_SSH_KEY secret
+rm /root/velowind-publish /root/velowind-publish.pub
+```
+
+For `VPS_KNOWN_HOSTS`, run `ssh-keyscan -t ed25519 <host>` on your own computer (add `-p <port>` if SSH isn't on 22), with `<host>` exactly as in `VPS_HOST`. The site:
+
+```
+cp deploy/nginx-apk.conf /etc/nginx/sites-available/apk.velowind.de
+ln -s /etc/nginx/sites-available/apk.velowind.de /etc/nginx/sites-enabled/
+nginx -t && systemctl reload nginx
+```
+
+`https://apk.velowind.de/latest.json` answers 404 until the first release is copied. `https://apk.velowind.de/` always leads to the newest APK, so that is the link for new riders.

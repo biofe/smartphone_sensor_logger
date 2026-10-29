@@ -22,17 +22,114 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
-      - name: Unit tests and APK
-        run: ./gradlew :core:test :app:assembleDebug
+      # The unsigned release build is only there to catch release-only build errors before tagging
+      - name: Unit tests and APKs
+        run: ./gradlew :core:test :app:assembleDebug :app:assembleRelease
 
+      # The test build ("Bike Logger (dev)") installs next to the release app
       - uses: actions/upload-artifact@v4
         with:
           name: bike-sensor-logger-apk
           path: app/build/outputs/apk/debug/app-debug.apk
 
-      # Pushing a tag like v0.1.0 publishes the APK on the Releases page, where test riders can download it
-      - name: Publish release
-        if: startsWith(github.ref, 'refs/tags/v')
+  # Pushing a tag like v0.9.0 builds the release APK, signs it with the private key, publishes it
+  # on the Releases page and copies it to apk.velowind.de, where installed apps find it.
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Check the tag matches the app version
+        run: |
+          VERSION_NAME=$(grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts)
+          VERSION_CODE=$(grep -oP 'versionCode = \K[0-9]+' app/build.gradle.kts)
+          if [ "v$VERSION_NAME" != "$TAG" ]; then
+            echo "::error::Tag $TAG doesn't match versionName $VERSION_NAME in app/build.gradle.kts"
+            exit 1
+          fi
+          echo "VERSION_NAME=$VERSION_NAME" >> "$GITHUB_ENV"
+          echo "VERSION_CODE=$VERSION_CODE" >> "$GITHUB_ENV"
+
+      - name: Signed release APK
+        env:
+          RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+          RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+        run: |
+          if [ -z "$RELEASE_KEYSTORE_BASE64" ]; then
+            echo "::error::The RELEASE_KEYSTORE_BASE64 secret is missing; see docs/RELEASES.md"
+            exit 1
+          fi
+          export RELEASE_KEYSTORE="$RUNNER_TEMP/release.jks"
+          echo "$RELEASE_KEYSTORE_BASE64" | base64 -d > "$RELEASE_KEYSTORE"
+          ./gradlew :app:assembleRelease
+          rm "$RELEASE_KEYSTORE"
+          mkdir -p dist
+          cp app/build/outputs/apk/release/app-release.apk "dist/bike-sensor-logger-$VERSION_NAME.apk"
+
+      - name: Update manifest
+        run: |
+          # The tag's message (git tag -a v0.9.0 -m "...") becomes the release notes shown in the app
+          git fetch --force origin "refs/tags/$TAG:refs/tags/$TAG"
+          NOTES=$(git tag -l --format='%(contents)' "$TAG" | sed '/-----BEGIN PGP SIGNATURE-----/,$d')
+          APK="bike-sensor-logger-$VERSION_NAME.apk"
+          SHA256=$(sha256sum "dist/$APK" | cut -d' ' -f1)
+          NOTES="$NOTES" APK="$APK" SHA256="$SHA256" python3 - <<'PY'
+          import json, os
+          json.dump({
+              "versionCode": int(os.environ["VERSION_CODE"]),
+              "versionName": os.environ["VERSION_NAME"],
+              "apk": os.environ["APK"],
+              "sha256": os.environ["SHA256"],
+              "notes": os.environ["NOTES"].strip(),
+          }, open("dist/latest.json", "w"), indent=2)
+          PY
+          cat dist/latest.json
+
+      - name: Publish on the Releases page
         uses: softprops/action-gh-release@v2
         with:
-          files: app/build/outputs/apk/debug/app-debug.apk
+          files: dist/*
+
+      # Skipped until the VPS_* secrets are set (docs/RELEASES.md)
+      - name: Copy to apk.velowind.de
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          if [ -z "$VPS_HOST" ]; then
+            echo "::warning::VPS_HOST isn't set, so the APK was not copied to the server"
+            exit 0
+          fi
+          install -m 600 /dev/null "$RUNNER_TEMP/key"
+          echo "$VPS_SSH_KEY" > "$RUNNER_TEMP/key"
+          echo "$VPS_KNOWN_HOSTS" > "$RUNNER_TEMP/known_hosts"
+          APK="bike-sensor-logger-$VERSION_NAME.apk"
+          # The APK first, the manifest last: apps only learn about the version once its file is there.
+          # Uploading under a temporary name and renaming means no one ever downloads half a file.
+          cat > "$RUNNER_TEMP/batch" <<BATCH
+          cd /apk
+          put dist/$APK $APK.part
+          rename $APK.part $APK
+          put dist/$APK bike-sensor-logger.apk.part
+          rename bike-sensor-logger.apk.part bike-sensor-logger.apk
+          put dist/latest.json latest.json.part
+          rename latest.json.part latest.json
+          BATCH
+          sftp -b "$RUNNER_TEMP/batch" -P "${VPS_PORT:-22}" -i "$RUNNER_TEMP/key" \
+            -o UserKnownHostsFile="$RUNNER_TEMP/known_hosts" -o StrictHostKeyChecking=yes \
+            "velowind-publish@$VPS_HOST"
+          rm "$RUNNER_TEMP/key"
+          curl -fsS https://apk.velowind.de/latest.json
