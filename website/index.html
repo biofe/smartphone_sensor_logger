@@ -48,16 +48,18 @@
 
       <figure class="trace" aria-labelledby="trace-cap">
         <div class="trace-head">
-          <span class="num">accelerometer, vertical · 3–8 Hz band</span>
-          <span id="trace-cap">What the phone feels on one stretch of a test ride (illustration)</span>
+          <span class="num">vibration 3–8 Hz per 100 m · dB vs. same speed</span>
+          <span id="trace-cap">One real test ride: 9.9 km, phone on the handlebar</span>
         </div>
-        <canvas id="trace" data-labels="asphalt|concrete slabs|gravel" role="img" aria-label="A vibration trace that stays low on asphalt, shows regular spikes on concrete slabs, and becomes two to three times larger on gravel."></canvas>
+        <canvas id="trace" data-labels="concrete slabs=concrete slabs|compacted gravel=gravel" role="img" aria-label="Vibration along a 9.9 km test ride, corrected for speed: below average on most asphalt, about 10 dB above average after the concrete slab rating near km 2.3, and about 8 dB above average around the gravel ratings near km 5.4 to 5.7."></canvas>
         <div class="trace-foot">
           <div class="legend">
             <span><i style="background: var(--teal)"></i>smooth</span>
             <span><i style="background: var(--rough)"></i>rough</span>
+            <span>┆ rider's rating</span>
+            <span>up = rougher, down = smoother</span>
           </div>
-          <span>On the first handlebar test, gravel showed <span class="num">2–3×</span> the vibration of asphalt and <span class="num">+13 dB</span> at 8 kHz.</span>
+          <span>Around the gravel ratings: <span class="num">+8 dB</span>. Asphalt before it: <span class="num">−6 dB</span>. Some rough patches have no rating yet.</span>
         </div>
       </figure>
     </div>
@@ -79,7 +81,7 @@
         <div class="measure">
           <h3>Vibration</h3>
           <span class="fig">accelerometer ~100 Hz · gyroscope</span>
-          <p>Shows the surface: smooth asphalt, slab joints, cobbles, gravel. Measured against distance, so riding faster doesn't count as a rougher path.</p>
+          <p>Shows the surface: smooth asphalt, slab joints, cobbles, gravel. The analysis corrects for speed, so riding faster doesn't count as a rougher path.</p>
         </div>
         <div class="measure">
           <h3>Sound levels</h3>
@@ -111,8 +113,8 @@
       <ol class="pipeline">
         <li><div><h3>Collect<span class="status done">running</span></h3><p>The Android logger records all sensors on one clock and uploads finished rides over Wi-Fi to the project server, which checks every upload before it enters the dataset.</p></div></li>
         <li><div><h3>Clean and align<span class="status done">running</span></h3><p>Sensor clocks are checked against real time, start and end of every ride are cut for privacy, and standing time is removed.</p></div></li>
-        <li><div><h3>Match to the street network<span class="status now">in progress</span></h3><p>GPS tracks are matched to OpenStreetMap ways, so measurements from many rides add up per stretch of path.</p></div></li>
-        <li><div><h3>Features<span class="status now">in progress</span></h3><p>Roughness per metre in the 3–8 Hz band, noise per frequency band, speed, gradient. Bike type and phone mount are taken into account so that a road bike and a cargo bike can be compared.</p></div></li>
+        <li><div><h3>Match to the street network<span class="status next">next</span></h3><p>GPS tracks will be matched to OpenStreetMap ways, so measurements from many rides add up per stretch of path.</p></div></li>
+        <li><div><h3>Features<span class="status now">first tests</span></h3><p>Vibration per frequency band, corrected for speed, and noise per frequency band, tested on the first test rides. Next come gradient, and bike type and phone mount, so that a road bike and a cargo bike can be compared.</p></div></li>
         <li><div><h3>Add context<span class="status next">next</span></h3><p>Weather (rain, temperature, wind) by time and place, plus time of day and day of week.</p></div></li>
         <li><div><h3>Model<span class="status next">next</span></h3><p>Classifiers for surface and roughness trained on rider ratings, checked against OpenStreetMap smoothness tags.</p></div></li>
         <li><div><h3>Map<span class="status next">next</span></h3><p>An interactive map of path quality, with filters for time of day, weekday and weather.</p></div></li>
@@ -128,7 +130,7 @@
         </div>
         <div>
           <h3>Less data from each phone</h3>
-          <p>A small model on the phone that turns 100 readings per second into a few numbers per stretch. That cuts upload size by around a hundred times and keeps even less about the ride.</p>
+          <p>A small model on the phone that turns 100 readings per second into a few numbers per stretch. By a rough estimate that could cut the upload size about a hundredfold, and it keeps even less about the ride.</p>
         </div>
         <div>
           <h3>How hard is this stretch?</h3>
@@ -237,7 +239,7 @@
         <details><summary>How much battery and data does it use?</summary><p>Recording keeps GPS and the sensors on, similar to a sports tracking app. A 30-minute ride is a few megabytes and is uploaded only on Wi-Fi, unless you choose "Upload now" on mobile data.</p></details>
         <details><summary>Can my rides be traced back to me?</summary><p>Rides carry a random install id, never your name or phone number. Start and end are cut away before upload. Someone who already knows where you ride could still recognise a route, which is why the cut uses a different random radius for every ride.</p></details>
         <details><summary>How do I stop taking part?</summary><p>Turn off automatic upload in Upload settings, or use "Delete my data on the server" there and uninstall the app. Rides on your phone are removed with the app.</p></details>
-        <details><summary>Who can see the data?</summary><p>Uploaded rides are stored on the project's own server and used for this research project. They are not sold or shared with advertisers. Results like the comfort map are shown per stretch of path, combined over many rides.</p></details>
+        <details><summary>Who can see the data?</summary><p>Uploaded rides are stored on the project's own server and used for this research project. They are not sold or shared with advertisers. Results like the comfort map will show stretches of path, combined over many rides.</p></details>
       </div>
     </div>
   </section>
@@ -250,6 +252,7 @@
   </div>
 </footer>
 
+<script src="/trace-data.js"></script>
 <script src="/site.js"></script>
 </body>
 </html>

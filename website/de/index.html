@@ -48,16 +48,18 @@
 
       <figure class="trace" aria-labelledby="trace-cap">
         <div class="trace-head">
-          <span class="num">Beschleunigung, vertikal · Band 3–8 Hz</span>
-          <span id="trace-cap">Was das Handy auf einem Stück Testfahrt spürt (Illustration)</span>
+          <span class="num">Vibration 3–8 Hz pro 100 m · dB ggü. gleichem Tempo</span>
+          <span id="trace-cap">Eine echte Testfahrt: 9,9 km, Handy am Lenker</span>
         </div>
-        <canvas id="trace" data-labels="Asphalt|Betonplatten|Schotter" role="img" aria-label="Eine Vibrationskurve, die auf Asphalt niedrig bleibt, auf Betonplatten regelmäßige Spitzen zeigt und auf Schotter zwei- bis dreimal so groß wird."></canvas>
+        <canvas id="trace" data-labels="concrete slabs=Betonplatten|compacted gravel=Schotter" role="img" aria-label="Vibration entlang einer 9,9 km langen Testfahrt, um das Tempo bereinigt: unter dem Durchschnitt auf dem meisten Asphalt, etwa 10 dB darüber nach der Betonplatten-Bewertung bei km 2,3 und etwa 8 dB darüber rund um die Schotter-Bewertungen bei km 5,4 bis 5,7."></canvas>
         <div class="trace-foot">
           <div class="legend">
             <span><i style="background: var(--teal)"></i>glatt</span>
             <span><i style="background: var(--rough)"></i>holprig</span>
+            <span>┆ Bewertung beim Fahren</span>
+            <span>oben = holpriger, unten = glatter</span>
           </div>
-          <span>Beim ersten Test am Lenker zeigte Schotter <span class="num">2–3×</span> so viel Vibration wie Asphalt und <span class="num">+13 dB</span> bei 8 kHz.</span>
+          <span>Rund um die Schotter-Bewertungen: <span class="num">+8 dB</span>. Asphalt davor: <span class="num">−6 dB</span>. Manche holprigen Stellen sind noch nicht bewertet.</span>
         </div>
       </figure>
     </div>
@@ -79,7 +81,7 @@
         <div class="measure">
           <h3>Vibration</h3>
           <span class="fig">Beschleunigung ~100 Hz · Gyroskop</span>
-          <p>Zeigt den Belag: glatter Asphalt, Plattenfugen, Kopfsteinpflaster, Schotter. Gemessen pro Strecke, damit schnelleres Fahren nicht als holprigerer Weg zählt.</p>
+          <p>Zeigt den Belag: glatter Asphalt, Plattenfugen, Kopfsteinpflaster, Schotter. Die Auswertung rechnet das Tempo heraus, damit schnelleres Fahren nicht als holprigerer Weg zählt.</p>
         </div>
         <div class="measure">
           <h3>Geräuschpegel</h3>
@@ -111,8 +113,8 @@
       <ol class="pipeline">
         <li><div><h3>Sammeln<span class="status done">läuft</span></h3><p>Die Android-App zeichnet alle Sensoren mit einer gemeinsamen Uhr auf und lädt fertige Fahrten im WLAN auf den Projektserver. Der prüft jede Fahrt, bevor sie in den Datensatz kommt.</p></div></li>
         <li><div><h3>Bereinigen und abgleichen<span class="status done">läuft</span></h3><p>Die Sensorzeiten werden mit der echten Uhrzeit abgeglichen, Anfang und Ende jeder Fahrt werden zum Schutz der Privatsphäre abgeschnitten, Standzeiten entfernt.</p></div></li>
-        <li><div><h3>Auf das Wegenetz legen<span class="status now">in Arbeit</span></h3><p>Die GPS-Spuren werden OpenStreetMap-Wegen zugeordnet, damit sich die Messungen vieler Fahrten pro Wegstück summieren.</p></div></li>
-        <li><div><h3>Merkmale<span class="status now">in Arbeit</span></h3><p>Rauheit pro Meter im Band 3–8 Hz, Lärm pro Frequenzband, Tempo, Steigung. Radtyp und Halterung werden berücksichtigt, damit sich ein Rennrad und ein Lastenrad vergleichen lassen.</p></div></li>
+        <li><div><h3>Auf das Wegenetz legen<span class="status next">als Nächstes</span></h3><p>Die GPS-Spuren werden OpenStreetMap-Wegen zugeordnet, damit sich die Messungen vieler Fahrten pro Wegstück summieren.</p></div></li>
+        <li><div><h3>Merkmale<span class="status now">erste Tests</span></h3><p>Vibration pro Frequenzband, um das Tempo bereinigt, und Lärm pro Frequenzband, erprobt an den ersten Testfahrten. Als Nächstes kommen Steigung sowie Radtyp und Halterung dazu, damit sich ein Rennrad und ein Lastenrad vergleichen lassen.</p></div></li>
         <li><div><h3>Kontext ergänzen<span class="status next">als Nächstes</span></h3><p>Wetter (Regen, Temperatur, Wind) nach Zeit und Ort, dazu Tageszeit und Wochentag.</p></div></li>
         <li><div><h3>Modellieren<span class="status next">als Nächstes</span></h3><p>Klassifikatoren für Belag und Rauheit, trainiert mit den Bewertungen der Fahrenden und geprüft an den Zustandsangaben in OpenStreetMap.</p></div></li>
         <li><div><h3>Karte<span class="status next">als Nächstes</span></h3><p>Eine interaktive Karte der Wegqualität mit Filtern für Tageszeit, Wochentag und Wetter.</p></div></li>
@@ -128,7 +130,7 @@
         </div>
         <div>
           <h3>Weniger Daten pro Handy</h3>
-          <p>Ein kleines Modell auf dem Handy macht aus 100 Messwerten pro Sekunde ein paar Zahlen pro Wegstück. Das verkleinert die Uploads etwa um das Hundertfache und speichert noch weniger über die Fahrt.</p>
+          <p>Ein kleines Modell auf dem Handy macht aus 100 Messwerten pro Sekunde ein paar Zahlen pro Wegstück. Grob geschätzt könnte das die Uploads etwa um das Hundertfache verkleinern, und es speichert noch weniger über die Fahrt.</p>
         </div>
         <div>
           <h3>Wie anstrengend ist dieses Stück?</h3>
@@ -237,7 +239,7 @@
         <details><summary>Wie viel Akku und Datenvolumen braucht die App?</summary><p>Beim Aufzeichnen sind GPS und Sensoren an, ähnlich wie bei einer Sport-Tracking-App. Eine Fahrt von 30 Minuten hat ein paar Megabyte und wird nur im WLAN hochgeladen, außer du wählst „Upload now“ über mobile Daten.</p></details>
         <details><summary>Lassen sich meine Fahrten auf mich zurückführen?</summary><p>Fahrten tragen eine zufällige Installationskennung, nie deinen Namen oder deine Telefonnummer. Anfang und Ende werden vor dem Upload abgeschnitten. Wer schon weiß, wo du fährst, könnte eine Strecke trotzdem wiedererkennen, deshalb ist der Radius des Schnitts bei jeder Fahrt ein anderer.</p></details>
         <details><summary>Wie höre ich auf mitzumachen?</summary><p>Schalte den automatischen Upload in den Upload settings aus, oder nutze dort „Delete my data on the server“ und deinstalliere die App. Die Fahrten auf deinem Handy werden mit der App gelöscht.</p></details>
-        <details><summary>Wer sieht die Daten?</summary><p>Hochgeladene Fahrten liegen auf dem eigenen Server des Projekts und werden für dieses Forschungsprojekt verwendet. Sie werden nicht verkauft und nicht an Werbefirmen gegeben. Ergebnisse wie die Komfortkarte zeigen Werte pro Wegstück, zusammengefasst aus vielen Fahrten.</p></details>
+        <details><summary>Wer sieht die Daten?</summary><p>Hochgeladene Fahrten liegen auf dem eigenen Server des Projekts und werden für dieses Forschungsprojekt verwendet. Sie werden nicht verkauft und nicht an Werbefirmen gegeben. Ergebnisse wie die Komfortkarte werden Wegstücke zeigen, zusammengefasst aus vielen Fahrten.</p></details>
       </div>
     </div>
   </section>
@@ -250,6 +252,7 @@
   </div>
 </footer>
 
+<script src="/trace-data.js"></script>
 <script src="/site.js"></script>
 </body>
 </html>
