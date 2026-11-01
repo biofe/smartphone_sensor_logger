@@ -47,8 +47,6 @@ class UiState {
     var autoUpload by mutableStateOf(false)
     var detailedPoll by mutableStateOf(false)
     var keepScreenOn by mutableStateOf(false)
-    /** Non-undone taps per [Labels.Choice.key] on the running ride */
-    var labelCounts by mutableStateOf<Map<String, Int>>(emptyMap())
     /** The last poll tap, shown with Undo for a few seconds */
     var lastTap by mutableStateOf<Labels.Tap?>(null)
     var lastTapUndone by mutableStateOf(false)
@@ -186,7 +184,6 @@ class MainActivity : ComponentActivity() {
         if (changed) {
             applyRideWindow()
             ui.lastTap = null
-            ui.labelCounts = s.rideDir?.takeIf { s.recording }?.let { Labels.counts(it) } ?: emptyMap()
         }
         ui.autoStopped = s.autoStopped
         if (!s.recording) {
@@ -270,7 +267,6 @@ class MainActivity : ComponentActivity() {
     private fun tapLabel(choice: Labels.Choice) {
         val tap = Labels.tapLive(choice) ?: return
         buzz(VibrationEffect.EFFECT_CLICK)
-        ui.labelCounts = ui.labelCounts + (choice.key to (ui.labelCounts[choice.key] ?: 0) + 1)
         showTap(tap, undone = false)
     }
 
@@ -279,7 +275,6 @@ class MainActivity : ComponentActivity() {
         if (ui.lastTapUndone) return
         Labels.undo(tap)
         buzz(VibrationEffect.EFFECT_DOUBLE_CLICK)
-        ui.labelCounts = ui.labelCounts + (tap.choice.key to ((ui.labelCounts[tap.choice.key] ?: 1) - 1).coerceAtLeast(0))
         showTap(tap, undone = true)
     }
 

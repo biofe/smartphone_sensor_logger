@@ -85,14 +85,4 @@ object Labels {
         lines[i] = lines[i] + "1"
         file.writeText(lines.joinToString("\n", postfix = "\n"))
     }
-
-    /** Taps per [Choice.key] that weren't undone, for the counters on the buttons. */
-    fun counts(ride: File): Map<String, Int> {
-        val file = File(ride, FILE)
-        if (!file.exists()) return emptyMap()
-        return file.readLines().drop(1).mapNotNull { line ->
-            val c = line.split(',')
-            if (c.size < 8 || c[7] == "1") null else "${c[5]}/${c[6]}"
-        }.groupingBy { it }.eachCount()
-    }
 }

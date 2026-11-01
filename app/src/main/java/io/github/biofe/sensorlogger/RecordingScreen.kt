@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -116,7 +115,7 @@ private fun PollGrid(ui: UiState, actions: AppActions, modifier: Modifier) {
             Row(Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 row.choices.forEach { choice ->
                     PollTile(
-                        title, choice, ui.labelCounts[choice.key] ?: 0, flash == choice.key,
+                        title, choice, flash == choice.key,
                         Modifier.weight(1f).fillMaxHeight(),
                     ) { actions.tapLabel(choice) }
                 }
@@ -126,12 +125,12 @@ private fun PollGrid(ui: UiState, actions: AppActions, modifier: Modifier) {
 }
 
 @Composable
-private fun PollTile(category: String, choice: Labels.Choice, count: Int, flashing: Boolean, modifier: Modifier, onTap: () -> Unit) {
+private fun PollTile(category: String, choice: Labels.Choice, flashing: Boolean, modifier: Modifier, onTap: () -> Unit) {
     val colors = MaterialTheme.colorScheme
     val bg by animateColorAsState(if (flashing) colors.primary else colors.surfaceContainerHigh, label = "tile")
     val fg = if (flashing) colors.onPrimary else colors.onSurface
     val label = stringResource(choice.label)
-    val description = stringResource(R.string.poll_count, category, label, count)
+    val description = "$category: $label"
     Surface(
         onClick = onTap,
         modifier = modifier.semantics { contentDescription = description },
@@ -151,15 +150,6 @@ private fun PollTile(category: String, choice: Labels.Choice, count: Int, flashi
                     label, style = MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center,
                     maxLines = 2, lineHeight = 16.sp,
                 )
-            }
-            if (count > 0) {
-                Box(
-                    Modifier.align(Alignment.TopEnd).padding(6.dp).sizeIn(minWidth = 20.dp).height(20.dp)
-                        .clip(CircleShape).background(colors.primary).padding(horizontal = 5.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(count.toString(), style = MaterialTheme.typography.labelSmall, color = colors.onPrimary)
-                }
             }
         }
     }
