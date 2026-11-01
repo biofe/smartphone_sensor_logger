@@ -48,18 +48,16 @@
 
       <figure class="trace" aria-labelledby="trace-cap">
         <div class="trace-head">
-          <span class="num">vibration 3–8 Hz per 100 m · dB vs. same speed</span>
-          <span id="trace-cap">One real test ride: 9.9 km, phone on the handlebar</span>
+          <span class="num">vibration 3–8 Hz per 100 m</span>
+          <span id="trace-cap">Test ride with phone on the handlebar</span>
         </div>
-        <canvas id="trace" data-labels="concrete slabs=concrete slabs|compacted gravel=gravel" role="img" aria-label="Vibration along a 9.9 km test ride, corrected for speed: below average on most asphalt, about 10 dB above average after the concrete slab rating near km 2.3, and about 8 dB above average around the gravel ratings near km 5.4 to 5.7."></canvas>
+        <canvas id="trace" data-labels="concrete slabs=concrete slabs|compacted gravel=gravel|asphalt=asphalt" data-axis="rel. dB|average" role="img" aria-label="Vibration along a 9.9 km test ride, corrected for speed: below average on most asphalt, about 10 dB above average after the concrete slab rating near km 2.3, and about 8 dB above average around the gravel rating near km 5.4."></canvas>
         <div class="trace-foot">
           <div class="legend">
             <span><i style="background: var(--teal)"></i>smooth</span>
             <span><i style="background: var(--rough)"></i>rough</span>
-            <span>┆ rider's rating</span>
-            <span>up = rougher, down = smoother</span>
           </div>
-          <span>Around the gravel ratings: <span class="num">+8 dB</span>. Asphalt before it: <span class="num">−6 dB</span>. Some rough patches have no rating yet.</span>
+          <span>Gravel: <span class="num">+8 dB</span>. Asphalt before it: <span class="num">−6 dB</span>. Some rough patches have no rating yet.</span>
         </div>
       </figure>
     </div>

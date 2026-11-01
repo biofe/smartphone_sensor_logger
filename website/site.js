@@ -42,21 +42,37 @@
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, w, h);
     var teal = css('--teal'), rough = css('--rough'), muted = css('--muted'), line = css('--line'), ink = css('--ink');
-    var left = 2, right = w - 2, top = 22, bottom = h - 18, mid = (top + bottom) / 2;
+    var axisW = 58, left = axisW, right = w - 2, top = w < 600 ? 34 : 22, bottom = h - 18, mid = (top + bottom) / 2;
     var x = function (km) { return left + (km / maxKm) * (right - left); };
     var y = function (db) { return mid - (db / maxDb) * (bottom - top) / 2; };
     ctx.font = '11px ' + css('--font-mono');
 
+    // Vertical axis: relative dB, 0 = the ride's average at the same speed
+    var yLabels = (canvas.getAttribute('data-axis') || 'rel. dB|average').split('|');
+    ctx.fillStyle = muted; ctx.strokeStyle = line; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(left - 0.5, top); ctx.lineTo(left - 0.5, bottom); ctx.stroke();
+    [-10, 10].forEach(function (v) {
+      if (Math.abs(v) > maxDb) return;
+      var ty = Math.round(y(v)) + 0.5;
+      ctx.beginPath(); ctx.moveTo(left - 4, ty); ctx.lineTo(left, ty); ctx.stroke();
+      var t = (v > 0 ? '+' : '−') + Math.abs(v), tw = ctx.measureText(t).width;
+      ctx.fillText(t, left - 6 - tw, ty + 4);
+    });
+    var aw = ctx.measureText(yLabels[1]).width;
+    ctx.fillText(yLabels[1], left - 6 - aw, Math.round(mid) + 4);
+    ctx.fillText(yLabels[0], 0, top - 8);
+
     // The rider's surface ratings: a dashed line, labelled where it isn't plain asphalt
-    var lastLabelEnd = -1;
+    var rowEnd = [-1, -1];
     data.marks.forEach(function (m) {
-      var mx = Math.round(x(m.km)) + 0.5, special = m.surface !== 'asphalt';
+      var mx = Math.round(x(m.km)) + 0.5, special = true;
       ctx.strokeStyle = special ? muted : line; ctx.lineWidth = 1; ctx.setLineDash([2, 3]);
       ctx.beginPath(); ctx.moveTo(mx, top - 4); ctx.lineTo(mx, bottom); ctx.stroke(); ctx.setLineDash([]);
       if (special) {
         var label = names[m.surface] || m.surface, tw = ctx.measureText(label).width;
         var lx = Math.min(mx + 3, right - tw);
-        if (lx > lastLabelEnd + 6) { ctx.fillStyle = ink; ctx.fillText(label, lx, 12); lastLabelEnd = lx + tw; }
+        var row = lx > rowEnd[0] + 6 ? 0 : 1;
+        ctx.fillStyle = ink; ctx.fillText(label, lx, 12 + row * 12); rowEnd[row] = lx + tw;
       }
     });
 
