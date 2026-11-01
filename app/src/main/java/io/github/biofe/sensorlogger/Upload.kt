@@ -241,10 +241,12 @@ object Upload {
             if (only != null && ride.name !in only || !labelsPending(ride)) continue
             if (stopRequested) return false
             val mtime = labelsMtime(ride)
-            val (name, body) = Exporter.trimmedLabels(ride) ?: run {
+            val trimmed = Exporter.trimmedLabels(ride)
+            if (trimmed == null) {
                 markLabelsSent(ride, mtime) // nothing inside the privacy window
                 continue
             }
+            val (name, body) = trimmed
             val answer = try {
                 send(context, "PUT", "/v1/rides/$name/labels", body, "text/csv")
             } catch (e: IOException) {
