@@ -6,7 +6,8 @@ data_dir/
     set_aside/<install>/<ride>.zip    quarantined rides of a blocked install
     rejected/<install>/<time>-<ride>.zip   failed a check, kept for a while to see why
     map_annotations/<install>.csv     the install's latest map annotations
-    (each ride ZIP has a <ride>.json check report next to it)
+    (each ride ZIP has a <ride>.json check report next to it, and <ride>.labels.csv when the
+    rider annotated the ride after uploading it; it replaces the labels.csv inside the ZIP)
 """
 
 import hashlib
@@ -15,6 +16,7 @@ import json
 import shutil
 import sqlite3
 import time
+import zipfile
 from pathlib import Path
 
 from .config import Settings
@@ -172,7 +174,8 @@ class Store:
         src = self.path(src_state, install_id, ride_name)
         dst = self.path(dst_state, install_id, ride_name)
         dst.parent.mkdir(parents=True, exist_ok=True)
-        for s, d in ((src, dst), (src.with_suffix(".json"), dst.with_suffix(".json"))):
+        for s, d in ((src, dst), (src.with_suffix(".json"), dst.with_suffix(".json")),
+                     (src.with_suffix(".labels.csv"), dst.with_suffix(".labels.csv"))):
             if s.exists():
                 s.replace(d)
         self.db.execute(
@@ -192,6 +195,18 @@ class Store:
                 "SELECT * FROM rides WHERE state = 'quarantine' AND install_id = ? ORDER BY received_utc", (install_id,)
             ).fetchall()
         return self.db.execute("SELECT * FROM rides WHERE state = 'quarantine' ORDER BY received_utc").fetchall()
+
+    def window(self, row) -> tuple[int, int]:
+        """The kept time window of a stored ride, from its meta.json."""
+        with zipfile.ZipFile(self.path(row["state"], row["install_id"], row["ride_name"])) as zf:
+            meta = json.loads(zf.read(f"{row['ride_name']}/meta.json"))
+        return meta["kept_from_utc_ms"], meta["kept_to_utc_ms"]
+
+    def save_labels(self, row, data: bytes):
+        target = self.path(row["state"], row["install_id"], row["ride_name"]).with_suffix(".labels.csv")
+        tmp = target.with_suffix(".tmp")
+        tmp.write_bytes(data)
+        tmp.replace(target)
 
     # --- rejections ---
 

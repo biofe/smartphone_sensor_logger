@@ -92,19 +92,22 @@ fun RecordingScreen(ui: UiState, actions: AppActions) {
             Text(it, color = LocalVelowind.current.warn, style = MaterialTheme.typography.bodyMedium)
         }
 
-        PollGrid(ui, actions, Modifier.weight(1f))
-        PollStatus(ui, actions)
+        PollGrid(ui.lastTap, ui.lastTapUndone, actions.tapLabel, Modifier.weight(1f))
+        PollStatus(ui.lastTap, ui.lastTapUndone, actions.undoLabel)
         HoldToStopButton(onStop = actions.stopRide)
     }
 }
 
-/** The 12 poll buttons in rows of 4, 3, 3 and 2; the tapped one flashes briefly. */
+/**
+ * The 12 poll buttons in rows of 4, 3, 3 and 2; the tapped one flashes briefly. Used during the
+ * ride and when annotating a ride later.
+ */
 @Composable
-private fun PollGrid(ui: UiState, actions: AppActions, modifier: Modifier) {
+fun PollGrid(lastTap: Labels.Tap?, lastTapUndone: Boolean, onTap: (Labels.Choice) -> Unit, modifier: Modifier) {
     var flash by remember { mutableStateOf<String?>(null) }
-    LaunchedEffect(ui.lastTap) {
-        val tap = ui.lastTap ?: return@LaunchedEffect
-        if (ui.lastTapUndone) return@LaunchedEffect
+    LaunchedEffect(lastTap) {
+        val tap = lastTap ?: return@LaunchedEffect
+        if (lastTapUndone) return@LaunchedEffect
         flash = tap.choice.key
         delay(FLASH_MS)
         flash = null
@@ -117,7 +120,7 @@ private fun PollGrid(ui: UiState, actions: AppActions, modifier: Modifier) {
                     PollTile(
                         title, choice, flash == choice.key,
                         Modifier.weight(1f).fillMaxHeight(),
-                    ) { actions.tapLabel(choice) }
+                    ) { onTap(choice) }
                 }
             }
         }
@@ -157,25 +160,25 @@ private fun PollTile(category: String, choice: Labels.Choice, flashing: Boolean,
 
 /** What the last tap saved, with Undo for a few seconds; otherwise a one-line hint. */
 @Composable
-private fun PollStatus(ui: UiState, actions: AppActions) {
-    val tap = ui.lastTap
+fun PollStatus(lastTap: Labels.Tap?, lastTapUndone: Boolean, onUndo: () -> Unit, hint: String = stringResource(R.string.poll_hint)) {
+    val tap = lastTap
     Row(
         Modifier.fillMaxWidth().height(40.dp).semantics { liveRegion = LiveRegionMode.Polite },
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (tap == null) {
             Text(
-                stringResource(R.string.poll_hint), style = MaterialTheme.typography.bodyMedium,
+                hint, style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         } else {
             val label = stringResource(tap.choice.label)
             Text(
-                stringResource(if (ui.lastTapUndone) R.string.poll_undone else R.string.poll_saved, label),
+                stringResource(if (lastTapUndone) R.string.poll_undone else R.string.poll_saved, label),
                 style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f),
             )
-            if (!ui.lastTapUndone) {
-                TextButton(onClick = actions.undoLabel) {
+            if (!lastTapUndone) {
+                TextButton(onClick = onUndo) {
                     Icon(VelowindIcons.Undo, contentDescription = null, modifier = Modifier.size(18.dp))
                     HGap(6.dp)
                     Text(stringResource(R.string.undo))

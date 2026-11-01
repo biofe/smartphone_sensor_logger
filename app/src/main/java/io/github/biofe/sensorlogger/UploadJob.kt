@@ -12,6 +12,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.os.PersistableBundle
 
 /**
  * Uploads in the background, so they carry on with the app closed.
@@ -33,9 +34,10 @@ class UploadJob : JobService() {
             // An automatic upload may be running (or stuck in a frozen app): let it stop after its ride, then take over
             Upload.requestStop()
         }
+        val only = params.extras.getStringArray(EXTRA_ONLY)?.toSet()
         worker = Thread {
             val summary = runCatching {
-                Upload.uploadAll(this, waitMs = if (now) TAKE_OVER_WAIT_MS else 0) { done, total ->
+                Upload.uploadAll(this, waitMs = if (now) TAKE_OVER_WAIT_MS else 0, only = only) { done, total ->
                     if (now && done < total) notify(params, "Ride ${done + 1} of $total", done, total)
                 }
             }.getOrNull()
@@ -98,6 +100,7 @@ class UploadJob : JobService() {
         private const val PERIODIC = 2
         private const val NOW = 3
         private const val CHANNEL_ID = "upload"
+        private const val EXTRA_ONLY = "only"
         private const val NOTIFICATION_ID = 2
 
         /** One ride takes seconds on Wi-Fi; two minutes cover a slow connection. */
@@ -134,10 +137,14 @@ class UploadJob : JobService() {
             }
         }
 
-        /** "Upload now": runs at once on any network and keeps going with the app closed. Call while the app is open. */
-        fun uploadNow(context: Context) {
+        /**
+         * "Upload now": runs at once on any network and keeps going with the app closed. Call while
+         * the app is open. [only]: the ride folders the rider picked; null uploads everything waiting.
+         */
+        fun uploadNow(context: Context, only: List<String>? = null) {
             val builder = JobInfo.Builder(NOW, ComponentName(context, UploadJob::class.java))
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                .setExtras(PersistableBundle().apply { if (only != null) putStringArray(EXTRA_ONLY, only.toTypedArray()) })
                 .setBackoffCriteria(30 * 1000L, JobInfo.BACKOFF_POLICY_EXPONENTIAL)
             val scheduler = context.getSystemService(JobScheduler::class.java)
             // Tapped again while it runs: scheduling the same id would stop it

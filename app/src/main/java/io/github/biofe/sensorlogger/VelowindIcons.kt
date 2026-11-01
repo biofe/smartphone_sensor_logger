@@ -69,6 +69,10 @@ object VelowindIcons {
     val Map = icon("map", "M12 21s-6-5.5-6-11a6 6 0 1 1 12 0c0 5.5-6 11-6 11z", circle(12f, 10f, 2f))
     val Pin = icon("pin", "M12 21s-6-5.5-6-11a6 6 0 1 1 12 0c0 5.5-6 11-6 11z")
     val Stop = icon("stop", "M6 6h12v12H6z")
+    val Delete = icon("delete", "M4 7h16M9.5 7V4h5v3M6 7l1 13h10l1-13M10 11v5M14 11v5")
+    val Download = icon("download", "M12 4v11M7 10l5 5 5-5M5 20h14")
+    val Route = icon("route", circle(6f, 18f, 2f) + circle(18f, 6f, 2f), "M8 18h6.5a3 3 0 0 0 0-6h-5a3 3 0 0 1 0-6H16")
+    val Close = icon("close", "M6 6l12 12M18 6L6 18")
     val Undo = icon("undo", "M9 14L4 9l5-5", "M4 9h10.5a5.5 5.5 0 0 1 0 11H11")
 
     // Poll buttons: a wheel on the ground for surface, the way's edges for width

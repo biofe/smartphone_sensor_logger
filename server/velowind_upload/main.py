@@ -176,6 +176,33 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         log.info("stored %s/%s (%d bytes) in %s", install_id[:8], ride_name, received, state)
         return _answer(201, "stored")
 
+    @app.put("/v1/rides/{ride_name}/labels")
+    async def upload_labels(ride_name: str, request: Request):
+        install_id, row = guard(request, register=False)
+        if row is None:
+            return _answer(401, "unauthorized", "Unknown install")
+        if row["trust"] == "blocked":
+            return _answer(403, "blocked", "This install may not upload")
+        ride = store.ride(install_id, ride_name)
+        if ride is None:
+            return _answer(404, "unknown_ride", "The server doesn't have this ride")
+        data = b""
+        async for chunk in request.stream():
+            data += chunk
+            if len(data) > settings.max_labels_bytes:
+                return _answer(413, "rejected", "Labels are too large")
+        try:
+            t0, t1 = store.window(ride)
+            count = checks.check_labels(data, t0, t1)
+        except checks.Rejected as e:
+            # No ride name on the row: a refused label file mustn't count as a refused ride upload
+            store.reject(install_id, None, request.headers.get("x-app-version", "")[:20], 400, e.reason,
+                         f"labels of {ride_name}: {e.details}", None, len(data))
+            return _answer(400, "rejected", e.reason)
+        store.save_labels(ride, data)
+        log.info("stored %d labels for %s/%s", count, install_id[:8], ride_name)
+        return _answer(200, "stored")
+
     @app.put("/v1/map-annotations")
     async def upload_map_annotations(request: Request):
         install_id, row = guard(request, register=True)

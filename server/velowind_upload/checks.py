@@ -321,6 +321,23 @@ def _distance_m(a, b) -> float:
     return 2 * 6_371_000 * math.asin(math.sqrt(h))
 
 
+def check_labels(data: bytes, t0: int, t1: int) -> int:
+    """Poll taps sent again after the ride was uploaded (the rider annotated it later). Returns the row count."""
+    name = "labels.csv"
+    try:
+        rows = [r for r in csv.reader(io.StringIO(data.decode("utf-8"))) if r]
+    except (UnicodeDecodeError, csv.Error) as e:
+        raise Rejected(f"{name} can't be read", str(e)[:200])
+    if not rows:
+        raise Rejected(f"{name} is empty")
+    _check_header(name, rows[0])
+    if len(rows) - 1 > MAX_LABELS:
+        raise Rejected("Too many labels", f"more than {MAX_LABELS}")
+    for i, row in enumerate(rows[1:], 1):
+        _check_label(row, i, len(rows[0]), t0, t1)
+    return len(rows) - 1
+
+
 MAP_ANNOTATION_ROWS = 5000
 
 

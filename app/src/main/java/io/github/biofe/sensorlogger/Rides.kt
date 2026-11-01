@@ -91,7 +91,7 @@ object Rides {
     private fun colorForType(context: Context, type: String): Int? =
         Bikes.list(context).firstOrNull { it.type == type }?.color
 
-    private fun track(ride: File): List<GeoPoint> {
+    fun track(ride: File): List<GeoPoint> {
         val gps = File(ride, GPS_FILE)
         if (!gps.exists()) return emptyList()
         return gps.useLines { lines ->

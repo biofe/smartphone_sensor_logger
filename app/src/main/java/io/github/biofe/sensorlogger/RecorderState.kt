@@ -9,8 +9,7 @@ object RecorderState {
     @Volatile var gyroSamples = 0L
     @Volatile var pressureSamples = 0L
     @Volatile var gpsFixes = 0L
-    @Volatile var annotations = 0
-    /** Last GPS fix, for annotations */
+    /** Last GPS fix (lat, lon, accuracy), for poll taps */
     @Volatile var lastFix: DoubleArray? = null
     @Volatile var soundFrames = 0L
     @Volatile var lastGpsAccuracyM = Float.NaN
@@ -30,7 +29,6 @@ object RecorderState {
         gyroSamples = 0
         pressureSamples = 0
         gpsFixes = 0
-        annotations = 0
         lastFix = null
         soundFrames = 0
         lastGpsAccuracyM = Float.NaN

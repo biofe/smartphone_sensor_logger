@@ -73,6 +73,23 @@ object Labels {
         file.appendText(row.joinToString(",") + "\n")
     }
 
+    /** A stored tap, for showing it on the map. */
+    class Saved(val tMs: Long, val lat: Double?, val lon: Double?, val source: String, val key: String)
+
+    /** The ride's taps that weren't undone. */
+    fun read(ride: File): List<Saved> {
+        val file = File(ride, FILE)
+        if (!file.exists()) return emptyList()
+        return file.readLines().drop(1).mapNotNull { line ->
+            val c = line.split(',')
+            val t = c.getOrNull(0)?.toLongOrNull()
+            if (c.size < 8 || t == null || c[7] == "1") null
+            else Saved(t, c[1].toDoubleOrNull(), c[2].toDoubleOrNull(), c[4], "${c[5]}/${c[6]}")
+        }
+    }
+
+    fun choice(key: String): Choice? = ROWS.flatMap { it.choices }.firstOrNull { it.key == key }
+
     /** Marks the tap as undone; the row stays, so the analysis can see what happened. */
     @Synchronized
     fun undo(tap: Tap) {

@@ -20,7 +20,6 @@
     <string name="my_rides">My rides</string>
     <string name="see_all">See all %1$d</string>
     <string name="no_rides_yet">No rides yet. Tap a bike above to record your first one.</string>
-    <string name="annotate_on_map">Annotate on the map</string>
     <string name="date_today">Today, %1$s</string>
     <string name="date_yesterday">Yesterday, %1$s</string>
     <plurals name="rides">
@@ -73,6 +72,43 @@
     <string name="sensor_baro">Baro</string>
     <string name="location_needed">Precise location is needed to record a ride.</string>
 
+    <!-- Ride list -->
+    <plurals name="selected_n">
+        <item quantity="one">%1$d selected</item>
+        <item quantity="other">%1$d selected</item>
+    </plurals>
+    <string name="select_all">Select all</string>
+    <string name="select_none">Select none</string>
+    <string name="tap_to_select">Tap rides to select them.</string>
+    <string name="action_annotate">Annotate</string>
+    <string name="action_upload">Upload</string>
+    <string name="action_gpx">GPX</string>
+    <string name="action_zip">ZIP</string>
+    <string name="action_delete">Delete</string>
+    <string name="nothing_to_upload">Nothing to upload: these rides are uploaded already or too short.</string>
+    <string name="export_failed">Export failed: %1$s</string>
+    <string name="no_gps_points">These rides have no GPS points.</string>
+    <string name="share_tracks">Open or send tracks</string>
+    <plurals name="gpx_saved">
+        <item quantity="one">Full track saved to Downloads/BikeSensorLogger</item>
+        <item quantity="other">%1$d full tracks saved to Downloads/BikeSensorLogger</item>
+    </plurals>
+    <plurals name="delete_rides_question">
+        <item quantity="one">Delete this ride from the phone?</item>
+        <item quantity="other">Delete %1$d rides from the phone?</item>
+    </plurals>
+
+    <!-- Annotating a ride afterwards -->
+    <string name="annotate_title">Annotate ride</string>
+    <string name="annotate_hint">Tap the track where you noticed something. The grey dashed ends stay on your phone and can\'t be annotated.</string>
+    <string name="annotate_nothing_kept">This ride is too short: nothing is left once its start and end are hidden.</string>
+    <string name="annotate_spot_at">Spot passed at %1$s · %2$s</string>
+    <string name="annotate_poll_hint">Tap what applied here. You can tap several.</string>
+    <string name="annotate_tap_track">Tap closer to the coloured track</string>
+    <string name="annotate_during_ride">during the ride</string>
+    <string name="annotate_later">added later</string>
+    <string name="close">Close</string>
+
     <!-- Settings -->
     <string name="upload">Upload</string>
     <string name="upload_auto">Upload automatically on Wi-Fi</string>
@@ -94,9 +130,6 @@
     <string name="during_rides">During rides</string>
     <string name="keep_screen_on">Keep the screen on</string>
     <string name="keep_screen_on_note">Uses more battery. The ride screen also shows over the lock screen, so the poll is one tap away.</string>
-    <string name="annotating">Annotating</string>
-    <string name="detailed_poll">Detailed poll</string>
-    <string name="detailed_poll_note">Adds type of way, exact surface, sounds and a note</string>
     <string name="privacy_storage">Privacy and storage</string>
     <string name="what_is_sent">What is sent, and what isn\'t</string>
     <string name="phone_id">Phone ID</string>

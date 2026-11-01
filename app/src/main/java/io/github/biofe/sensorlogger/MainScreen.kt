@@ -21,7 +21,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -92,21 +91,12 @@ fun MainScreen(ui: UiState, actions: AppActions) {
                 )
             }
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                ui.rides.take(3).forEach { ride -> RideRow(ride) { actions.rideActions(ride.dir) } }
+                ui.rides.take(3).forEach { ride -> RideRow(ride) { actions.openRide(ride.dir) } }
             }
             Text(
                 ui.uploadLine, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 8.dp),
             )
-        }
-
-        OutlinedButton(
-            onClick = actions.openMap,
-            modifier = Modifier.padding(start = 16.dp, top = 12.dp),
-        ) {
-            Icon(VelowindIcons.Map, contentDescription = null, modifier = Modifier.size(18.dp))
-            HGap(8.dp)
-            Text(stringResource(R.string.annotate_on_map))
         }
     }
 }

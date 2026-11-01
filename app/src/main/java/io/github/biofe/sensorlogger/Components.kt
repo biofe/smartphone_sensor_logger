@@ -4,6 +4,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -19,6 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -33,6 +35,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.ui.semantics.semantics
@@ -75,16 +78,30 @@ fun SectionCard(title: String?, modifier: Modifier = Modifier, content: @Composa
     }
 }
 
-/** One ride: bike badge, date, distance · duration · size, and its upload state. */
+/**
+ * One ride: bike badge, date, distance · duration · size, and its upload state. With [selected]
+ * not null the row is part of a selection: a tap toggles it and a tick replaces the badge.
+ */
 @Composable
-fun RideRow(ride: Rides.Info, onClick: () -> Unit) {
+fun RideRow(ride: Rides.Info, selected: Boolean? = null, onClick: () -> Unit) {
     val tint = LocalVelowind.current.bike(ride.color).tint
+    val shape = RoundedCornerShape(16.dp)
+    val click = if (selected == null) Modifier.clickable(onClick = onClick)
+    else Modifier.toggleable(value = selected, role = Role.Checkbox, onValueChange = { onClick() })
     Row(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(tint).clickable(onClick = onClick).padding(12.dp),
+        Modifier.fillMaxWidth().clip(shape).background(tint)
+            .then(if (selected == true) Modifier.border(2.dp, MaterialTheme.colorScheme.primary, shape) else Modifier)
+            .then(click).padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        BikeBadge(ride.bikeType, ride.color)
+        if (selected == true) {
+            Box(Modifier.size(40.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary), contentAlignment = Alignment.Center) {
+                Icon(VelowindIcons.Check, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(24.dp))
+            }
+        } else {
+            BikeBadge(ride.bikeType, ride.color)
+        }
         Column(Modifier.weight(1f)) {
             Text(
                 ride.startedAt?.let { formatRideDate(it) } ?: ride.dir.name,

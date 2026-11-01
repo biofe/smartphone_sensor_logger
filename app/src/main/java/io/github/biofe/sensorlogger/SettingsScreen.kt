@@ -98,10 +98,6 @@ fun SettingsScreen(ui: UiState, actions: AppActions) {
                 SwitchRow(stringResource(R.string.keep_screen_on), stringResource(R.string.keep_screen_on_note), ui.keepScreenOn, actions.setKeepScreenOn)
             }
 
-            SectionCard(stringResource(R.string.annotating)) {
-                SwitchRow(stringResource(R.string.detailed_poll), stringResource(R.string.detailed_poll_note), ui.detailedPoll, actions.setDetailedPoll)
-            }
-
             SectionCard(stringResource(R.string.privacy_storage)) {
                 LinkRow(stringResource(R.string.what_is_sent), onClick = actions.showWhatIsSent)
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)

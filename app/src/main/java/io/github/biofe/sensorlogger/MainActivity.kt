@@ -8,9 +8,6 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.os.VibratorManager
 import android.view.WindowManager
 import android.widget.TextView
 import android.widget.Toast
@@ -45,7 +42,6 @@ class UiState {
     var uploadLine by mutableStateOf("")
     var consented by mutableStateOf(false)
     var autoUpload by mutableStateOf(false)
-    var detailedPoll by mutableStateOf(false)
     var keepScreenOn by mutableStateOf(false)
     /** The last poll tap, shown with Undo for a few seconds */
     var lastTap by mutableStateOf<Labels.Tap?>(null)
@@ -56,6 +52,8 @@ class UiState {
     /** The bike being edited; [BikeEdit.NEW] adds one */
     var bikeEdit by mutableStateOf<BikeEdit?>(null)
     var firstRun by mutableStateOf(false)
+    /** Folder names of the rides picked in the ride list */
+    var selected by mutableStateOf<Set<String>>(emptySet())
 }
 
 enum class Screen { MAIN, SETTINGS, RIDES }
@@ -72,11 +70,17 @@ class AppActions(
     val stopRide: () -> Unit,
     val tapLabel: (Labels.Choice) -> Unit,
     val undoLabel: () -> Unit,
-    val openMap: () -> Unit,
     val openSettings: () -> Unit,
     val openRides: () -> Unit,
     val back: () -> Unit,
-    val rideActions: (File) -> Unit,
+    /** From the main screen: the ride list with this ride picked */
+    val openRide: (File) -> Unit,
+    val selectRides: (Set<String>) -> Unit,
+    val annotateRide: (File) -> Unit,
+    val uploadRides: (List<File>) -> Unit,
+    val gpxRides: (List<File>) -> Unit,
+    val zipRides: (List<File>) -> Unit,
+    val deleteRides: (List<File>) -> Unit,
     val addBike: () -> Unit,
     val editBike: (Bikes.Bike) -> Unit,
     val installUpdate: () -> Unit,
@@ -86,7 +90,6 @@ class AppActions(
     val showWhatIsSent: () -> Unit,
     val deleteServerData: () -> Unit,
     val exportAll: () -> Unit,
-    val setDetailedPoll: (Boolean) -> Unit,
     val setKeepScreenOn: (Boolean) -> Unit,
 )
 
@@ -116,21 +119,25 @@ class MainActivity : ComponentActivity() {
         stopRide = ::stopRecording,
         tapLabel = ::tapLabel,
         undoLabel = ::undoLabel,
-        openMap = { startActivity(Intent(this, MapActivity::class.java)) },
         openSettings = { ui.screen = Screen.SETTINGS },
-        openRides = { ui.screen = Screen.RIDES },
-        back = { ui.screen = Screen.MAIN },
-        rideActions = ::rideActions,
+        openRides = { ui.selected = emptySet(); ui.screen = Screen.RIDES },
+        back = { ui.selected = emptySet(); ui.screen = Screen.MAIN },
+        openRide = { ui.selected = setOf(it.name); ui.screen = Screen.RIDES },
+        selectRides = { ui.selected = it },
+        annotateRide = { AnnotateActivity.open(this, it) },
+        uploadRides = { uploadNow(it) },
+        gpxRides = ::exportGpx,
+        zipRides = { export(it) },
+        deleteRides = ::confirmDelete,
         addBike = { ui.bikeEdit = BikeEdit.NEW },
         editBike = { ui.bikeEdit = BikeEdit(it) },
         installUpdate = { Updater.available(this)?.let { Updater.offer(this, it) } },
         checkForUpdates = ::checkForUpdate,
-        uploadNow = ::uploadNow,
+        uploadNow = { uploadNow() },
         setAutoUpload = { Upload.setAuto(this, it); renderUpload() },
         showWhatIsSent = { askConsent {} },
         deleteServerData = ::confirmServerDelete,
         exportAll = { export(Rides.list(this)) },
-        setDetailedPoll = { AnnotationPoll.setDetailed(this, it); ui.detailedPoll = it },
         setKeepScreenOn = {
             getSharedPreferences(PREFS, MODE_PRIVATE).edit().putBoolean(KEY_SCREEN_ON, it).apply()
             ui.keepScreenOn = it
@@ -143,7 +150,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         ui.bikes = Bikes.list(this)
         ui.firstRun = ui.bikes.isEmpty()
-        ui.detailedPoll = AnnotationPoll.detailed(this)
         ui.keepScreenOn = getSharedPreferences(PREFS, MODE_PRIVATE).getBoolean(KEY_SCREEN_ON, false)
         ui.installId = Upload.shortInstallId(this)
         ui.versionName = packageManager.getPackageInfo(packageName, 0).versionName ?: "?"
@@ -266,7 +272,7 @@ class MainActivity : ComponentActivity() {
 
     private fun tapLabel(choice: Labels.Choice) {
         val tap = Labels.tapLive(choice) ?: return
-        buzz(VibrationEffect.EFFECT_CLICK)
+        Haptics.tap(this)
         showTap(tap, undone = false)
     }
 
@@ -274,7 +280,7 @@ class MainActivity : ComponentActivity() {
         val tap = ui.lastTap ?: return
         if (ui.lastTapUndone) return
         Labels.undo(tap)
-        buzz(VibrationEffect.EFFECT_DOUBLE_CLICK)
+        Haptics.undo(this)
         showTap(tap, undone = true)
     }
 
@@ -287,16 +293,6 @@ class MainActivity : ComponentActivity() {
     }
 
     private val clearTap = Runnable { ui.lastTap = null }
-
-    private fun buzz(effect: Int) {
-        val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            getSystemService(VibratorManager::class.java).defaultVibrator
-        } else {
-            @Suppress("DEPRECATION")
-            getSystemService(Vibrator::class.java)
-        }
-        vibrator?.vibrate(VibrationEffect.createPredefined(effect))
-    }
 
     private fun stopRecording() {
         startService(Intent(this, RecordingService::class.java).setAction(RecordingService.ACTION_STOP))
@@ -453,12 +449,18 @@ class MainActivity : ComponentActivity() {
             .show()
     }
 
-    private fun uploadNow() {
+    /** [only]: the rides picked in the ride list; null uploads everything waiting. */
+    private fun uploadNow(only: List<File>? = null) {
         if (!Upload.consented(this)) {
-            askConsent { uploadNow() }
+            askConsent { uploadNow(only) }
             return
         }
-        val waiting = Upload.pending(this)
+        val names = only?.map { it.name }
+        val waiting = Upload.pending(this, names?.toSet())
+        if (only != null && waiting.isEmpty() && only.none { Upload.labelsPending(it) }) {
+            Toast.makeText(this, R.string.nothing_to_upload, Toast.LENGTH_SHORT).show()
+            return
+        }
         val network = getSystemService(android.net.ConnectivityManager::class.java)
         if (network.activeNetwork == null) {
             Toast.makeText(this, "No internet connection.", Toast.LENGTH_SHORT).show()
@@ -469,22 +471,22 @@ class MainActivity : ComponentActivity() {
             val mb = waiting.sumOf { r -> r.walkTopDown().filter { it.isFile }.sumOf { it.length() } } / 3 / 1_000_000
             AlertDialog.Builder(this)
                 .setMessage("You're not on Wi-Fi. Upload ${waiting.size} ${if (waiting.size == 1) "ride" else "rides"} (about ${maxOf(mb, 1)} MB) over mobile data?")
-                .setPositiveButton("Upload") { _, _ -> runUpload() }
+                .setPositiveButton("Upload") { _, _ -> runUpload(names) }
                 .setNegativeButton("Wait for Wi-Fi", null)
                 .show()
         } else {
-            runUpload()
+            runUpload(names)
         }
     }
 
-    private fun runUpload() {
-        UploadJob.uploadNow(this)
+    private fun runUpload(only: List<String>?) {
+        UploadJob.uploadNow(this, only)
         Toast.makeText(this, "Uploading in the background; the notification shows how far it got.", Toast.LENGTH_LONG).show()
     }
 
     private fun confirmServerDelete() {
         AlertDialog.Builder(this)
-            .setMessage("Delete every ride and map annotation this phone has sent to the project server? Automatic upload will be turned off. Rides on this phone stay.")
+            .setMessage("Delete every ride and annotation this phone has sent to the project server? Automatic upload will be turned off. Rides on this phone stay.")
             .setPositiveButton("Delete") { _, _ ->
                 Thread {
                     val result = runCatching { Upload.deleteOnServer(this) }
@@ -504,58 +506,40 @@ class MainActivity : ComponentActivity() {
 
     // --- Rides -------------------------------------------------------------------------------
 
-    private fun rideActions(ride: File) {
-        val actions = arrayOf(
-            "Send to the project (privacy-trimmed)",
-            "Export my track as GPX (full, for my own use)",
-            "Delete",
-        )
-        AlertDialog.Builder(this)
-            .setTitle(ride.name)
-            .setItems(actions) { _, which ->
-                when (which) {
-                    0 -> export(listOf(ride))
-                    1 -> exportGpx(ride)
-                    else -> confirmDelete(ride)
-                }
-            }
-            .show()
-    }
-
-    private fun exportGpx(ride: File) {
-        if (RecorderState.recording && RecorderState.rideDir == ride) {
-            Toast.makeText(this, R.string.stop_before_export, Toast.LENGTH_SHORT).show()
-            return
-        }
+    /** The rider's own full tracks (not privacy-trimmed), saved to Downloads and offered for sharing. */
+    private fun exportGpx(rides: List<File>) {
         Thread {
-            val result = runCatching { GpxExporter.export(this, ride) }
+            val result = runCatching { rides.mapNotNull { GpxExporter.export(this, it) } }
             runOnUiThread {
-                val r = result.getOrElse {
-                    Toast.makeText(this, "Export failed: ${it.message}", Toast.LENGTH_LONG).show()
+                val saved = result.getOrElse {
+                    Toast.makeText(this, getString(R.string.export_failed, it.message), Toast.LENGTH_LONG).show()
                     return@runOnUiThread
                 }
-                if (r == null) {
-                    Toast.makeText(this, "This ride has no GPS points.", Toast.LENGTH_SHORT).show()
+                if (saved.isEmpty()) {
+                    Toast.makeText(this, R.string.no_gps_points, Toast.LENGTH_SHORT).show()
                     return@runOnUiThread
                 }
-                Toast.makeText(this, "Saved Downloads/BikeSensorLogger/${r.fileName}", Toast.LENGTH_LONG).show()
-                val share = Intent(Intent.ACTION_SEND)
-                    .setType("application/gpx+xml")
-                    .putExtra(Intent.EXTRA_STREAM, r.uri)
-                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                startActivity(Intent.createChooser(share, "Open or send track"))
+                Toast.makeText(this, resources.getQuantityString(R.plurals.gpx_saved, saved.size, saved.size), Toast.LENGTH_LONG).show()
+                val share = if (saved.size == 1) {
+                    Intent(Intent.ACTION_SEND).putExtra(Intent.EXTRA_STREAM, saved[0].uri)
+                } else {
+                    Intent(Intent.ACTION_SEND_MULTIPLE).putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(saved.map { it.uri }))
+                }
+                share.setType("application/gpx+xml").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                startActivity(Intent.createChooser(share, getString(R.string.share_tracks)))
             }
         }.start()
     }
 
-    private fun confirmDelete(ride: File) {
+    private fun confirmDelete(rides: List<File>) {
         AlertDialog.Builder(this)
-            .setMessage("Delete ride ${ride.name}?")
-            .setPositiveButton("Delete") { _, _ ->
-                ride.deleteRecursively()
+            .setMessage(resources.getQuantityString(R.plurals.delete_rides_question, rides.size, rides.size))
+            .setPositiveButton(R.string.action_delete) { _, _ ->
+                rides.filterNot { RecorderState.recording && RecorderState.rideDir == it }.forEach { it.deleteRecursively() }
+                ui.selected = emptySet()
                 refreshRides()
             }
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton(R.string.cancel, null)
             .show()
     }
 
@@ -593,7 +577,10 @@ fun VelowindApp(
     removeBike: (Bikes.Bike) -> Unit,
     saveFirstBikes: (List<String>) -> Unit,
 ) {
-    BackHandler(enabled = ui.screen != Screen.MAIN && !ui.recording) { actions.back() }
+    BackHandler(enabled = ui.screen != Screen.MAIN && !ui.recording) {
+        // In the ride list, back first drops the selection
+        if (ui.screen == Screen.RIDES && ui.selected.isNotEmpty()) actions.selectRides(emptySet()) else actions.back()
+    }
     Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).safeDrawingPadding()) {
         when {
             ui.recording -> RecordingScreen(ui, actions)
