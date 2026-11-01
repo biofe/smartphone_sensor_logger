@@ -146,7 +146,7 @@ nginx -t && systemctl reload nginx
 
 ## 8. Website: velowind.de
 
-A one-page site for test riders (what Velowind is, privacy, install steps, riding tips) lives in [`website/`](../../website/). It is plain static HTML with no external requests; it only asks `apk.velowind.de/latest.json` for the newest version number (step 7's nginx file allows that with a CORS header; copy it again if your copy predates that line).
+The site for test riders (what Velowind is, privacy, install steps, riding tips; English at `/`, German at `/de/`) lives in [`website/`](../../website/). It is plain static HTML with no external requests; it only asks `apk.velowind.de/latest.json` for the newest version number (step 7's nginx file allows that with a CORS header; copy it again if your copy predates that line).
 
 Point `velowind.de` and `www.velowind.de` at the VPS (A/AAAA records), then:
 
@@ -154,11 +154,11 @@ Point `velowind.de` and `www.velowind.de` at the VPS (A/AAAA records), then:
 certbot certonly --nginx -d velowind.de -d www.velowind.de
 mkdir -p /srv/velowind/www
 cp -r website/. /srv/velowind/www/
-cp deploy/nginx-www.conf /etc/nginx/sites-available/velowind.de
+cp server/deploy/nginx-www.conf /etc/nginx/sites-available/velowind.de
 ln -s /etc/nginx/sites-available/velowind.de /etc/nginx/sites-enabled/
 nginx -t && systemctl reload nginx
 ```
 
-(Run the `cp` lines from the repo root, so `website/` and `server/deploy/` resolve; adjust paths if you work from `server/`.) To update the site later, pull and copy `website/` again; no reload needed.
+Run these from the repo root. To update the site later, pull and copy `website/` again; no reload needed.
 
-Before sharing the link, fill in the contact address in the footer of `website/index.html`, and add a privacy notice if your situation needs one (the upload server logs IP addresses for 7 days).
+The contact address in the footers is put together by `site.js`, so it isn't in the HTML for address harvesters; change it there and in both footers.

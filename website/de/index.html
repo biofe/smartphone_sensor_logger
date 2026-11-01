@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Velowind</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Velowind zeigt, wie sich Radwege fahren: Belag, Lärm und Verkehr, gemessen mit den Handys der Fahrenden. Ein Data-Science-Projekt, offen für Testfahrende.">
+<link rel="alternate" hreflang="de" href="https://velowind.de/de/">
+<link rel="alternate" hreflang="en" href="https://velowind.de/">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#">
+      <span class="brand-mark" aria-hidden="true">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2,16a3.5,3.5 0,1 0,7 0a3.5,3.5 0,1 0,-7 0M15,16a3.5,3.5 0,1 0,7 0a3.5,3.5 0,1 0,-7 0M5.5,16L9,10h6.5l3,6M9,10l3,6H5.5M15.5,10l-1,-3h-2"/><path d="M2,6.5h8.5a2.2,2.2 0,1 0,-2.2 -2.2M13.5,4h6.5"/></svg>
+      </span>
+      Velowind
+    </a>
+    <nav aria-label="Abschnitte">
+      <a href="#idee">Die Idee</a>
+      <a href="#data-science">Data Science</a>
+      <a href="#datenschutz">Datenschutz</a>
+      <a href="#installieren">Installieren</a>
+      <a href="#fahren">Fahren</a>
+      <a href="/" hreflang="en" lang="en" class="lang">English</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="hero">
+    <div class="wrap">
+      <span class="eyebrow">Testfahrende gesucht · Android</span>
+      <h1>Wie fährt sich dieser Radweg?</h1>
+      <p class="lede">Karten zeigen, wo Radwege sind, aber nicht, ob sie glatt, holprig, laut oder ruhig sind. Velowind misst das mit den Handys der Menschen, die dort fahren, und macht aus den Fahrten eine Komfortkarte. Es ist ein Data-Science-Projekt, das klein anfängt und weiter wachsen soll.</p>
+      <div class="cta-row">
+        <a class="btn" id="download" href="https://apk.velowind.de/">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 20h14"/></svg>
+          App herunterladen
+        </a>
+        <span class="cta-note"><span id="version-line" data-prefix="Version">Neueste Version</span> · ab Android 10 · <a href="#installieren">so installierst du sie</a></span>
+      </div>
+
+      <figure class="trace" aria-labelledby="trace-cap">
+        <div class="trace-head">
+          <span class="num">Beschleunigung, vertikal · Band 3–8 Hz</span>
+          <span id="trace-cap">Was das Handy auf einem Stück Testfahrt spürt (Illustration)</span>
+        </div>
+        <canvas id="trace" data-labels="Asphalt|Betonplatten|Schotter" role="img" aria-label="Eine Vibrationskurve, die auf Asphalt niedrig bleibt, auf Betonplatten regelmäßige Spitzen zeigt und auf Schotter zwei- bis dreimal so groß wird."></canvas>
+        <div class="trace-foot">
+          <div class="legend">
+            <span><i style="background: var(--teal)"></i>glatt</span>
+            <span><i style="background: var(--rough)"></i>holprig</span>
+          </div>
+          <span>Beim ersten Test am Lenker zeigte Schotter <span class="num">2–3×</span> so viel Vibration wie Asphalt und <span class="num">+13 dB</span> bei 8 kHz.</span>
+        </div>
+      </figure>
+    </div>
+  </div>
+
+  <section id="idee">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="eyebrow">Die Idee</span>
+        <h2>Eine Komfortkarte aus echten Fahrten</h2>
+      </div>
+      <div class="prose">
+        <p>Ob eine Strecke angenehm ist, hängt von Dingen ab, die eine normale Karte nicht zeigt: rissiger Asphalt oder Schotter, Betonplatten mit einer Fuge alle paar Meter, ein schmaler Weg direkt an einer lauten Straße oder ein ruhiger Weg durch die Felder. OpenStreetMap hat zwar Angaben zu Belag und Zustand, aber für viele Wege fehlen sie oder sind veraltet.</p>
+        <p>Velowind füllt diese Lücke von unten. Während du fährst, zeichnet die App auf, wie stark das Rad wackelt, wie laut es um dich herum ist und wo du bist. Viele Fahrten über dasselbe Stück, mit verschiedenen Rädern, zu verschiedenen Zeiten und bei verschiedenem Wetter, ergeben zusammen ein verlässliches Bild davon.</p>
+        <p>Das erste Ziel ist eine Karte der Wegqualität nach Belag, Lärm, Tageszeit und Wetter. Langfristig soll daraus ein Routenplaner werden, der dir den glatten und ruhigen Weg findet, nicht nur den kurzen.</p>
+      </div>
+
+      <div class="measures" aria-label="Was die App misst">
+        <div class="measure">
+          <h3>Vibration</h3>
+          <span class="fig">Beschleunigung ~100 Hz · Gyroskop</span>
+          <p>Zeigt den Belag: glatter Asphalt, Plattenfugen, Kopfsteinpflaster, Schotter. Gemessen pro Strecke, damit schnelleres Fahren nicht als holprigerer Weg zählt.</p>
+        </div>
+        <div class="measure">
+          <h3>Geräuschpegel</h3>
+          <span class="fig">26 Terzbänder · 50 Hz–16 kHz · alle 125 ms</span>
+          <p>Zeigt Verkehr, Wind und Ruhe. Das Handy speichert nur die Lautstärke pro Frequenzband, also nie Sprache oder Ton.</p>
+        </div>
+        <div class="measure">
+          <h3>Position und Höhe</h3>
+          <span class="fig">GPS 1 Hz · Barometer 10 Hz</span>
+          <p>Ordnet jede Messung auf der Karte ein und erfasst Steigungen, die dafür wichtig sind, wie anstrengend ein Stück ist.</p>
+        </div>
+        <div class="measure">
+          <h3>Deine Bewertungen</h3>
+          <span class="fig">Belag · Breite · Verkehr · Lärm</span>
+          <p>Ein paar Antworten mit einem Tipp zu der Stelle, an der du gerade bist. Daraus lernen die Modelle, was die Messwerte bedeuten.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="data-science">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="eyebrow">Ein Data-Science-Projekt</span>
+        <h2>Von Sensordaten zur Karte</h2>
+        <p class="lede">Velowind ist als Data-Science-Projekt entstanden und wird offen entwickelt. So kommt eine Fahrt auf die Karte, und so weit ist es heute.</p>
+      </div>
+
+      <ol class="pipeline">
+        <li><div><h3>Sammeln<span class="status done">läuft</span></h3><p>Die Android-App zeichnet alle Sensoren mit einer gemeinsamen Uhr auf und lädt fertige Fahrten im WLAN auf den Projektserver. Der prüft jede Fahrt, bevor sie in den Datensatz kommt.</p></div></li>
+        <li><div><h3>Bereinigen und abgleichen<span class="status done">läuft</span></h3><p>Die Sensorzeiten werden mit der echten Uhrzeit abgeglichen, Anfang und Ende jeder Fahrt werden zum Schutz der Privatsphäre abgeschnitten, Standzeiten entfernt.</p></div></li>
+        <li><div><h3>Auf das Wegenetz legen<span class="status now">in Arbeit</span></h3><p>Die GPS-Spuren werden OpenStreetMap-Wegen zugeordnet, damit sich die Messungen vieler Fahrten pro Wegstück summieren.</p></div></li>
+        <li><div><h3>Merkmale<span class="status now">in Arbeit</span></h3><p>Rauheit pro Meter im Band 3–8 Hz, Lärm pro Frequenzband, Tempo, Steigung. Radtyp und Halterung werden berücksichtigt, damit sich ein Rennrad und ein Lastenrad vergleichen lassen.</p></div></li>
+        <li><div><h3>Kontext ergänzen<span class="status next">als Nächstes</span></h3><p>Wetter (Regen, Temperatur, Wind) nach Zeit und Ort, dazu Tageszeit und Wochentag.</p></div></li>
+        <li><div><h3>Modellieren<span class="status next">als Nächstes</span></h3><p>Klassifikatoren für Belag und Rauheit, trainiert mit den Bewertungen der Fahrenden und geprüft an den Zustandsangaben in OpenStreetMap.</p></div></li>
+        <li><div><h3>Karte<span class="status next">als Nächstes</span></h3><p>Eine interaktive Karte der Wegqualität mit Filtern für Tageszeit, Wochentag und Wetter.</p></div></li>
+      </ol>
+
+      <div class="sec-head">
+        <h3>Wie es weitergehen kann</h3>
+      </div>
+      <div class="outlook">
+        <div>
+          <h3>Velowind Routes</h3>
+          <p>Ein Routenplaner, der Komfort mitzählt: glatter Belag, wenig Verkehrslärm, sanfte Steigungen und der Wind des Tages.</p>
+        </div>
+        <div>
+          <h3>Weniger Daten pro Handy</h3>
+          <p>Ein kleines Modell auf dem Handy macht aus 100 Messwerten pro Sekunde ein paar Zahlen pro Wegstück. Das verkleinert die Uploads etwa um das Hundertfache und speichert noch weniger über die Fahrt.</p>
+        </div>
+        <div>
+          <h3>Wie anstrengend ist dieses Stück?</h3>
+          <p>Ein physikalischer Anstrengungswert pro Wegstück aus Steigung, Rollwiderstand des Belags und Gegenwind, abgeglichen damit, wie stark echte Fahrende dort langsamer werden.</p>
+        </div>
+        <div>
+          <h3>Mehr Fahrende, mehr Orte</h3>
+          <p>Mitmachen kann jede und jeder, die die App installieren. Mit mehr Fahrenden deckt die Karte mehr von einer Stadt ab, dazu mehr Wetterlagen, Jahres- und Tageszeiten.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="datenschutz">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="eyebrow">Datenschutz</span>
+        <h2>So gebaut, dass Fahrten nicht auf dich zurückführen</h2>
+        <p class="lede">Du legst kein Konto an und gibst keinen Namen an. Nichts verlässt dein Handy, bevor du in der App dem Upload zustimmst.</p>
+      </div>
+      <div class="split">
+        <div class="panel yes">
+          <h3>Was hochgeladen wird</h3>
+          <ul>
+            <li>Bewegungssensordaten, die GPS-Spur und Geräuschpegel in Frequenzbändern</li>
+            <li>Deine Bewertungen von Stellen auf der Fahrt</li>
+            <li>Der Radtyp (zum Beispiel „Trekking“), das Handymodell und die App-Version</li>
+            <li>Eine zufällige Kennung dieser App-Installation, damit du deine Daten später löschen kannst</li>
+          </ul>
+        </div>
+        <div class="panel no">
+          <h3>Was dein Handy nie verlässt</h3>
+          <ul>
+            <li>Tonaufnahmen jeder Art: Das Handy speichert Lautstärke pro Band, keinen Ton</li>
+            <li>Die ersten und letzten <span class="num">150–250 m</span> jeder Fahrt, mit zufälligem Radius abgeschnitten, damit Wohnung oder Arbeitsplatz nicht zu finden sind</li>
+            <li>Dein Name, deine Kontaktdaten und die Namen deiner Räder</li>
+            <li>Die vollständige Spur, die du für dich selbst als GPX exportieren kannst</li>
+          </ul>
+        </div>
+      </div>
+      <p class="callout">Du behältst die Kontrolle. Der automatische Upload läuft nur im WLAN und lässt sich abschalten. <strong>Upload settings → Delete my data on the server</strong> löscht alles, was dein Handy gesendet hat. Diese Website setzt keine Cookies und lädt nichts von anderen Seiten.</p>
+    </div>
+  </section>
+
+  <section id="installieren">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="eyebrow">Installieren</span>
+        <h2>So kommst du an die App</h2>
+        <p class="lede">Die App ist noch nicht im Play Store, deshalb fragt Android einmal nach, ob du die Installation erlaubst. Sie braucht Android 10 oder neuer. Die App selbst ist vorerst auf Englisch.</p>
+      </div>
+      <ol class="steps">
+        <li><div><h3>APK herunterladen</h3><p>Öffne <a href="https://apk.velowind.de/">apk.velowind.de</a> auf deinem Handy. Dort gibt es immer die neueste Version. Jede Version liegt auch auf <a href="https://github.com/biofe/smartphone_sensor_logger/releases">GitHub</a>, zusammen mit dem Quellcode.</p></div></li>
+        <li><div><h3>Installation erlauben</h3><p>Öffne die heruntergeladene Datei. Android fragt, ob dein Browser oder deine Datei-App Apps installieren darf: Tippe auf <strong>Einstellungen</strong>, schalte <strong>Dieser Quelle vertrauen</strong> (oder <strong>Von dieser Quelle zulassen</strong>) ein, geh zurück und tippe auf <strong>Installieren</strong>. Wenn Play Protect vor einer unbekannten App warnt, wähle <strong>Trotzdem installieren</strong>.</p></div></li>
+        <li><div><h3>Räder einrichten</h3><p>Öffne die App, wähle die Räder aus, die du fährst, und erlaube Standort, Mikrofon und Benachrichtigungen. Jedes Rad bekommt seinen eigenen Startknopf.</p></div></li>
+        <li><div><h3>Im Hintergrund laufen lassen</h3><p>Öffne in den Android-Einstellungen die App, dann <strong>Akku</strong>, und wähle <strong>Uneingeschränkt</strong>. Sonst beenden manche Handys die Aufzeichnung, wenn der Bildschirm aus ist.</p></div></li>
+        <li><div><h3>Dem Upload zustimmen</h3><p>Die App zeigt, was sie sendet, und fragt einmal nach. Danach gehen fertige Fahrten an den Projektserver, sobald du im WLAN bist.</p></div></li>
+      </ol>
+      <p class="prose" style="color: var(--muted)">Updates kommen von selbst: Die App sieht einmal am Tag nach und bietet eine neue Version mit einem Tipp an. Deine Fahrten und Einstellungen bleiben erhalten.</p>
+    </div>
+  </section>
+
+  <section id="fahren">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="eyebrow">Fahren</span>
+        <h2>Fahr einfach so, wie du immer fährst</h2>
+      </div>
+      <div class="tips">
+        <div>
+          <h3>Start</h3>
+          <p>Tippe vor dem Losfahren auf den Knopf des Rads, mit dem du fährst. Eine Benachrichtigung zeigt, dass die Fahrt aufgezeichnet wird.</p>
+        </div>
+        <div>
+          <h3>Wohin mit dem Handy</h3>
+          <p>Eine feste Halterung am Lenker liefert die klarsten Daten. Wenn du keine hast, steck das Handy einfach in die Tasche: Das Treten wackelt etwas mit, aber jede Fahrt hilft der Karte.</p>
+        </div>
+        <div>
+          <h3>Bewerte, was dir auffällt</h3>
+          <p>Wenn dir etwas auffällt, etwa ein holpriges Stück, ein enger Weg oder lauter Verkehr, bewerte es mit ein paar Tipps. Nur wenn es sicher ist: im Stehen oder mit einem kurzen Tipp auf das Handy in der Halterung, wie es die StVO erlaubt.</p>
+        </div>
+        <div>
+          <h3>Stopp</h3>
+          <p>Beende die Fahrt in der App. Wenn du es vergisst, stoppt sie nach 10 Minuten Stillstand an einem Ort von selbst und lässt die Standzeit weg.</p>
+        </div>
+        <div>
+          <h3>Jede Fahrt zählt</h3>
+          <p>Der Weg zur Arbeit, der Einkauf, die Wochenendtour. Auch oft dieselbe Strecke zu fahren hilft, weil es zeigt, wie sich ein Weg mit Wetter und Tageszeit verändert.</p>
+        </div>
+        <div>
+          <h3>Mikrofon nicht teilen</h3>
+          <p>Andere Apps, die gleichzeitig das Mikrofon nutzen, etwa Anrufe oder Lärmmesser, blockieren die Geräuschmessung. Die App warnt dich, wenn das passiert.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="fragen">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="eyebrow">Fragen</span>
+        <h2>Gut zu wissen</h2>
+      </div>
+      <div class="faq">
+        <details><summary>Gibt es eine iPhone-Version?</summary><p>Noch nicht. Für iOS-Apps außerhalb des App Store braucht man ein kostenpflichtiges Entwicklerkonto, deshalb startet das Projekt mit Android.</p></details>
+        <details><summary>Wie viel Akku und Datenvolumen braucht die App?</summary><p>Beim Aufzeichnen sind GPS und Sensoren an, ähnlich wie bei einer Sport-Tracking-App. Eine Fahrt von 30 Minuten hat ein paar Megabyte und wird nur im WLAN hochgeladen, außer du wählst „Upload now“ über mobile Daten.</p></details>
+        <details><summary>Lassen sich meine Fahrten auf mich zurückführen?</summary><p>Fahrten tragen eine zufällige Installationskennung, nie deinen Namen oder deine Telefonnummer. Anfang und Ende werden vor dem Upload abgeschnitten. Wer schon weiß, wo du fährst, könnte eine Strecke trotzdem wiedererkennen, deshalb ist der Radius des Schnitts bei jeder Fahrt ein anderer.</p></details>
+        <details><summary>Wie höre ich auf mitzumachen?</summary><p>Schalte den automatischen Upload in den Upload settings aus, oder nutze dort „Delete my data on the server“ und deinstalliere die App. Die Fahrten auf deinem Handy werden mit der App gelöscht.</p></details>
+        <details><summary>Wer sieht die Daten?</summary><p>Hochgeladene Fahrten liegen auf dem eigenen Server des Projekts und werden für dieses Forschungsprojekt verwendet. Sie werden nicht verkauft und nicht an Werbefirmen gegeben. Ergebnisse wie die Komfortkarte zeigen Werte pro Wegstück, zusammengefasst aus vielen Fahrten.</p></details>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Velowind · eine gemeinsame Komfortkarte für Radwege</span>
+    <span>Kontakt: <span id="contact">felix0180 [at] web.de</span> · <a href="https://github.com/biofe/smartphone_sensor_logger">Quellcode</a></span>
+  </div>
+</footer>
+
+<script src="/site.js"></script>
+</body>
+</html>
