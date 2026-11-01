@@ -34,7 +34,6 @@ object VelowindIcons {
     private val wheels = circle(5.5f, 16f, 3.5f) + circle(18.5f, 16f, 3.5f)
     private const val BOLT = "M20 1.5l-2.5 4h3l-2.5 4"
 
-    val Logo = icon("logo", wheels, "M5.5 16L9 10h6.5l3 6M9 10l3 6H5.5M15.5 10l-1-3h-2", "M2 6.5h8.5a2.2 2.2 0 1 0-2.2-2.2M13.5 4h6.5")
 
     private val standard = arrayOf(wheels, "M5.5 16L9 9h7l2.5 7M9 9l3 7H5.5M16 9l-1-3h-2.5M8 6.5h3")
     private val road = arrayOf(wheels, "M5.5 16L9 9h7l2.5 7M9 9l3 7H5.5M16 9l-1-3h2.5c1 0 1 2.5 0 2.5M8 6.5h3")
