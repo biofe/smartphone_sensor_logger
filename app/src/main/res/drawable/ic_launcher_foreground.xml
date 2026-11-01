@@ -12,7 +12,7 @@
         android:translateX="25"
         android:translateY="34.4">
         <path
-            android:pathData="M2,16a3.5,3.5 0,1 0,7 0a3.5,3.5 0,1 0,-7 0M15,16a3.5,3.5 0,1 0,7 0a3.5,3.5 0,1 0,-7 0M5.5,16L9,10h6.5M9,10l3,6H5.5M12,16l3.5,-6M18.5,16L15.2,7.6h-1.6a1.2,1.2 0,0 0,-1.2 1.2M9,10L8.2,8.4M6.8,8.4h3"
+            android:pathData="M2,16a3.5,3.5 0,1 0,7 0a3.5,3.5 0,1 0,-7 0M15,16a3.5,3.5 0,1 0,7 0a3.5,3.5 0,1 0,-7 0M5.5,16L9,10h6.5M9,10l3,6H5.5M12,16l3.5,-6M18.5,16L15.2,7.6h-2.3M9,10L8.2,8.4M6.8,8.4h3"
             android:strokeWidth="1.8"
             android:strokeColor="#FFFFFF"
             android:strokeLineCap="round"
