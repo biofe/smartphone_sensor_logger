@@ -98,7 +98,7 @@ The app is Android only (Android 10+). iOS is out of scope for now.
 
 ## Open questions and tests
 
-- **Sensor clock drift (found 2026-10-27):** on the test phone, rides recorded on 25 and 26 Oct had accelerometer, gyroscope and barometer times far from the GPS and sound times, so the privacy trim removed all of their rows (the first uploads were rejected for that). 0.8.1 corrects it while recording and realigns older rides on export, to within a few milliseconds of the ride start. Check that the re-uploaded rides line up, e.g. a bump visible in both accel and sound.
+- **Sensor clock drift (found 2026-10-27):** on the test phone, rides recorded on 25 and 26 Oct had accelerometer, gyroscope and barometer times far from the GPS and sound times, so the privacy trim removed all of their rows (the first uploads were rejected for that). 0.8.1 corrects it while recording and realigns older rides on export, to within a few milliseconds of the ride start. Check that the re-uploaded rides line up, e.g. a bump visible in both accel and sound. On a ride on 2026-10-30 (0.9.1) the correction was about 30.7 minutes (1,844,677–1,844,685 ms), the same for all three sensors, so it isn't the clock change (that would be 60 minutes). Most likely the phone's sensor clock pauses while the phone sleeps, so the gap grows with time since the last restart. The correction handles it.
 
 - **Mic drop at annotation stops:** on 2026-10-21 the sound fell to −55 to −65 dBFS at every annotation stop, against −42 at a stop without one. Test a stop where you open the app without annotating, to see whether app use mutes the mic.
 - **Rigid open handlebar mount** vs. the long-arm closed case (arm swing sits inside the 3–8 Hz roughness band).
