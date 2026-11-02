@@ -4,10 +4,13 @@ import android.Manifest
 import android.app.AlertDialog
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.PowerManager
+import android.provider.Settings
 import android.view.WindowManager
 import android.widget.TextView
 import android.widget.Toast
@@ -52,6 +55,9 @@ class UiState {
     /** The bike being edited; [BikeEdit.NEW] adds one */
     var bikeEdit by mutableStateOf<BikeEdit?>(null)
     var firstRun by mutableStateOf(false)
+    /** The introduction: on first launch, or opened again from Settings */
+    var showIntro by mutableStateOf(false)
+    var batteryUnrestricted by mutableStateOf(false)
     /** Folder names of the rides picked in the ride list */
     var selected by mutableStateOf<Set<String>>(emptySet())
 }
@@ -91,6 +97,9 @@ class AppActions(
     val deleteServerData: () -> Unit,
     val exportAll: () -> Unit,
     val setKeepScreenOn: (Boolean) -> Unit,
+    val showIntro: () -> Unit,
+    val finishIntro: () -> Unit,
+    val openBatterySettings: () -> Unit,
 )
 
 class MainActivity : ComponentActivity() {
@@ -143,6 +152,12 @@ class MainActivity : ComponentActivity() {
             ui.keepScreenOn = it
             applyRideWindow()
         },
+        showIntro = { ui.showIntro = true },
+        finishIntro = {
+            getSharedPreferences(PREFS, MODE_PRIVATE).edit().putBoolean(KEY_INTRO_SEEN, true).apply()
+            ui.showIntro = false
+        },
+        openBatterySettings = ::openBatterySettings,
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -150,6 +165,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         ui.bikes = Bikes.list(this)
         ui.firstRun = ui.bikes.isEmpty()
+        // Riders who already set up their bikes know the app; the intro is for new installs
+        ui.showIntro = ui.firstRun && !getSharedPreferences(PREFS, MODE_PRIVATE).getBoolean(KEY_INTRO_SEEN, false)
         ui.keepScreenOn = getSharedPreferences(PREFS, MODE_PRIVATE).getBoolean(KEY_SCREEN_ON, false)
         ui.installId = Upload.shortInstallId(this)
         ui.versionName = packageManager.getPackageInfo(packageName, 0).versionName ?: "?"
@@ -168,6 +185,7 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         refreshRides()
         handler.post(tick)
+        ui.batteryUnrestricted = getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(packageName)
         // Ask once, after the bikes are set up and not in the middle of a ride
         if (!Upload.consentAsked(this) && Bikes.list(this).isNotEmpty() && !RecorderState.recording) askConsent {}
         resumeUpdate()
@@ -259,6 +277,12 @@ class MainActivity : ComponentActivity() {
         ui.firstRun = false
         refreshRides()
         if (!Upload.consentAsked(this)) askConsent {}
+    }
+
+    /** Android's page for this app, where battery usage can be set to Unrestricted. */
+    private fun openBatterySettings() {
+        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", packageName, null))
+        runCatching { startActivity(intent) }
     }
 
     // --- Recording ---------------------------------------------------------------------------
@@ -555,6 +579,7 @@ class MainActivity : ComponentActivity() {
 
         private const val PREFS = "ride_screen"
         private const val KEY_SCREEN_ON = "keep_screen_on"
+        private const val KEY_INTRO_SEEN = "intro_seen"
 
         private const val CONSENT_TEXT =
             "Your rides help build a map of how comfortable cycle paths are. If you agree, the app sends each " +
@@ -577,6 +602,8 @@ fun VelowindApp(
     removeBike: (Bikes.Bike) -> Unit,
     saveFirstBikes: (List<String>) -> Unit,
 ) {
+    // Opened again from Settings: back closes it (on first launch there is nothing behind it)
+    BackHandler(enabled = ui.showIntro && !ui.firstRun && !ui.recording) { actions.finishIntro() }
     BackHandler(enabled = ui.screen != Screen.MAIN && !ui.recording) {
         // In the ride list, back first drops the selection
         if (ui.screen == Screen.RIDES && ui.selected.isNotEmpty()) actions.selectRides(emptySet()) else actions.back()
@@ -584,12 +611,13 @@ fun VelowindApp(
     Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).safeDrawingPadding()) {
         when {
             ui.recording -> RecordingScreen(ui, actions)
+            ui.showIntro -> IntroScreen(ui, actions)
             ui.screen == Screen.SETTINGS -> SettingsScreen(ui, actions)
             ui.screen == Screen.RIDES -> RidesScreen(ui, actions)
             else -> MainScreen(ui, actions)
         }
     }
-    if (ui.firstRun) FirstBikesDialog(saveFirstBikes)
+    if (ui.firstRun && !ui.showIntro) FirstBikesDialog(saveFirstBikes)
     ui.bikeEdit?.let { edit ->
         val bike = edit.bike
         BikeEditor(

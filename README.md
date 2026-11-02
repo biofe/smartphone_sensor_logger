@@ -47,8 +47,8 @@ The phone identifies itself with a random id and secret made on first launch; th
 ## Installing (for riders)
 
 1. Open `https://apk.velowind.de/` on the phone to download the app, and open the file. Allow installing from this source when Android asks. The app then updates itself: it asks before installing a new version.
-2. Open **Velowind** and pick the bikes you ride (change them later under **Settings → My bikes**). Tap **Start ride** for the bike you're on and allow location, microphone and notifications.
-3. For reliable recording with the screen off, set the app's battery usage to **Unrestricted** (Settings → Apps → Velowind → Battery).
+2. Open **Velowind**. A short introduction explains what is recorded, how to use the app safely on the bike, and the battery setting below (again under **Settings → How Velowind works**). Then pick the bikes you ride (change them later under **Settings → My bikes**). Tap **Start ride** for the bike you're on and allow location, microphone and notifications.
+3. For reliable recording with the screen off, set the app's battery usage to **Unrestricted** (Settings → Apps → Velowind → Battery). The introduction and the app's settings link straight to that page and show whether it's done.
 4. Put the phone in your pocket or a handlebar mount and ride. Hold **Stop** for a second at the end (or tap Stop twice in the notification). If you forget, recording stops by itself after 10 minutes without moving (more than 50 m), and the standing time is left out of the export. Waits at traffic lights are far shorter and don't stop it.
 
 To record ground truth, tap what you notice on the recording screen: noise (quiet, far traffic, loud traffic, wind), surface (smooth, bumpy, rough), width (narrow, medium, wide) and how riding feels (nice, unpleasant). Each tap saves only the time and your position, with a short vibration and Undo for 5 s. While recording, the screen shows over the lock screen. Only glance or tap when it's safe, and only with the phone in a mount (§ 23 StVO).
