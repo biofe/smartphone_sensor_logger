@@ -9,7 +9,9 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <!-- Map tiles for annotating on the map, and uploading rides -->
+    <!-- One short buzz confirms a poll tap without looking -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- Map tiles for annotating rides afterwards, and uploading rides -->
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Upload only on Wi-Fi, and keep the upload job scheduled after a reboot -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -24,9 +26,9 @@
 
     <application
         android:allowBackup="false"
-        android:icon="@android:drawable/ic_menu_compass"
+        android:icon="@mipmap/ic_launcher"
         android:label="${appLabel}"
-        android:theme="@android:style/Theme.DeviceDefault.DayNight">
+        android:theme="@style/Theme.Velowind">
 
         <activity
             android:name=".MainActivity"
@@ -39,7 +41,7 @@
         </activity>
 
         <activity
-            android:name=".MapActivity"
+            android:name=".AnnotateActivity"
             android:exported="false" />
 
         <service

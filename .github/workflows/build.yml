@@ -26,7 +26,7 @@ jobs:
       - name: Unit tests and APKs
         run: ./gradlew :core:test :app:assembleDebug :app:assembleRelease
 
-      # The test build ("Bike Logger (dev)") installs next to the release app
+      # The test build ("Velowind (dev)") installs next to the release app
       - uses: actions/upload-artifact@v4
         with:
           name: bike-sensor-logger-apk

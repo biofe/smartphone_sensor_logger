@@ -19,6 +19,7 @@ import java.util.concurrent.locks.ReentrantLock
  * The phone identifies itself with a random install id and a secret it makes on first use; the
  * server keeps only a hash of the secret, so no password is needed in the app. Each ride folder
  * gets an `upload.json` with its state, so a ride is never sent twice once the server has it.
+ * Poll taps added after the upload (annotating later) are sent on their own.
  */
 object Upload {
 
@@ -26,6 +27,7 @@ object Upload {
 
     private const val PREFS = "upload"
     private const val STATE_FILE = "upload.json"
+    private const val LABELS_MTIME = "labels_mtime"
     private const val CONNECT_TIMEOUT_MS = 15_000
     private const val READ_TIMEOUT_MS = 120_000
 
@@ -106,13 +108,29 @@ object Upload {
         }.getOrDefault(Status(State.WAITING))
     }
 
-    private fun setStatus(context: Context, ride: File, state: State, reason: String = "", name: String? = null) {
+    private fun setStatus(context: Context, ride: File, state: State, reason: String = "", name: String? = null, labelsMtime: Long? = null) {
         val json = JSONObject().put("state", state.name).put("utc_ms", System.currentTimeMillis())
             .put("app_version", versionName(context))
         if (reason.isNotEmpty()) json.put("reason", reason)
         if (name != null) json.put("name", name)
+        if (labelsMtime != null) json.put(LABELS_MTIME, labelsMtime)
         File(ride, STATE_FILE).writeText(json.toString())
     }
+
+    /** labels.csv's time stamp when the server last got it; 0 if it had none. */
+    private fun labelsSent(ride: File): Long =
+        runCatching { JSONObject(File(ride, STATE_FILE).readText()).optLong(LABELS_MTIME, 0L) }.getOrDefault(0L)
+
+    private fun markLabelsSent(ride: File, mtime: Long) {
+        val file = File(ride, STATE_FILE)
+        runCatching { file.writeText(JSONObject(file.readText()).put(LABELS_MTIME, mtime).toString()) }
+    }
+
+    private fun labelsMtime(ride: File): Long = File(ride, Labels.FILE).let { if (it.exists()) it.lastModified() else 0L }
+
+    /** An uploaded ride the rider annotated afterwards. */
+    fun labelsPending(ride: File): Boolean =
+        status(ride).state == State.UPLOADED && labelsMtime(ride) != labelsSent(ride)
 
     /** Short mark for the ride list. */
     fun label(ride: File): String {
@@ -127,12 +145,16 @@ object Upload {
 
     private fun isRecording(ride: File) = RecorderState.recording && RecorderState.rideDir == ride
 
-    /** Waiting rides, plus rides refused under an older app version: an update may have fixed the cause. */
-    fun pending(context: Context): List<File> {
+    /**
+     * Waiting rides, plus rides refused under an older app version: an update may have fixed the
+     * cause. [only] limits it to the rides the rider picked.
+     */
+    fun pending(context: Context, only: Set<String>? = null): List<File> {
         val version = versionName(context)
         return Rides.list(context).filter {
             val s = status(it)
-            !isRecording(it) && (s.state == State.WAITING || s.state == State.REJECTED && s.appVersion != version)
+            (only == null || it.name in only) &&
+                !isRecording(it) && (s.state == State.WAITING || s.state == State.REJECTED && s.appVersion != version)
         }
     }
 
@@ -142,29 +164,32 @@ object Upload {
     // --- Uploading ---------------------------------------------------------------------------
 
     /**
-     * Uploads every waiting ride, then the map annotations if they changed. Runs on a background
-     * thread, one run at a time: a second call waits up to [waitMs] for the first to finish.
+     * Uploads every waiting ride (or those of them named in [only]), then poll taps added to
+     * uploaded rides. Runs on a background thread, one run at a time: a second call waits up to
+     * [waitMs] for the first to finish.
      */
-    fun uploadAll(context: Context, waitMs: Long = 0, progress: (Int, Int) -> Unit = { _, _ -> }): Summary {
+    fun uploadAll(context: Context, waitMs: Long = 0, only: Set<String>? = null, progress: (Int, Int) -> Unit = { _, _ -> }): Summary {
         if (!consented(context)) return Summary(0, 0, false, "Uploading needs your consent first.")
         if (!lock.tryLock(waitMs, TimeUnit.MILLISECONDS)) return Summary(0, 0, true, "An upload is already running.")
         stopRequested = false
         try {
-            return run(context, progress)
+            return run(context, only, progress)
         } finally {
             lock.unlock()
         }
     }
 
-    private fun run(context: Context, progress: (Int, Int) -> Unit): Summary {
+    private fun run(context: Context, only: Set<String>?, progress: (Int, Int) -> Unit): Summary {
         checkServerVersion(context)?.let { return Summary(0, 0, false, it) }
-        val rides = pending(context)
+        val rides = pending(context, only)
         var uploaded = 0
         var rejected = 0
         rides.forEachIndexed { i, ride ->
             if (stopRequested) return Summary(uploaded, rejected, true, null)
             progress(i, rides.size)
             val zip = File(context.cacheDir, "upload-${ride.name}.zip")
+            // Taps added while this upload runs are newer than this and get sent afterwards
+            val labelsMtime = labelsMtime(ride)
             try {
                 val name = runCatching { Exporter.packRide(ride, zip) }.getOrElse {
                     setStatus(context, ride, State.REJECTED, "can't be read on the phone")
@@ -187,7 +212,7 @@ object Upload {
                 }
                 when (answer.code) {
                     200, 201 -> {
-                        setStatus(context, ride, State.UPLOADED, name = name)
+                        setStatus(context, ride, State.UPLOADED, name = name, labelsMtime = labelsMtime)
                         uploaded++
                     }
                     400, 413 -> {
@@ -206,28 +231,32 @@ object Upload {
             }
         }
         progress(rides.size, rides.size)
-        val mapOk = uploadMapAnnotations(context)
-        return Summary(uploaded, rejected, !mapOk, null)
+        val labelsOk = uploadLabels(context, only)
+        return Summary(uploaded, rejected, !labelsOk, null)
     }
 
-    /** Returns false if they should be sent again later. */
-    private fun uploadMapAnnotations(context: Context): Boolean {
-        val lines = Annotations.exportableMapLines(context)
-        if (lines.isEmpty()) return true
-        val body = lines.joinToString("\n", postfix = "\n").toByteArray()
-        val hash = sha256(body)
-        if (prefs(context).getString("map_sha256", null) == hash) return true
-        val answer = try {
-            send(context, "PUT", "/v1/map-annotations", body, "text/csv")
-        } catch (e: IOException) {
-            return false
+    /** Sends the poll taps of rides annotated after their upload. Returns false if some should be sent again later. */
+    private fun uploadLabels(context: Context, only: Set<String>?): Boolean {
+        for (ride in Rides.list(context)) {
+            if (only != null && ride.name !in only || !labelsPending(ride)) continue
+            if (stopRequested) return false
+            val mtime = labelsMtime(ride)
+            val trimmed = Exporter.trimmedLabels(ride)
+            if (trimmed == null) {
+                markLabelsSent(ride, mtime) // nothing inside the privacy window
+                continue
+            }
+            val (name, body) = trimmed
+            val answer = try {
+                send(context, "PUT", "/v1/rides/$name/labels", body, "text/csv")
+            } catch (e: IOException) {
+                return false
+            }
+            // Stored, or refused for good (e.g. the server lost the ride): either way don't send this version again
+            if (answer.code == 200 || answer.code in setOf(400, 403, 404, 413)) markLabelsSent(ride, mtime)
+            else return false
         }
-        if (answer.code == 200 || answer.code in setOf(400, 403, 413)) {
-            // Accepted, or refused for good: either way don't send this version again
-            prefs(context).edit().putString("map_sha256", hash).apply()
-            return true
-        }
-        return false
+        return true
     }
 
     /** A message if the server needs a newer app, else null. Unreachable server: carry on, the upload will tell. */
@@ -262,7 +291,7 @@ object Upload {
     fun deleteOnServer(context: Context): Int {
         val answer = send(context, "DELETE", "/v1/install", null, null)
         if (answer.code != 200) throw IOException(answer.reason.ifEmpty { "Server answered ${answer.code}" })
-        prefs(context).edit().putBoolean("consent", false).putBoolean("auto", false).remove("map_sha256").apply()
+        prefs(context).edit().putBoolean("consent", false).putBoolean("auto", false).apply()
         UploadJob.schedule(context)
         return answer.json?.optInt("rides", 0) ?: 0
     }

@@ -56,12 +56,6 @@ object Exporter {
                         if (name != null) exported++ else skipped++
                     }
                     progress(rides.size, rides.size)
-                    val mapLines = Annotations.exportableMapLines(context)
-                    if (exported > 0 && mapLines.isNotEmpty()) {
-                        zip.putNextEntry(ZipEntry("map_annotations.csv"))
-                        zip.write(mapLines.joinToString("\n", postfix = "\n").toByteArray())
-                        zip.closeEntry()
-                    }
                 }
             }
         } catch (e: Exception) {
@@ -108,8 +102,28 @@ object Exporter {
         return shifts
     }
 
-    /** Returns the exported ride name, or null if the ride has nothing left after privacy trimming. */
-    private fun writeRide(ride: File, zip: ZipOutputStream): String? {
+    /**
+     * The ride's poll taps inside the privacy window, for sending them again after the rider
+     * annotated an uploaded ride. Null if there are none or nothing is left after trimming.
+     */
+    fun trimmedLabels(ride: File): Pair<String, ByteArray>? {
+        val file = File(ride, Labels.FILE)
+        if (!file.exists()) return null
+        val (_, window, rideId) = keep(ride) ?: return null
+        val lines = file.readLines()
+        val kept = lines.drop(1).filter { line ->
+            val t = line.substringBefore(',').toLongOrNull()
+            t != null && t in window
+        }
+        if (kept.isEmpty()) return null
+        return rideId to (listOf(lines.first()) + kept).joinToString("\n", postfix = "\n").toByteArray()
+    }
+
+    /** The part of the ride that leaves the phone (export, upload); null if trimming leaves nothing. */
+    fun keptWindow(ride: File): LongRange? = runCatching { keep(ride)?.second }.getOrNull()
+
+    /** The meta data, the kept time window and the exported name of a ride; null if trimming leaves nothing. */
+    private fun keep(ride: File): Triple<JSONObject, LongRange, String>? {
         val metaFile = File(ride, Rides.META_FILE)
         val gpsFile = File(ride, Rides.GPS_FILE)
         if (!metaFile.exists() || !gpsFile.exists()) return null
@@ -136,6 +150,12 @@ object Exporter {
         // Rides recorded before 0.7.0 have no suffix: keep their old id so earlier exports still match
         val suffix = meta.optString("name_suffix", "")
         val rideId = if (suffix.isEmpty()) meta.getString("ride_id") else RideName.of(window.first, suffix)
+        return Triple(meta, window, rideId)
+    }
+
+    /** Returns the exported ride name, or null if the ride has nothing left after privacy trimming. */
+    private fun writeRide(ride: File, zip: ZipOutputStream): String? {
+        val (meta, window, rideId) = keep(ride) ?: return null
         meta.put("ride_id", rideId)
         meta.put("privacy_trim", "random ${PrivacyTrim.MIN_RADIUS_M.toInt()}-${PrivacyTrim.MAX_RADIUS_M.toInt()} m at each end")
         meta.put("kept_from_utc_ms", window.first)
@@ -154,7 +174,7 @@ object Exporter {
         zip.write(meta.toString(2).toByteArray())
         zip.closeEntry()
 
-        for (name in listOf(Rides.ACCEL_FILE, Rides.GYRO_FILE, Rides.PRESSURE_FILE, Rides.GPS_FILE, Rides.SOUND_FILE, Rides.ANNOTATIONS_FILE)) {
+        for (name in listOf(Rides.ACCEL_FILE, Rides.GYRO_FILE, Rides.PRESSURE_FILE, Rides.GPS_FILE, Rides.SOUND_FILE, Rides.ANNOTATIONS_FILE, Labels.FILE)) {
             val file = File(ride, name)
             if (!file.exists()) continue
             zip.putNextEntry(ZipEntry("$rideId/$name"))

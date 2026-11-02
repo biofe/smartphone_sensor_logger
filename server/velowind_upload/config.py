@@ -22,6 +22,7 @@ class Settings:
     max_unpacked_bytes: int = 600 * 1024 * 1024
     max_unpack_ratio: float = 20.0
     max_map_annotation_bytes: int = 1024 * 1024
+    max_labels_bytes: int = 1024 * 1024
     min_free_bytes: int = 5 * 1024**3
 
     requests_per_ip_per_hour: int = 60

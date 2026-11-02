@@ -230,3 +230,42 @@ def test_cleanup_drops_old_rejected_files_and_ips(client, settings):
     assert store.db.execute("SELECT file FROM rejections").fetchone()["file"] is None
     assert store.db.execute("SELECT COUNT(*) FROM registrations").fetchone()[0] == 0
     assert not list((settings.data_dir / "rejected").rglob("*.zip"))
+
+
+LABELS = (
+    "t_utc_ms,lat,lon,accuracy_m,source,category,value,undone\n"
+    "1792589662000,51.53,9.931,4.0,later,surface,rough,\n"
+)
+
+
+def test_labels_added_after_upload_are_stored_and_move_with_the_ride(client, settings):
+    phone = Phone(client)
+    name = "20261020-1211Z-k3f9"
+    phone.upload(name=name, start=(48.21, 16.37))  # outside the area: quarantine
+    for _ in range(2):
+        r = client.put(f"/v1/rides/{name}/labels", content=LABELS, headers=phone.headers())
+        assert r.status_code == 200
+    stored = settings.data_dir / "quarantine" / phone.id / f"{name}.labels.csv"
+    assert stored.read_text() == LABELS
+    client.app.state.store.promote(phone.id, name)
+    assert (settings.data_dir / "dataset" / phone.id / f"{name}.labels.csv").read_text() == LABELS
+    assert not stored.exists()
+
+
+def test_labels_for_unknown_ride_or_outside_window_are_refused(client):
+    phone = Phone(client)
+    phone.upload()
+    r = client.put("/v1/rides/20261020-1259Z-k3f9/labels", content=LABELS, headers=phone.headers())
+    assert r.status_code == 404
+    late = LABELS.replace("1792589662000", "1792599662000")
+    r = client.put("/v1/rides/20261020-1213Z-k3f9/labels", content=late, headers=phone.headers())
+    assert r.status_code == 400
+    assert r.json()["reason"] == "labels.csv has rows outside the ride's time window"
+
+
+def test_labels_from_another_install_are_refused(client):
+    Phone(client).upload()
+    other = Phone(client)
+    other.upload(name="20261020-1210Z-k3f9")
+    r = client.put("/v1/rides/20261020-1213Z-k3f9/labels", content=LABELS, headers=other.headers())
+    assert r.status_code == 404

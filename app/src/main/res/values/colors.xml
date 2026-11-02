@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Window background before Compose draws; matches the theme in VelowindTheme.kt -->
+    <color name="velowind_background">#F4F7F6</color>
+    <color name="velowind_icon_background">#0A6C69</color>
+</resources>

@@ -19,7 +19,8 @@ Every request except `/v1/health` carries `X-Install-Id: <uuid>` and `Authorizat
 | Request | Answers |
 |---|---|
 | `POST /v1/rides/<ride name>` with the ZIP as body, headers `X-Content-SHA256`, `X-App-Version` | `201` stored · `200` already had it · `400` rejected · `401` unknown secret · `403` blocked · `413` too large · `422` transfer damaged, send again · `429` slow down (`Retry-After`) · `503` storage full (`Retry-After`) |
-| `PUT /v1/map-annotations` with `map_annotations.csv` as body | `200` stored (replaces the previous copy) · `400` · `401` · `403` · `413` · `429` |
+| `PUT /v1/rides/<ride name>/labels` with the ride's privacy-trimmed `labels.csv` as body, after the rider annotated an uploaded ride | `200` stored as `<ride>.labels.csv` next to the ZIP (replaces the previous copy and the ZIP's own `labels.csv`) · `400` · `401` · `403` · `404` ride not on the server · `413` · `429` |
+| `PUT /v1/map-annotations` with `map_annotations.csv` as body (apps before 0.10.0) | `200` stored (replaces the previous copy) · `400` · `401` · `403` · `413` · `429` |
 | `DELETE /v1/install` | `200` everything of this install deleted |
 | `GET /v1/health` | `200` with the lowest app version the server expects |
 
@@ -43,7 +44,8 @@ quarantine/<install>/<ride>.zip + .json   passed the checks, waiting
 dataset/<install>/<ride>.zip + .json      promoted; the .json is the check report
 set_aside/<install>/...                   quarantined rides of a blocked install
 rejected/<install>/<time>-<ride>.zip      failed a check
-map_annotations/<install>.csv
+quarantine|dataset/<install>/<ride>.labels.csv   poll taps added after the upload
+map_annotations/<install>.csv            from apps before 0.10.0
 index.sqlite3                             installs, rides, rejections
 ```
 
