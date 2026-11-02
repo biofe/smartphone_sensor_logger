@@ -74,11 +74,11 @@ rsync -av <you>@<vps>:/srv/velowind/data/map_annotations/ ./data/server/map_anno
 
 ## 6. Updates and backups
 
-Update after a change in the repository:
+Update after a change in the repository (the checkout belongs to root, as it was cloned with `sudo`, so git needs `sudo` too):
 
 ```
-cd /opt/velowind && git pull
-cd server && docker compose -f deploy/docker-compose.yml up -d --build
+cd /opt/velowind && sudo git pull
+cd server && sudo docker compose -f deploy/docker-compose.yml up -d --build
 ```
 
 Back up `/srv/velowind/data/` (the `dataset/` folder and `index.sqlite3` are what matter). `quarantine/` and `rejected/` can be rebuilt from new uploads.
