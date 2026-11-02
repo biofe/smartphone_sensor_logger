@@ -96,6 +96,12 @@ fun SettingsScreen(ui: UiState, actions: AppActions) {
 
             SectionCard(stringResource(R.string.during_rides)) {
                 SwitchRow(stringResource(R.string.keep_screen_on), stringResource(R.string.keep_screen_on_note), ui.keepScreenOn, actions.setKeepScreenOn)
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                LinkRow(
+                    stringResource(R.string.battery_usage),
+                    stringResource(if (ui.batteryUnrestricted) R.string.battery_unrestricted else R.string.battery_restricted_note),
+                    onClick = actions.openBatterySettings,
+                )
             }
 
             SectionCard(stringResource(R.string.privacy_storage)) {
@@ -111,6 +117,8 @@ fun SettingsScreen(ui: UiState, actions: AppActions) {
             }
 
             SectionCard(stringResource(R.string.app)) {
+                LinkRow(stringResource(R.string.intro_again), onClick = actions.showIntro)
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 ValueRow(stringResource(R.string.version), if (ui.updaterEnabled) null else stringResource(R.string.test_build_note), ui.versionName)
                 if (ui.updaterEnabled) {
                     OutlinedButton(onClick = actions.checkForUpdates, modifier = Modifier.padding(vertical = 4.dp)) {

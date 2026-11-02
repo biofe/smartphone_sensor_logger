@@ -109,6 +109,34 @@
     <string name="annotate_later">added later</string>
     <string name="close">Close</string>
 
+    <!-- Introduction -->
+    <string name="intro_page_of">Page %1$d of %2$d</string>
+    <string name="intro_skip">Skip</string>
+    <string name="intro_next">Next</string>
+    <string name="intro_done">Let\'s ride</string>
+    <string name="intro_recorded_title">Rate cycle paths by riding them</string>
+    <string name="intro_recorded_text">Velowind records how a ride feels, so that together we can map how comfortable cycle paths are. While you ride, it records:</string>
+    <string name="intro_recorded_gps">Where you ride: GPS once a second.</string>
+    <string name="intro_recorded_motion">How bumpy it is: motion sensors about 100 times a second.</string>
+    <string name="intro_recorded_sound">How loud it is: sound levels in 26 frequency bands. Never audio, so no speech can be recovered.</string>
+    <string name="intro_recorded_poll">What you notice: the buttons you tap, with time and place.</string>
+    <string name="intro_recorded_privacy">Rides stay on your phone until you agree to send them. Before anything leaves the phone, a random 150 to 250 m is cut from the start and end of each ride, so your home and workplace stay private.</string>
+    <string name="intro_safety_title">Safe on the bike</string>
+    <string name="intro_safety_mount">The phone can ride in a pocket, but a handlebar mount gives the best data and lets you use the buttons.</string>
+    <string name="intro_safety_law">In Germany you may only use a phone while cycling if it sits in a mount, and only with a brief glance or tap (§ 23 StVO). Never hold it while riding.</string>
+    <string name="intro_safety_tap">Tap a button only when the road allows it. A tap saves just the time and place, so there\'s no hurry.</string>
+    <string name="intro_safety_stop">To stop, hold Stop for a second. If you forget, the ride stops by itself after 10 minutes without moving.</string>
+    <string name="intro_safety_later">Missed something? Annotate the ride afterwards on the map, with the same buttons.</string>
+    <string name="intro_battery_title">Keep recording with the screen off</string>
+    <string name="intro_battery_text">Android may pause apps to save battery, which cuts rides short. Set Velowind\'s battery usage to Unrestricted.</string>
+    <string name="intro_battery_how">In the page that opens, tap App battery usage (or Battery), then Unrestricted. Then come back here.</string>
+    <string name="battery_usage">Battery usage</string>
+    <string name="battery_unrestricted">Unrestricted: rides keep recording</string>
+    <string name="battery_restricted">Not unrestricted yet</string>
+    <string name="battery_restricted_note">Not unrestricted: Android may cut rides short. Tap to change.</string>
+    <string name="battery_open_settings">Open battery settings</string>
+    <string name="intro_again">How Velowind works</string>
+
     <!-- Settings -->
     <string name="upload">Upload</string>
     <string name="upload_auto">Upload automatically on Wi-Fi</string>

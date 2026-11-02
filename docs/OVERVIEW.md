@@ -1,6 +1,6 @@
-# Bike Sensor Logger: project overview
+# Velowind logger: project overview
 
-*Last updated: 2026-10-23 · app version on `master`: 0.8.3*
+*Last updated: 2026-11-02 · app version on `master`: 0.11.0*
 
 This page is the living overview of the logger: why it exists, what the finished app should do, and where each feature stands. Update the status tables whenever a feature changes state, and bump the date above. The [README](../README.md) stays the reference for file formats, installing and building.
 
@@ -12,7 +12,7 @@ Ready-made apps didn't fit. Sensor Logger records loudness or raw audio but no f
 
 - **No audio is stored.** Sound becomes 26 third-octave band levels every 125 ms on the phone, so speech can't be recovered.
 - **Homes and workplaces stay hidden.** Exports cut each ride's start and end at a random 150–250 m radius, and rides get random ids.
-- **Ground truth from the rider.** A short poll at a spot (or later on a map) labels surface, condition, width, traffic and noise, which the classifier learns from.
+- **Ground truth from the rider.** One-tap buttons while riding (or later on the ride's track) label noise, surface, width and riding comfort, which the classifier learns from.
 
 The app is Android only (Android 10+). iOS is out of scope for now.
 
@@ -25,6 +25,7 @@ The app is Android only (Android 10+). iOS is out of scope for now.
 | 🔜 Planned | Wanted for the version test riders get; not built yet |
 | 💤 Deferred | Good idea, but parked until after the first test round |
 | ❌ Rejected | Decided against, with the reason |
+| ❌ Replaced | Was in the app, replaced by something better |
 
 ## Features and their state
 
@@ -46,19 +47,16 @@ The app is Android only (Android 10+). iOS is out of scope for now.
 
 | Feature | Status | Since | Notes |
 |---|---|---|---|
-| "Annotate this spot" poll while recording | ✅ Tested | 0.3.0 | 15 annotations on the 2026-10-21 handlebar ride (older detailed poll) |
-| Short poll: six one-tap questions (overall, surface, condition, width, motor traffic, noise) | ✅ Tested | 0.6.0 | The default for test riders |
-| "Detailed poll" tick box: type of way, exact surface, sounds, note | ✅ Tested | 0.6.0 | Appends the 0.4–0.5 questions to the short poll |
-| Type of way incl. "cycle street" and "shared footway (in town)"; width = the space you may ride in your direction | ✅ Tested | 0.5.0 | Country shared paths count as separate cycle path |
-| Annotate on the map: OSM view of own tracks and earlier answers, tap a spot to rate it | ✅ Tested | 0.6.0 | Exported as `map_annotations.csv`, minus spots within 250 m of any ride's start or end. Tiles come from tile.openstreetmap.org |
-| Wind question in the short poll (calm / some / strong) | 🔜 Planned | | Labels wind noise for the sound classifier and helps the effort estimate. Wind speed and direction also come from the weather join, so the poll answer mostly checks what the rider felt and heard |
-| Quick marks while riding: big rating buttons on the recording notification (e.g. good / bad / mark), usable without unlocking | 🔜 Planned | | Saves the position and time without stopping; the full poll for a mark can be filled in later on the map. Only for a mounted phone and a short tap at safe moments: German traffic law (§ 23 StVO) allows only brief operation of a phone that isn't held |
+| Live poll on the recording screen: 12 one-tap buttons (Quiet, Far traffic, Loud traffic, Wind · Smooth, Bumpy, Rough · Narrow, Medium, Wide · Nice, Unpleasant) | ✅ Tested | 0.10.0 | A tap saves only time and the last GPS fix to `labels.csv`, with a vibration and Undo for 5 s. No counters on the buttons. Meant for a mounted phone and a short tap at safe moments: German traffic law (§ 23 StVO) allows only brief operation of a phone that isn't held. Replaces the planned wind question and notification quick marks |
+| Ride screen over the lock screen; optional "keep the screen on" | ✅ Tested | 0.10.0 | |
+| Annotate later: select one ride, its track on OSM, tap a spot on it for the same 12 buttons | 🧪 Built, untested | 0.10.0 | Rows get `source=later` and the time and position of the track point. The privacy-trimmed ends are grey and can't be annotated. Taps added to an uploaded ride are sent on their own (`PUT /v1/rides/<name>/labels`) |
+| Old stop-and-fill poll (short and detailed), map annotations | ❌ Replaced | 0.3.0–0.9.1 | Replaced by the live poll in 0.10.0. Old rides keep their `annotations.csv`; the server still accepts map annotations from older apps |
 
 ### Export and privacy
 
 | Feature | Status | Since | Notes |
 |---|---|---|---|
-| ZIP export per ride to `Downloads/BikeSensorLogger/` via share sheet | ✅ Tested | 0.1.0 | |
+| ZIP export to `Downloads/BikeSensorLogger/` via share sheet | ✅ Tested | 0.1.0 | From 0.10.0: select rides in the ride list, then ZIP; also GPX, Upload and Delete for the selection |
 | Random ride ids, start/stop times removed from `meta.json` | ✅ Tested | 0.1.0 | |
 | Readable ride names: UTC time of the first exported row plus 4 random characters, e.g. `20261021-1627Z-k3f9` | 🧪 Built, untested | 0.7.0 | Easier to handle in the analysis. Uses the first row *after* the privacy trim, so it reveals nothing the CSV timestamps don't already contain. The suffix is drawn when the ride starts, so re-exporting gives the same name. Rides recorded before 0.7.0 keep their old 8-character ids |
 | Privacy trim at a random 150–250 m radius per ride end (radii stay on the phone) | ✅ Tested | 0.2.0 | Used for the 2026-10-21 export |
@@ -74,13 +72,15 @@ The app is Android only (Android 10+). iOS is out of scope for now.
 | Release APK on the Releases page when a `v*` tag is pushed | ✅ Tested | 0.1.0 | From 0.9.0 signed with a private release key (GitHub secret); test builds are a separate "Bike Logger (dev)" app. See [RELEASES.md](RELEASES.md) |
 | App updates itself from `apk.velowind.de`: daily check of `latest.json`, notification, download with SHA-256 check, Android's installer asks the rider | ✅ Tested | 0.9.0 | Update 0.9.0 → 0.9.1 worked on 2026-10-29 via Check for updates; the daily notification hasn't been seen in practice yet. Only release builds. GitHub Actions copies each tagged release to the VPS over SFTP (an account that can only write that folder). Moving from a pre-0.9.0 app needs one uninstall, as the signing key changed |
 | Upload to the project server: HTTPS upload-only service on the VPS (`server/`, Docker behind nginx, `upload.velowind.de`) | ✅ Tested | 0.8.0 | Live on the VPS since 2026-10-27. No password in the app. Uploads are privacy-trimmed exactly like the ZIP export. Setup: [server/deploy/SETUP.md](../server/deploy/SETUP.md) |
-| Automatic upload on Wi-Fi (Android JobScheduler, unmetered network), with an "Upload now" button and a switch to turn it off | 🧪 Built, untested | 0.8.0 | On by default once the rider agrees to the consent text. Retries with back-off; "Upload now" asks before using mobile data. Each ride shows "uploaded", "waiting" or why the server didn't accept it |
+| Automatic upload on Wi-Fi (Android JobScheduler, unmetered network), with an "Upload now" button and a switch to turn it off | ✅ Tested | 0.8.0 | Confirmed 2026-11-02 to run without opening the app. On by default once the rider agrees to the consent text. Retries with back-off; "Upload now" asks before using mobile data. Each ride shows "uploaded", "waiting" or why the server didn't accept it |
 | Open participation: the app makes a random install id and secret on first launch | 🧪 Built, untested | 0.8.0 | The server stores only a hash of the secret, so nobody can upload or delete under someone else's id. "Delete my data on the server" in Upload settings removes everything an install sent |
 | Server checks on every upload: ZIP safety, untrimmed fields, columns, time window, sample rates, gravity, speed; rate limits per IP and install; free-space floor | 🧪 Built, untested | 0.8.0 | Can't catch realistic-looking fake rides, so outliers per install still need a look in the analysis. Every rejection is logged with details and the file kept for 30 days |
 | Automatic promotion: rides fully in Germany, France or Switzerland go straight into the dataset; trusted installs from anywhere; the rest wait in quarantine | 🧪 Built, untested | 0.8.0 | An install becomes trusted after 5 automatically promoted rides. Untrusted and blocked installs are never promoted automatically. Admin commands: report, promote, trust, block, delete |
 | Filter rides by location on the server | 💤 Deferred | | No area limit for now |
-| Visual polish of the main screens | 🔜 Planned | | Last step before shipping to test riders |
-| Rider instructions and consent text | 🔜 Planned | | A first consent text is in the app (0.8.0) and needs a check: who runs the project, a contact address, how long data is kept. Test riders are data subjects under GDPR |
+| Redesign: Jetpack Compose + Material 3 (no Play Services), Velowind colours in light and dark, logo, bikes with icons and colours, sensor health chips, hold-to-stop, settings page | ✅ Tested | 0.10.0 | Rides are tinted in their bike's colour. Texts are string resources, ready for German |
+| Introduction on first launch: what is recorded, mount and § 23 StVO, battery setting (with a link to Android's page and a check) | 🧪 Built, untested | 0.11.0 | Shown before the first bikes are picked; again from Settings → How Velowind works. Settings also shows whether battery usage is Unrestricted |
+| German translation | 🔜 Planned | | Strings are ready in `res/values/strings.xml` |
+| Consent text check | 🔜 Planned | | A first consent text is in the app (0.8.0) and needs a check: who runs the project, a contact address, how long data is kept. Test riders are data subjects under GDPR |
 
 ### Later or not at all
 
@@ -129,3 +129,5 @@ The app is Android only (Android 10+). iOS is out of scope for now.
 | 0.8.3 | Opening the app no longer restarts a running automatic upload; "Upload now" takes over from a running upload instead of giving up |
 | 0.9.0 | Updates itself from apk.velowind.de (with the rider's confirmation); release builds signed with a private key; test builds install as a separate "dev" app |
 | 0.9.1 | No app changes; first test of the self-update (0.9.0 also has "Check for updates" in Upload settings) |
+| 0.10.0 | Redesign (Compose, Velowind look and logo, bike colours); live poll with 12 buttons on the recording screen; ride list with selection; annotating a ride later on its track; old polls and map annotations removed |
+| 0.11.0 | Introduction on first launch (what is recorded, safety, battery); battery state in Settings |
