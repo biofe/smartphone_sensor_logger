@@ -11,6 +11,7 @@ import android.os.Handler
 import android.os.Looper
 import android.os.PowerManager
 import android.provider.Settings
+import android.view.MotionEvent
 import android.view.WindowManager
 import android.widget.TextView
 import android.widget.Toast
@@ -167,7 +168,8 @@ class MainActivity : ComponentActivity() {
         ui.firstRun = ui.bikes.isEmpty()
         // Riders who already set up their bikes know the app; the intro is for new installs
         ui.showIntro = ui.firstRun && !getSharedPreferences(PREFS, MODE_PRIVATE).getBoolean(KEY_INTRO_SEEN, false)
-        ui.keepScreenOn = getSharedPreferences(PREFS, MODE_PRIVATE).getBoolean(KEY_SCREEN_ON, false)
+        // On by default: the poll buttons need the screen, and a dimmed screen costs little
+        ui.keepScreenOn = getSharedPreferences(PREFS, MODE_PRIVATE).getBoolean(KEY_SCREEN_ON, true)
         ui.installId = Upload.shortInstallId(this)
         ui.versionName = packageManager.getPackageInfo(packageName, 0).versionName ?: "?"
         ui.updaterEnabled = Updater.enabled(this)
@@ -292,6 +294,31 @@ class MainActivity : ComponentActivity() {
         setShowWhenLocked(ui.recording)
         if (ui.recording && ui.keepScreenOn) window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         else window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        brighten()
+    }
+
+    /**
+     * With the screen kept on during a ride, it dims after a while without a touch to save
+     * battery; any touch brings the normal brightness back.
+     */
+    private fun brighten() {
+        handler.removeCallbacks(dim)
+        setBrightness(WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE)
+        if (ui.recording && ui.keepScreenOn) handler.postDelayed(dim, DIM_AFTER_MS)
+    }
+
+    private val dim = Runnable { setBrightness(DIM_BRIGHTNESS) }
+
+    private fun setBrightness(value: Float) {
+        val attrs = window.attributes
+        if (attrs.screenBrightness == value) return
+        attrs.screenBrightness = value
+        window.attributes = attrs
+    }
+
+    override fun dispatchTouchEvent(event: MotionEvent): Boolean {
+        if (event.actionMasked == MotionEvent.ACTION_DOWN && ui.recording && ui.keepScreenOn) brighten()
+        return super.dispatchTouchEvent(event)
     }
 
     private fun tapLabel(choice: Labels.Choice) {
@@ -579,6 +606,10 @@ class MainActivity : ComponentActivity() {
 
         private const val PREFS = "ride_screen"
         private const val KEY_SCREEN_ON = "keep_screen_on"
+
+        /** A kept-on ride screen dims to this (0–1) after this long without a touch */
+        private const val DIM_AFTER_MS = 20_000L
+        private const val DIM_BRIGHTNESS = 0.05f
         private const val KEY_INTRO_SEEN = "intro_seen"
 
         private const val CONSENT_TEXT =

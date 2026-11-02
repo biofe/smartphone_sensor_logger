@@ -6,6 +6,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.view.ViewGroup
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import androidx.activity.ComponentActivity
@@ -79,6 +80,9 @@ class AnnotateActivity : ComponentActivity() {
             return
         }
         web = WebView(this)
+        // Without these the WebView wraps its content inside Compose, so the page's 100% height is
+        // 0 and the map stays white
+        web.layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
         web.settings.javaScriptEnabled = true
         // OSM's tile policy asks apps to identify themselves
         web.settings.userAgentString = web.settings.userAgentString +
@@ -270,7 +274,8 @@ class AnnotateActivity : ComponentActivity() {
         return """<!doctype html><html><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>$css
-html, body, #map { height: 100%; margin: 0; }
+html, body { height: 100%; margin: 0; }
+#map { position: absolute; top: 0; right: 0; bottom: 0; left: 0; }
 #hint { position: absolute; z-index: 1000; left: 8px; right: 8px; top: 8px; padding: 8px 12px; display: none;
   background: rgba(255,255,255,.95); color: #222; font: 14px sans-serif; border-radius: 8px; text-align: center; }
 </style></head><body><div id="map"></div><div id="hint"></div>
@@ -311,7 +316,16 @@ function hint(text) {
   h.textContent = text; h.style.display = 'block';
   clearTimeout(hintTimer); hintTimer = setTimeout(() => { h.style.display = 'none'; }, 2500);
 }
-if (bounds.isValid()) map.fitBounds(bounds, {padding: [24, 24]}); else map.setView([51.16, 10.45], 6);
+function fit() {
+  if (bounds.isValid()) map.fitBounds(bounds, {padding: [24, 24]}); else map.setView([51.16, 10.45], 6);
+}
+fit();
+// The WebView can get its final size after the page loaded: redraw, and fit the track once it's visible
+let fitted = map.getSize().y > 0;
+new ResizeObserver(() => {
+  map.invalidateSize();
+  if (!fitted && map.getSize().y > 0) { fitted = true; fit(); }
+}).observe(document.getElementById('map'));
 map.on('click', (e) => {
   const a = map.containerPointToLatLng([0, 0]), b = map.containerPointToLatLng([100, 0]);
   Android.tapped(e.latlng.lat, e.latlng.lng, map.distance(a, b) / 100);

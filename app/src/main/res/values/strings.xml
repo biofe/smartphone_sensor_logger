@@ -157,7 +157,7 @@
     <string name="edit_bike">Edit %1$s</string>
     <string name="during_rides">During rides</string>
     <string name="keep_screen_on">Keep the screen on</string>
-    <string name="keep_screen_on_note">Uses more battery. The ride screen also shows over the lock screen, so the poll is one tap away.</string>
+    <string name="keep_screen_on_note">So the buttons are always ready. The screen dims after 20 seconds without a touch to save battery; a touch brightens it. When off, the ride screen still shows over the lock screen after the power button.</string>
     <string name="privacy_storage">Privacy and storage</string>
     <string name="what_is_sent">What is sent, and what isn\'t</string>
     <string name="phone_id">Phone ID</string>
