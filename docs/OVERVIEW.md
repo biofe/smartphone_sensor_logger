@@ -1,6 +1,6 @@
 # Velowind logger: project overview
 
-*Last updated: 2026-11-02 · app version on `master`: 0.11.0*
+*Last updated: 2026-11-02 · app version on `master`: 0.11.1*
 
 This page is the living overview of the logger: why it exists, what the finished app should do, and where each feature stands. Update the status tables whenever a feature changes state, and bump the date above. The [README](../README.md) stays the reference for file formats, installing and building.
 
@@ -48,7 +48,7 @@ The app is Android only (Android 10+). iOS is out of scope for now.
 | Feature | Status | Since | Notes |
 |---|---|---|---|
 | Live poll on the recording screen: 12 one-tap buttons (Quiet, Far traffic, Loud traffic, Wind · Smooth, Bumpy, Rough · Narrow, Medium, Wide · Nice, Unpleasant) | ✅ Tested | 0.10.0 | A tap saves only time and the last GPS fix to `labels.csv`, with a vibration and Undo for 5 s. No counters on the buttons. Meant for a mounted phone and a short tap at safe moments: German traffic law (§ 23 StVO) allows only brief operation of a phone that isn't held. Replaces the planned wind question and notification quick marks |
-| Ride screen over the lock screen; optional "keep the screen on" | ✅ Tested | 0.10.0 | |
+| Ride screen over the lock screen; "keep the screen on" | ✅ Tested | 0.10.0 | From 0.11.1 on by default, dimmed after 20 s without a touch: with the phone's normal timeout the screen went off mid-ride and only the power button woke it |
 | Annotate later: select one ride, its track on OSM, tap a spot on it for the same 12 buttons | 🧪 Built, untested | 0.10.0 | Rows get `source=later` and the time and position of the track point. The privacy-trimmed ends are grey and can't be annotated. Taps added to an uploaded ride are sent on their own (`PUT /v1/rides/<name>/labels`) |
 | Old stop-and-fill poll (short and detailed), map annotations | ❌ Replaced | 0.3.0–0.9.1 | Replaced by the live poll in 0.10.0. Old rides keep their `annotations.csv`; the server still accepts map annotations from older apps |
 
@@ -131,3 +131,4 @@ The app is Android only (Android 10+). iOS is out of scope for now.
 | 0.9.1 | No app changes; first test of the self-update (0.9.0 also has "Check for updates" in Upload settings) |
 | 0.10.0 | Redesign (Compose, Velowind look and logo, bike colours); live poll with 12 buttons on the recording screen; ride list with selection; annotating a ride later on its track; old polls and map annotations removed |
 | 0.11.0 | Introduction on first launch (what is recorded, safety, battery); battery state in Settings |
+| 0.11.1 | Annotate screen: the map showed only white (the map view had no height). The ride screen stays on by default and dims after 20 s without a touch |
