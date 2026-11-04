@@ -19,11 +19,11 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
@@ -653,13 +653,17 @@ fun VelowindApp(
         // In the ride list, back first drops the selection
         if (ui.screen == Screen.RIDES && ui.selected.isNotEmpty()) actions.selectRides(emptySet()) else actions.back()
     }
-    Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).safeDrawingPadding()) {
-        when {
-            ui.recording -> RecordingScreen(ui, actions)
-            ui.showIntro -> IntroScreen(ui, actions)
-            ui.screen == Screen.SETTINGS -> SettingsScreen(ui, actions)
-            ui.screen == Screen.RIDES -> RidesScreen(ui, actions)
-            else -> MainScreen(ui, actions)
+    // Surface, not just a background: it also sets the text colour for the theme, so plain Text
+    // is light in dark mode
+    Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+        Box(Modifier.safeDrawingPadding()) {
+            when {
+                ui.recording -> RecordingScreen(ui, actions)
+                ui.showIntro -> IntroScreen(ui, actions)
+                ui.screen == Screen.SETTINGS -> SettingsScreen(ui, actions)
+                ui.screen == Screen.RIDES -> RidesScreen(ui, actions)
+                else -> MainScreen(ui, actions)
+            }
         }
     }
     if (ui.firstRun && !ui.showIntro) FirstBikesDialog(saveFirstBikes)
