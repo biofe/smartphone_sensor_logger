@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Privacy · Velowind</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="How Velowind handles personal data.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="/">
+      <span class="brand-mark" aria-hidden="true">
+        <svg width="28" height="28" viewBox="-3.5 -4.5 31 31" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M2,16a3.5,3.5 0,1 0,7 0a3.5,3.5 0,1 0,-7 0M15,16a3.5,3.5 0,1 0,7 0a3.5,3.5 0,1 0,-7 0M5.5,16L9,10h6.5M9,10l3,6H5.5M12,16l3.5,-6M18.5,16L15.2,7.6h-2.3M9,10L8.2,8.4M6.8,8.4h3" stroke="#FFFFFF" stroke-width="1.8"/><path d="M17.2,2a2.1,2.1 0 1 0 4.2,0a2.1,2.1 0 1 0 -4.2,0" fill="#F7C948" stroke="#F7C948" stroke-width="1.8"/><path d="M22.80,2.00L23.90,2.00M21.77,4.47L22.55,5.25M19.30,5.50L19.30,6.60M16.83,4.47L16.05,5.25M15.80,2.00L14.70,2.00M16.83,-0.47L16.05,-1.25M19.30,-1.50L19.30,-2.60M21.77,-0.47L22.55,-1.25" stroke="#F7C948" stroke-width="1.5"/></svg>
+      </span>
+      Velowind
+    </a>
+    <nav aria-label="Pages">
+      <a href="/">Back to the start page</a>
+      <a href="/de/datenschutz.html" hreflang="de" lang="de" class="lang">Deutsch</a>
+    </nav>
+  </div>
+</header>
+
+<main class="legal">
+  <div class="wrap">
+    <div class="prose">
+      <h1>Privacy</h1>
+      <p>This page explains what personal data the Velowind website, the Velowind app and the project server process, why, and for how long.</p>
+
+      <h2>Who is responsible</h2>
+      <!--# block name="noprovider" --><p class="todo">Name and postal address are shown on the live site.</p><!--# endblock -->
+      <!--# include virtual="/_private/provider.html" stub="noprovider" -->
+      <p>Email: <span class="contact-copy">felix0180 [at] web.de</span></p>
+
+      <h2>This website</h2>
+      <p>The site sets no cookies, uses no analytics or tracking, and loads nothing from other companies. To deliver a page, the web server has to process your IP address and the request. The site keeps no access log, so this is not stored. Only if the server hits an error can its error log contain your IP address; that log is deleted after <span class="todo">[TODO: days, check logrotate on the server]</span> days.</p>
+      <p>The start page asks apk.velowind.de for the number of the newest app version. That server also keeps no access log.</p>
+      <p>Legal basis: Art. 6 (1) (f) GDPR. Delivering the site securely is in the project's legitimate interest.</p>
+
+      <h2>The app</h2>
+      <p>While you record a ride, the app stores on your phone: the GPS track, motion sensor data (accelerometer, gyroscope, barometer), sound levels in 26 frequency bands (never audio), your ratings of spots on the ride, and the bike you chose. None of this leaves the phone until you agree to the upload in the app.</p>
+      <p>If you agree, each finished ride is sent to the project server: the motion sensor data, the GPS track, the sound levels, your ratings, the bike type, the phone model, the app version and a random id for this app install. The first and last 150–250 m of every ride are cut off on the phone before upload. Your name, contact details, bike names and the full, uncut track are never sent.</p>
+      <p>Purpose: research on how comfortable cycle paths are to ride, and building a map of cycle path quality from many rides. Results are published only combined over many rides, per stretch of path. The data is not sold and not shared with advertisers.</p>
+      <p>Legal basis: your consent, Art. 6 (1) (a) GDPR. You can withdraw it at any time by turning off automatic upload in the app's Upload settings. "Delete my data on the server" in the same place deletes everything this app install has sent.</p>
+
+      <h2>On the project server</h2>
+      <ul>
+        <li>Uploaded rides, with the random install id, the time they arrived and the app version. They are kept <span class="todo">[TODO: how long, e.g. until the end of the project]</span>, or until you delete them from the app.</li>
+        <li>For each install id, a hash of a random secret that only your phone knows, so nobody else can upload or delete under your id.</li>
+        <li>Uploads the server refuses, with the reason, for up to 30 days, so that errors in the app can be found.</li>
+        <li>IP addresses, to limit how many requests and new installs can come from one address. The server keeps them for at most 7 days. Legal basis: Art. 6 (1) (f) GDPR; protecting the service against abuse is in the project's legitimate interest.</li>
+      </ul>
+      <p>The upload server keeps no access log. Rides carry only the random install id, so the project can only find your data if you tell it that id. The app shows it in Upload settings ("This phone's id").</p>
+
+      <h2>Other services</h2>
+      <ul>
+        <li><strong>Hosting:</strong> the website, the app downloads and the project server run on a rented server from <span class="todo">[TODO: hosting provider]</span>, which processes the data on the project's behalf.</li>
+        <li><strong>App updates:</strong> the app asks apk.velowind.de once a day whether there is a newer version. No access log is kept.</li>
+        <li><strong>GitHub:</strong> if you download the app from GitHub, GitHub's privacy statement applies.</li>
+        <li><strong>Map tiles:</strong> the map in the app loads its tiles from the OpenStreetMap Foundation (tile.openstreetmap.org), which receives your IP address. The <a href="https://osmfoundation.org/wiki/Privacy_Policy">OpenStreetMap Foundation's privacy policy</a> applies.</li>
+      </ul>
+
+      <h2>Your rights</h2>
+      <p>You have the right to access your data (Art. 15 GDPR), to have it corrected (Art. 16) or deleted (Art. 17), to restrict its processing (Art. 18), to receive it in a portable format (Art. 20), and to object to processing based on legitimate interest (Art. 21). You can withdraw consent at any time, with effect for the future (Art. 7 (3)). Write to the address above and quote your phone's id. You can also complain to a data protection supervisory authority (Art. 77 GDPR).</p>
+      <p class="muted">Last updated: <span class="todo">[TODO: date]</span></p>
+
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Velowind · a crowdsourced cycle path comfort map</span>
+    <span><a href="/imprint.html">Legal notice</a> · <a href="/privacy.html">Privacy</a> · Contact: <span id="contact">felix0180 [at] web.de</span> · <a href="https://github.com/biofe/smartphone_sensor_logger">Source code</a></span>
+  </div>
+</footer>
+
+<script src="/site.js"></script>
+</body>
+</html>

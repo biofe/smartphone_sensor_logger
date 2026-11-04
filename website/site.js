@@ -6,10 +6,12 @@
     var addr = ['felix0180', 'web.de'].join('@');
     var a = document.createElement('a'); a.href = 'mailto:' + addr; a.textContent = addr;
     contact.textContent = ''; contact.appendChild(a);
+    var copies = document.querySelectorAll('.contact-copy');
+    for (var c = 0; c < copies.length; c++) copies[c].textContent = addr;
   }
 
   var line = document.getElementById('version-line');
-  if (window.fetch) {
+  if (line && window.fetch) {
     fetch('https://apk.velowind.de/latest.json', { cache: 'no-cache' })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (j) { if (j && /^[0-9][0-9A-Za-z.\-]*$/.test(j.versionName || '')) line.textContent = (line.getAttribute('data-prefix') || 'Version') + ' ' + j.versionName; })

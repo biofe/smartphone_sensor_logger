@@ -161,4 +161,14 @@ nginx -t && systemctl reload nginx
 
 Run these from the repo root. To update the site later, pull and copy `website/` again; no reload needed.
 
+The legal notice and privacy pages (`/imprint.html`, `/privacy.html`, `/de/impressum.html`, `/de/datenschutz.html`) show the operator's name and postal address. They aren't in the repository: nginx inserts them from a file that exists only on the server. Create it once from the example and fill it in:
+
+```
+install -d -m 755 /etc/velowind/www-private
+cp server/deploy/provider.example.html /etc/velowind/www-private/provider.html
+nano /etc/velowind/www-private/provider.html
+```
+
+Until that file exists, the pages say the address is shown on the live site. Also fill in the `[TODO …]` items in the two privacy pages (hosting provider, how long rides are kept, error log retention, date) before going live.
+
 The contact address in the footers is put together by `site.js`, so it isn't in the HTML for address harvesters; change it there and in both footers.
