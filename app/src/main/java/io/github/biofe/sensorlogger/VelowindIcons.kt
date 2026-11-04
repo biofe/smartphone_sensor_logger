@@ -62,18 +62,16 @@ object VelowindIcons {
     private val trekking = standard + "M2.6 10.6h5.8M3.4 10.6L5.5 16" // rear rack
     private val city = arrayOf(wheels, REAR, "M12 16c1.6-2.8 3-4 4.9-4", "M18.5 16L14.9 6.8c-.8-.4-2-.2-2.8.3", SADDLE) // step-through, upright bar
     private val road = arrayOf(wheels, REAR, FRAME, DROP_BAR, SADDLE)
-    private val gravel = arrayOf(
-        circle(5.5f, 16f, 3.2f) + circle(18.5f, 16f, 3.2f), knobs(5.5f, 16f, 3.2f) + knobs(18.5f, 16f, 3.2f),
-        REAR, FRAME, DROP_BAR, SADDLE,
+    private val knobbly = circle(5.5f, 16f, 3.2f) + circle(18.5f, 16f, 3.2f)
+    private val treads = knobs(5.5f, 16f, 3.2f) + knobs(18.5f, 16f, 3.2f)
+    private val gravel = arrayOf(knobbly, treads, REAR, FRAME, DROP_BAR, SADDLE)
+    private val mountain = arrayOf( // knobbly tyres, low seat junction, suspension fork, flat bar
+        knobbly, treads, "M5.5 16L9 11.6l3 4.4H5.5", "M9 11.6l6.7-2.4M12 16l3.7-6.8",
+        "M18.5 16l-1.2-3.2M17.3 12.8l-1.9-5h3", "M9 11.6L8.2 8.4M6.8 8.4h3",
     )
-    private val mountain = arrayOf( // fat tyres, sloping top tube, suspension fork, flat bar
-        circle(5.5f, 16f, 3.6f) + circle(18.5f, 16f, 3.6f), circle(5.5f, 16f, 2f) + circle(18.5f, 16f, 2f),
-        "M5.5 16L9 10.5l3 5.5H5.5", "M9 10.5l6.6-1.3M12 16l3.6-6.8", "M18.5 16l-1.2-3.2M17.3 12.8l-1.9-5h3",
-        "M9 10.5L8.3 8.2M6.9 8.2h3",
-    )
-    private val cargo = arrayOf( // long john: box between rider and small front wheel
+    private val cargo = arrayOf( // long john: box between rider and small front wheel, bar on the box
         circle(4f, 16f, 3f) + circle(20f, 17f, 2.2f),
-        "M4 16l3-6 2.5 6H4M9.5 16h10.5M9.5 16l1.6-7.3h-2.1M7 10l-.6-2M5.2 8h2.6", "M12.5 10.5h6.5v4h-6.5z",
+        "M4 16l3-6 2.5 6H4M9.5 16h10.5M7 10l-.6-2M5.2 8h2.6", "M12.5 10.5h6.5v4h-6.5z", "M12.5 10.5L12 7.8h-2.2",
     )
     private val folding = arrayOf( // small wheels, hinge, tall seat post and stem
         circle(6f, 17.5f, 2.5f) + circle(18f, 17.5f, 2.5f), "M6 17.5h5l-.6-5L6 17.5", "M10.4 12.5l5.9-1.6",
@@ -83,9 +81,9 @@ object VelowindIcons {
         circle(5f, 16.5f, 3f) + circle(19.5f, 17f, 2.5f), "M5 16.5l4.5-3.3h4.5l5.5 3.8",
         "M9.5 13.2L7 7.8M9.5 13.2h3.3", "M14 13.2l5.3-3.4h1.7",
     )
-    private val velomobile = arrayOf( // closed shell with the rider's head, wheels peeking out
-        "M2.3 17C2.3 12.3 5.7 9.2 10.5 8.9c1-2.2 4-2.2 5 0c4 .5 6.3 3.7 6.3 7.6V17z",
-        "M4.5 17a2 2 0 0 0 4 0M15.5 17a2 2 0 0 0 4 0",
+    private val velomobile = arrayOf( // long shell, rider's head dome, open front wheel
+        "M2 13.8C2 11.6 4.5 10.3 8 10.1h3.5c5 .1 9.5 1.9 11 4.3c.3.5 0 .8-.6.8h-1.2a2.8 2.8 0 0 0-5.4 0H4.5C3 15.2 2 14.8 2 13.8z",
+        "M8.3 10.1a1.6 1.6 0 0 1 3.2 0", circle(18f, 17.2f, 1.9f), "M4.6 15.2a1.8 1.8 0 0 0 3.6 0",
     )
 
     /** The icon for a bike type; e-bikes get a small bolt. */
