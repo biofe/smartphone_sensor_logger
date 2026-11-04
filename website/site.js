@@ -1,15 +1,5 @@
 (function () {
   // Version from the update manifest the app itself reads. Fails quietly (e.g. offline) and keeps "Newest version".
-  // Contact address, assembled here so that simple address harvesters don't find it in the HTML.
-  var contact = document.getElementById('contact');
-  if (contact) {
-    var addr = ['felix0180', 'web.de'].join('@');
-    var a = document.createElement('a'); a.href = 'mailto:' + addr; a.textContent = addr;
-    contact.textContent = ''; contact.appendChild(a);
-    var copies = document.querySelectorAll('.contact-copy');
-    for (var c = 0; c < copies.length; c++) copies[c].textContent = addr;
-  }
-
   var line = document.getElementById('version-line');
   if (line && window.fetch) {
     fetch('https://apk.velowind.de/latest.json', { cache: 'no-cache' })

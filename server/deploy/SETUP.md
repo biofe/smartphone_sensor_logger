@@ -169,6 +169,6 @@ cp server/deploy/provider.example.html /etc/velowind/www-private/provider.html
 nano /etc/velowind/www-private/provider.html
 ```
 
-Until that file exists, the pages say the address is shown on the live site. Also fill in the `[TODO …]` items in the two privacy pages (hosting provider, how long rides are kept, error log retention, date) before going live.
+Until that file exists, the pages say the address is shown on the live site. Also fill in the remaining `[TODO …]` items in the two privacy pages before going live.
 
-The contact address in the footers is put together by `site.js`, so it isn't in the HTML for address harvesters; change it there and in both footers.
+The contact address is written as "felix0180 strudel web de" in the footers and legal pages, so that address harvesters don't pick it up.
