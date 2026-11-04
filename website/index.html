@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Velowind</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Velowind maps how cycle paths feel to ride: surface, noise and traffic, measured by riders' phones. A data science project, open for test riders.">
+<link rel="alternate" hreflang="de" href="https://velowind.de/de/">
+<link rel="alternate" hreflang="en" href="https://velowind.de/">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#">
+      <span class="brand-mark" aria-hidden="true">
+        <svg width="28" height="28" viewBox="-3.5 -4.5 31 31" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M2,16a3.5,3.5 0,1 0,7 0a3.5,3.5 0,1 0,-7 0M15,16a3.5,3.5 0,1 0,7 0a3.5,3.5 0,1 0,-7 0M5.5,16L9,10h6.5M9,10l3,6H5.5M12,16l3.5,-6M18.5,16L15.2,7.6h-2.3M9,10L8.2,8.4M6.8,8.4h3" stroke="#FFFFFF" stroke-width="1.8"/><path d="M17.2,2a2.1,2.1 0 1 0 4.2,0a2.1,2.1 0 1 0 -4.2,0" fill="#F7C948" stroke="#F7C948" stroke-width="1.8"/><path d="M22.80,2.00L23.90,2.00M21.77,4.47L22.55,5.25M19.30,5.50L19.30,6.60M16.83,4.47L16.05,5.25M15.80,2.00L14.70,2.00M16.83,-0.47L16.05,-1.25M19.30,-1.50L19.30,-2.60M21.77,-0.47L22.55,-1.25" stroke="#F7C948" stroke-width="1.5"/></svg>
+      </span>
+      Velowind
+    </a>
+    <nav aria-label="Sections">
+      <a href="#idea">The idea</a>
+      <a href="#science">Data science</a>
+      <a href="#privacy">Privacy</a>
+      <a href="#install">Install</a>
+      <a href="#ride">Riding</a>
+      <a href="de/index.html" hreflang="de" lang="de" class="lang">Deutsch</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="hero">
+    <div class="wrap">
+      <span class="eyebrow">Test riders wanted · Android</span>
+      <h1>How does this cycle path feel to ride?</h1>
+      <p class="lede">Maps show where cycle paths are, but not whether they are smooth, rattly, loud or calm. Velowind measures that with the phones of people who ride them, and turns the rides into a comfort map. It is a data science project that starts small and is meant to keep growing.</p>
+      <div class="cta-row">
+        <a class="btn" id="download" href="https://apk.velowind.de/">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 20h14"/></svg>
+          Download the app
+        </a>
+        <span class="cta-note"><span id="version-line">Newest version</span> · Android 10 or newer · <a href="#install">how to install</a></span>
+      </div>
+
+      <figure class="trace" aria-labelledby="trace-cap">
+        <div class="trace-head">
+          <span class="num">vibration 3–8 Hz per 100 m</span>
+          <span id="trace-cap">Test ride with phone on the handlebar</span>
+        </div>
+        <canvas id="trace" data-labels="concrete slabs=concrete slabs|compacted gravel=gravel|asphalt=asphalt" data-axis="rel. dB|average" role="img" aria-label="Vibration along a 9.9 km test ride, corrected for speed: below average on most asphalt, about 10 dB above average after the concrete slab rating near km 2.3, and about 8 dB above average around the gravel rating near km 5.4."></canvas>
+        <div class="trace-foot">
+          <div class="legend">
+            <span><i style="background: var(--teal)"></i>smooth</span>
+            <span><i style="background: var(--rough)"></i>rough</span>
+          </div>
+        </div>
+      </figure>
+    </div>
+  </div>
+
+  <section id="idea">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="eyebrow">The idea</span>
+        <h2>A comfort map, built from real rides</h2>
+      </div>
+      <div class="prose">
+        <p>Whether a route is pleasant depends on things a normal map leaves out: cracked asphalt or gravel, concrete slabs with a bump every few metres, a path squeezed next to a busy road, or a quiet lane through the fields. OpenStreetMap has tags for surface and smoothness, but they are missing or out of date for many ways.</p>
+        <p>Velowind fills that gap from the bottom up. While you ride, the app records how much the bike shakes, how loud it is around you, and where you are. Many rides over the same stretch, on different bikes, at different times and in different weather, add up to a reliable picture of that stretch.</p>
+        <p>The first goal is a map of path quality by surface, noise, time of day and weather. The long-term goal is a route planner that can find you the smooth and quiet way, not only the short one.</p>
+      </div>
+
+      <div class="measures" aria-label="What the app measures">
+        <div class="measure">
+          <h3>Vibration</h3>
+          <span class="fig">accelerometer ~100 Hz · gyroscope</span>
+          <p>Shows the surface: smooth asphalt, slab joints, cobbles, gravel. The analysis corrects for speed, so riding faster doesn't count as a rougher path.</p>
+        </div>
+        <div class="measure">
+          <h3>Sound levels</h3>
+          <span class="fig">26 third-octave bands · 50 Hz–16 kHz · every 125 ms</span>
+          <p>Shows traffic, wind and quiet. The phone keeps only loudness per frequency band, so no speech or audio is ever stored.</p>
+        </div>
+        <div class="measure">
+          <h3>Position and height</h3>
+          <span class="fig">GPS 1 Hz · barometer 10 Hz</span>
+          <p>Places each measurement on the map and tracks climbs, which matter for how hard a stretch is to ride.</p>
+        </div>
+        <div class="measure">
+          <h3>Your ratings</h3>
+          <span class="fig">surface · width · traffic · noise</span>
+          <p>A few one-tap answers about the spot you are on. They are the ground truth that the models learn from.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="science">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="eyebrow">A data science project</span>
+        <h2>From raw sensor data to a map</h2>
+        <p class="lede">Velowind started as a data science project and is built in the open. This is the path from a ride to the map, and where it stands today.</p>
+      </div>
+
+      <ol class="pipeline">
+        <li><div><h3>Collect<span class="status done">running</span></h3><p>The Android logger records all sensors and uploads finished rides over Wi-Fi to the project server.</p></div></li>
+        <li><div><h3>Clean and align<span class="status done">running</span></h3><p>Sensor clocks are checked against real time and start and end of every ride are cut for privacy.</p></div></li>
+        <li><div><h3>Match to the street network<span class="status next">next</span></h3><p>GPS tracks will be matched to OpenStreetMap ways.</p></div></li>
+        <li><div><h3>Features<span class="status now">first tests</span></h3><p>Vibration per frequency band and noise per frequency band were tested on first test rides. Next come gradient, bike type and phone mount, so that data from a road bike and from a cargo bike can be compared.</p></div></li>
+        <li><div><h3>Add context<span class="status next">next</span></h3><p>Weather (rain, temperature, wind) by time and place, plus time of day and day of week.</p></div></li>
+        <li><div><h3>Model<span class="status next">next</span></h3><p>Classifiers for surface and roughness trained on rider ratings, checked against OpenStreetMap smoothness tags.</p></div></li>
+        <li><div><h3>Map<span class="status next">next</span></h3><p>An interactive map of path quality, with filters for time of day, weekday and weather.</p></div></li>
+      </ol>
+
+      <div class="sec-head">
+        <h3>Where it can go next</h3>
+      </div>
+      <div class="outlook">
+        <div>
+          <h3>Velowind Routes</h3>
+          <p>A route planner that weighs comfort: smooth surface, little traffic noise, gentle climbs, and the wind of the day.</p>
+        </div>
+        <div>
+          <h3>Less data from each phone</h3>
+          <p>A small model on the phone that turns 100 readings per second into a few numbers per stretch. By a rough estimate that could cut the upload size about a hundredfold.</p>
+        </div>
+        <div>
+          <h3>How hard is this stretch?</h3>
+          <p>An effort score per stretch from gradient, rolling resistance of the surface and headwind, checked against how real riders slow down.</p>
+        </div>
+        <div>
+          <h3>More riders, more places</h3>
+          <p>The app accepts anyone who installs it. With more riders, the map can cover more of a city, and more weather, seasons and times of day.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="privacy">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="eyebrow">Privacy</span>
+        <h2>Built so that rides can't point back to you</h2>
+        <p class="lede">You don't make an account and you don't give a name. Nothing leaves your phone until you agree to the upload in the app.</p>
+      </div>
+      <div class="split">
+        <div class="panel yes">
+          <h3>What is uploaded</h3>
+          <ul>
+            <li>Motion sensor data, the GPS track and sound levels in frequency bands</li>
+            <li>Your ratings of spots on the ride</li>
+            <li>The type of bike (for example "trekking"), the phone model and app version</li>
+            <li>A random id for your app install, so you can delete your data later</li>
+          </ul>
+        </div>
+        <div class="panel no">
+          <h3>What never leaves your phone</h3>
+          <ul>
+            <li>Audio of any kind: the phone stores loudness per band, not sound</li>
+            <li>The first and last <span class="num">150–250 m</span> of every ride, cut at a random radius so your home or work can't be found</li>
+            <li>Your name, contact details, or the names you give your bikes</li>
+            <li>The full track you can export as GPX for yourself</li>
+          </ul>
+        </div>
+      </div>
+      <p class="callout">You stay in control. Automatic upload runs only on Wi-Fi and can be switched off. <strong>Settings → Delete my data on the server</strong> removes everything your phone has sent.</p>
+    </div>
+  </section>
+
+  <section id="install">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="eyebrow">Install</span>
+        <h2>Get the app</h2>
+        <p class="lede">The app isn't in the Play Store yet, so Android asks you once to allow the installation. It needs Android 10 or newer.</p>
+      </div>
+      <ol class="steps">
+        <li><div><h3>Download the APK</h3><p>Open <a href="https://apk.velowind.de/">apk.velowind.de</a> on your phone. It always gives you the newest version. Each release is also on <a href="https://github.com/biofe/smartphone_sensor_logger/releases">GitHub</a>, together with the source code.</p></div></li>
+        <li><div><h3>Allow the installation</h3><p>Open the downloaded file. Android asks whether your browser or file app may install apps: tap <strong>Settings</strong>, turn on <strong>Allow from this source</strong>, go back and tap <strong>Install</strong>. If Play Protect warns about an unknown app, choose <strong>Install anyway</strong>.</p></div></li>
+        <li><div><h3>Set up your bikes</h3><p>Open the app, pick the bikes you ride, and allow location, microphone and notifications. Each bike gets its own start button.</p></div></li>
+        <li><div><h3>Let it run in the background</h3><p>In Android settings, open the app, then <strong>Battery</strong>, and choose <strong>Unrestricted</strong>. Otherwise some phones stop the recording when the screen is off.</p></div></li>
+        <li><div><h3>Agree to the upload</h3><p>The app shows what it sends and asks once. After that, finished rides go to the project server whenever you are on Wi-Fi. You can upload your recordings always manually (Settings &rarr; Upload now)</p></div></li>
+      </ol>
+      <p class="prose" style="color: var(--muted)">Updates come by themselves: the app checks once a day and offers a new version with one tap. Your rides and settings stay.</p>
+    </div>
+  </section>
+
+  <section id="ride">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="eyebrow">Riding</span>
+        <h2>Just ride the way you always do</h2>
+      </div>
+      <div class="tips">
+        <div>
+          <h3>Start</h3>
+          <p>Tap the button of the bike you are on before you set off. A notification shows that the ride is recording.</p>
+        </div>
+        <div>
+          <h3>Where to put the phone</h3>
+          <p>A firm handlebar mount gives the clearest data. Rides with the phone in your trouser pocket, or carried on you some other way, help too.</p>
+        </div>
+        <div>
+          <h3>Rate what you notice</h3>
+          <p>When something stands out, like a rough patch, a narrow path or loud traffic, rate it in a few taps. But only when it is safe: if you stop, or with a brief tap on a mounted phone, as traffic law allows.</p>
+        </div>
+        <div>
+          <h3>Stop</h3>
+          <p>End the ride in the app. If you forget, it stops by itself after 10 minutes standing in one place, and leaves the standing time out.</p>
+        </div>
+        <div>
+          <h3>Any ride counts</h3>
+          <p>Your commute, the shopping trip, a weekend tour. Riding the same way often is useful too, because it shows how a path changes with weather and time of day.</p>
+        </div>
+        <div>
+          <h3>Don't share the mic</h3>
+          <p>Other apps that use the microphone at the same time, like calls or noise meters, block the sound measurement. The app warns you if that happens.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="eyebrow">Questions</span>
+        <h2>Good to know</h2>
+      </div>
+      <div class="faq">
+        <details><summary>Is there an iPhone version?</summary><p>Not yet. Distributing iOS apps outside the App Store needs a paid developer account, so the project starts with Android.</p></details>
+        <details><summary>How much battery and data does it use?</summary><p>Recording keeps GPS and the sensors on, similar to a sports tracking app. A 30-minute ride is a few megabytes and is uploaded only on Wi-Fi, unless you choose "Upload now" on mobile data.</p></details>
+        <details><summary>Can my rides be traced back to me?</summary><p>Rides carry a random install id, never your name or phone number. Start and end are cut away before upload. Someone who already knows where you ride could still recognise a route, which is why the cut uses a different random radius for every ride.</p></details>
+        <details><summary>How do I stop taking part?</summary><p>Turn off automatic upload in Upload settings, or use "Delete my data on the server" there and uninstall the app. Rides on your phone are removed with the app.</p></details>
+        <details><summary>Who can see the data?</summary><p>Uploaded rides are stored on the project's own server and used for this research project. They are not sold or shared with advertisers.</p></details>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Velowind · a crowdsourced cycle path comfort map</span>
+    <span><a href="imprint.html">Legal notice</a> · <a href="privacy.html">Privacy</a> · Contact: <span id="contact">info strudel velowind de</span> · <a href="https://github.com/biofe/smartphone_sensor_logger">Source code</a></span>
+  </div>
+</footer>
+
+<script src="trace-data.js"></script>
+<script src="site.js"></script>
+</body>
+</html>

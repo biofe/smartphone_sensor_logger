@@ -6,6 +6,8 @@ Android 10 or newer. Recording keeps running with the phone in a pocket and the 
 
 For the project's purpose, planned features and the state of each one, see [docs/OVERVIEW.md](docs/OVERVIEW.md).
 
+The website for test riders (velowind.de) is in [website/](website/); deployment is step 8 of [server/deploy/SETUP.md](server/deploy/SETUP.md).
+
 ## What it records
 
 Each ride is one folder with one CSV per sensor and a `meta.json`. Every CSV starts with `t_utc_ms`, a UTC timestamp in milliseconds from the phone clock, so the files (and data from other apps on the same phone) can be joined on time.

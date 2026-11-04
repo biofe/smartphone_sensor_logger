@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Datenschutz · Velowind</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Wie Velowind mit personenbezogenen Daten umgeht.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <span class="brand-mark" aria-hidden="true">
+        <svg width="28" height="28" viewBox="-3.5 -4.5 31 31" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M2,16a3.5,3.5 0,1 0,7 0a3.5,3.5 0,1 0,-7 0M15,16a3.5,3.5 0,1 0,7 0a3.5,3.5 0,1 0,-7 0M5.5,16L9,10h6.5M9,10l3,6H5.5M12,16l3.5,-6M18.5,16L15.2,7.6h-2.3M9,10L8.2,8.4M6.8,8.4h3" stroke="#FFFFFF" stroke-width="1.8"/><path d="M17.2,2a2.1,2.1 0 1 0 4.2,0a2.1,2.1 0 1 0 -4.2,0" fill="#F7C948" stroke="#F7C948" stroke-width="1.8"/><path d="M22.80,2.00L23.90,2.00M21.77,4.47L22.55,5.25M19.30,5.50L19.30,6.60M16.83,4.47L16.05,5.25M15.80,2.00L14.70,2.00M16.83,-0.47L16.05,-1.25M19.30,-1.50L19.30,-2.60M21.77,-0.47L22.55,-1.25" stroke="#F7C948" stroke-width="1.5"/></svg>
+      </span>
+      Velowind
+    </a>
+    <nav aria-label="Seiten">
+      <a href="index.html">Zur Startseite</a>
+      <a href="../privacy.html" hreflang="en" lang="en" class="lang">English</a>
+    </nav>
+  </div>
+</header>
+
+<main class="legal">
+  <div class="wrap">
+    <div class="prose">
+      <h1>Datenschutzerklärung</h1>
+      <p>Diese Seite erklärt, welche personenbezogenen Daten die Velowind-Website, die Velowind-App und der Projektserver verarbeiten, wozu und wie lange.</p>
+
+      <h2>Verantwortlich</h2>
+      <!--# block name="noprovider" --><p class="todo">Name und Postanschrift stehen auf der veröffentlichten Seite.</p><!--# endblock -->
+      <!--# include virtual="/_private/provider.html" stub="noprovider" -->
+      <p>E-Mail: <span class="contact-copy">info strudel velowind de</span></p>
+
+      <h2>Diese Website</h2>
+      <p>Die Seite nutzt keine Cookies, keine Statistik- oder Tracking-Dienste und lädt nichts von anderen Firmen. Um eine Seite auszuliefern, muss der Webserver deine IP-Adresse und die Anfrage verarbeiten. Die Seite führt kein Zugriffsprotokoll, gespeichert wird diese also nicht. Nur wenn auf dem Server ein Fehler auftritt, kann das Fehlerprotokoll deine IP-Adresse enthalten; es wird täglich rotiert und nach spätestens 15 Tagen gelöscht.</p>
+      <p>Die Startseite fragt bei apk.velowind.de die Nummer der neuesten App-Version ab. Auch dieser Server führt kein Zugriffsprotokoll.</p>
+      <p>Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO. Die sichere Auslieferung der Seite ist ein berechtigtes Interesse des Projekts.</p>
+
+      <h2>Die App</h2>
+      <p>Während du eine Fahrt aufzeichnest, speichert die App auf deinem Handy: die GPS-Spur, Bewegungssensordaten (Beschleunigung, Gyroskop, Luftdruck), Geräuschpegel in 26 Frequenzbändern (nie Ton), deine Bewertungen von Stellen auf der Fahrt und das gewählte Rad. Nichts davon verlässt das Handy, bevor du in der App dem Upload zustimmst.</p>
+      <p>Wenn du zustimmst, wird jede fertige Fahrt an den Projektserver gesendet: die Bewegungssensordaten, die GPS-Spur, die Geräuschpegel, deine Bewertungen, der Radtyp, das Handymodell, die App-Version und eine zufällige Kennung dieser App-Installation. Die ersten und letzten 150–250 m jeder Fahrt werden vor dem Upload auf dem Handy abgeschnitten. Dein Name, deine Kontaktdaten, die Namen deiner Räder und die vollständige, ungekürzte Spur werden nie gesendet.</p>
+      <p>Zweck: Forschung dazu, wie angenehm sich Radwege fahren, und der Aufbau einer Karte der Radwegqualität aus vielen Fahrten. Ergebnisse werden nur zusammengefasst über viele Fahrten veröffentlicht, pro Wegstück. Die Daten werden nicht verkauft und nicht an Werbefirmen gegeben.</p>
+      <p>Rechtsgrundlage: deine Einwilligung, Art. 6 Abs. 1 lit. a DSGVO. Du kannst sie jederzeit widerrufen, indem du den automatischen Upload in den Upload settings der App ausschaltest. „Delete my data on the server“ an derselben Stelle löscht alles, was diese App-Installation gesendet hat.</p>
+
+      <h2>Auf dem Projektserver</h2>
+      <ul>
+        <li>Hochgeladene Fahrten, mit der zufälligen Installationskennung, dem Eingangszeitpunkt und der App-Version. Sie werden gespeichert, solange sie für das Forschungsprojekt gebraucht werden; nicht mehr benötigte Fahrten werden gelöscht. Du kannst deine jederzeit aus der App löschen.</li>
+        <li>Pro Installationskennung ein Hash eines zufälligen Geheimnisses, das nur dein Handy kennt, damit niemand sonst unter deiner Kennung hochladen oder löschen kann.</li>
+        <li>Uploads, die der Server ablehnt für höchstens 30 Tage, damit sich Fehler in der App finden lassen.</li>
+        <li>IP-Adressen, um zu begrenzen, wie viele Anfragen und neue Installationen von einer Adresse kommen können. Der Server speichert sie höchstens 7 Tage. Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO; der Schutz des Dienstes vor Missbrauch ist ein berechtigtes Interesse des Projekts.</li>
+      </ul>
+      <p>Der Upload-Server führt kein Zugriffsprotokoll. Fahrten tragen nur die zufällige Installationskennung, deshalb kann das Projekt deine Daten nur finden, wenn du ihm diese Kennung nennst. Die App zeigt sie in den Upload settings („This phone's id“).</p>
+
+      <h2>Andere Dienste</h2>
+      <ul>
+        <li><strong>Hosting:</strong> Website, App-Downloads und Projektserver laufen auf einem gemieteten virtuellen Server in Deutschland von IONOS SE, der die Daten im Auftrag des Projekts verarbeitet.</li>
+        <li><strong>App-Updates:</strong> Die App fragt einmal am Tag bei apk.velowind.de nach, ob es eine neue Version gibt. Ein Zugriffsprotokoll wird nicht geführt.</li>
+        <li><strong>GitHub:</strong> Wenn du die App von GitHub herunterlädst, gilt die Datenschutzerklärung von GitHub.</li>
+        <li><strong>Kartenkacheln:</strong> Die Karte in der App lädt ihre Kacheln von der OpenStreetMap Foundation (tile.openstreetmap.org), die dabei deine IP-Adresse erhält. Es gilt die <a href="https://osmfoundation.org/wiki/Privacy_Policy">Datenschutzerklärung der OpenStreetMap Foundation</a>.</li>
+      </ul>
+
+      <h2>Deine Rechte</h2>
+      <p>Du hast das Recht auf Auskunft (Art. 15 DSGVO), Berichtigung (Art. 16), Löschung (Art. 17), Einschränkung der Verarbeitung (Art. 18), Datenübertragbarkeit (Art. 20) und Widerspruch gegen Verarbeitungen aus berechtigtem Interesse (Art. 21). Eine Einwilligung kannst du jederzeit mit Wirkung für die Zukunft widerrufen (Art. 7 Abs. 3). Schreib an die oben genannte Adresse und nenne die Kennung deines Handys. Außerdem kannst du dich bei einer Datenschutz-Aufsichtsbehörde beschweren (Art. 77 DSGVO).</p>
+      <p class="muted">Stand: 4. November 2026</p>
+
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Velowind · eine gemeinsame Komfortkarte für Radwege</span>
+    <span><a href="impressum.html">Impressum</a> · <a href="datenschutz.html">Datenschutz</a> · Kontakt: <span id="contact">info strudel velowind de</span> · <a href="https://github.com/biofe/smartphone_sensor_logger">Quellcode</a></span>
+  </div>
+</footer>
+
+<script src="../site.js"></script>
+</body>
+</html>

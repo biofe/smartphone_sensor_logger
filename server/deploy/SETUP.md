@@ -143,3 +143,32 @@ nginx -t && systemctl reload nginx
 ```
 
 `https://apk.velowind.de/latest.json` answers 404 until the first release is copied. `https://apk.velowind.de/` always leads to the newest APK, so that is the link for new riders.
+
+## 8. Website: velowind.de
+
+The site for test riders (what Velowind is, privacy, install steps, riding tips; English at `/`, German at `/de/`) lives in [`website/`](../../website/). It is plain static HTML with no external requests; it only asks `apk.velowind.de/latest.json` for the newest version number (step 7's nginx file allows that with a CORS header; copy it again if your copy predates that line).
+
+Point `velowind.de` and `www.velowind.de` at the VPS (A/AAAA records), then:
+
+```
+certbot certonly --nginx -d velowind.de -d www.velowind.de
+mkdir -p /srv/velowind/www
+cp -r website/. /srv/velowind/www/
+cp server/deploy/nginx-www.conf /etc/nginx/sites-available/velowind.de
+ln -s /etc/nginx/sites-available/velowind.de /etc/nginx/sites-enabled/
+nginx -t && systemctl reload nginx
+```
+
+Run these from the repo root. To update the site later, pull and copy `website/` again; no reload needed.
+
+The legal notice and privacy pages (`/imprint.html`, `/privacy.html`, `/de/impressum.html`, `/de/datenschutz.html`) show the operator's name and postal address. They aren't in the repository: nginx inserts them from a file that exists only on the server. Create it once from the example and fill it in:
+
+```
+install -d -m 755 /etc/velowind/www-private
+cp server/deploy/provider.example.html /etc/velowind/www-private/provider.html
+nano /etc/velowind/www-private/provider.html
+```
+
+Until that file exists, the pages say the address is shown on the live site. 
+
+The contact address is written as "info strudel velowind de" in the footers and legal pages, so that address harvesters don't pick it up.
