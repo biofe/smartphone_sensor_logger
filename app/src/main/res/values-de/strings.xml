@@ -11,14 +11,14 @@
     <string name="start_a_ride">Fahrt starten</string>
     <string name="start">Start</string>
     <string name="start_ride_on">Fahrt mit %1$s starten</string>
-    <string name="start_hint">Ein Tipp startet die Aufzeichnung.</string>
-    <string name="start_hint_swipe">Wische für weitere Räder. Ein Tipp startet die Aufzeichnung.</string>
-    <string name="add_bike">Rad hinzufügen</string>
+    <string name="start_hint">Eine Berührung startet die Aufzeichnung.</string>
+    <string name="start_hint_swipe">Wische für weitere Fahrräder. Antippen startet die Aufzeichnung.</string>
+    <string name="add_bike">Fahrrad hinzufügen</string>
     <string name="install_update">Update %1$s installieren</string>
     <string name="auto_stopped">Die letzte Fahrt hat nach 10 Minuten ohne Bewegung von selbst angehalten und wurde gespeichert.</string>
     <string name="my_rides">Meine Fahrten</string>
     <string name="see_all">Alle %1$d anzeigen</string>
-    <string name="no_rides_yet">Noch keine Fahrten. Tippe oben auf ein Rad, um deine erste aufzuzeichnen.</string>
+    <string name="no_rides_yet">Noch keine Fahrten. Tippe oben auf ein Fahrrad, um deine erste Fahrt aufzuzeichnen.</string>
     <string name="date_today">Heute, %1$s</string>
     <string name="date_yesterday">Gestern, %1$s</string>
     <plurals name="rides">
@@ -102,7 +102,7 @@
     <string name="annotate_hint">Tippe auf die Strecke, wo dir etwas aufgefallen ist. Die grau gestrichelten Enden bleiben auf deinem Handy und lassen sich nicht bewerten.</string>
     <string name="annotate_nothing_kept">Diese Fahrt ist zu kurz: Ohne Anfang und Ende bleibt nichts übrig.</string>
     <string name="annotate_spot_at">Stelle passiert um %1$s · %2$s</string>
-    <string name="annotate_poll_hint">Tippe an, was hier zutraf. Mehreres geht auch.</string>
+    <string name="annotate_poll_hint">Tippe an, was hier zutraf. Mehrefachauswahl möglich (nacheinander).</string>
     <string name="annotate_tap_track">Tippe näher an die farbige Strecke</string>
     <string name="annotate_during_ride">während der Fahrt</string>
     <string name="annotate_later">nachträglich</string>
@@ -114,21 +114,21 @@
     <string name="intro_next">Weiter</string>
     <string name="intro_done">Los geht\'s</string>
     <string name="intro_recorded_title">Radwege bewerten, indem du sie fährst</string>
-    <string name="intro_recorded_text">Velowind zeichnet auf, wie sich eine Fahrt anfühlt, damit wir gemeinsam eine Karte erstellen können, wie angenehm Radwege sind. Während du fährst, zeichnet die App auf:</string>
+    <string name="intro_recorded_text">Velowind zeichnet auf, wie sich eine Fahrt anfühlt. Damit können wir gemeinsam eine Karte erstellen die uns anzeigt, wie angenehm Radwege sind. Während du fährst, zeichnet die App auf:</string>
     <string name="intro_recorded_gps">Wo du fährst: GPS einmal pro Sekunde.</string>
     <string name="intro_recorded_motion">Wie holprig es ist: Bewegungssensoren etwa 100-mal pro Sekunde.</string>
     <string name="intro_recorded_sound">Wie laut es ist: Geräuschpegel in 26 Frequenzbändern. Nie Ton, also lässt sich keine Sprache heraushören.</string>
-    <string name="intro_recorded_poll">Was dir auffällt: die Knöpfe, die du antippst, mit Zeit und Ort.</string>
+    <string name="intro_recorded_poll">Was dir auffällt: die Kacheln, die du antippst - mit Zeit und Ort.</string>
     <string name="intro_recorded_privacy">Fahrten bleiben auf deinem Handy, bis du dem Senden zustimmst. Bevor etwas das Handy verlässt, werden zufällige 150 bis 250 m am Anfang und Ende jeder Fahrt abgeschnitten, damit deine Wohnung und dein Arbeitsplatz privat bleiben.</string>
     <string name="intro_safety_title">Sicher auf dem Rad</string>
-    <string name="intro_safety_mount">Das Handy kann in der Tasche mitfahren, aber eine Lenkerhalterung liefert die besten Daten und du kannst die Knöpfe benutzen.</string>
+    <string name="intro_safety_mount">Das Handy kann in der Tasche mitfahren, aber eine Lenkerhalterung liefert die besten Daten und du kannst die Rückmeldekacheln benutzen.</string>
     <string name="intro_safety_law">In Deutschland darfst du beim Radfahren das Handy nur benutzen, wenn es in einer Halterung steckt, und nur mit einem kurzen Blick oder Tipp (§ 23 StVO). Halte es während der Fahrt nie in der Hand.</string>
-    <string name="intro_safety_tap">Tippe nur, wenn die Verkehrslage es zulässt. Ein Tipp speichert nur Zeit und Ort, es eilt also nicht.</string>
+    <string name="intro_safety_tap">Tippe nur, wenn die Verkehrslage es zulässt.</string>
     <string name="intro_safety_stop">Zum Beenden halte den Stopp-Knopf eine Sekunde lang gedrückt. Wenn du es vergisst, hält die Fahrt nach 10 Minuten ohne Bewegung von selbst an.</string>
-    <string name="intro_safety_later">Etwas verpasst? Bewerte die Fahrt danach auf der Karte, mit denselben Knöpfen.</string>
+    <string name="intro_safety_later">Etwas verpasst? Bewerte die Fahrt danach auf der Karte mit denselben Knöpfen.</string>
     <string name="intro_battery_title">Auch bei ausgeschaltetem Bildschirm aufzeichnen</string>
     <string name="intro_battery_text">Android pausiert manchmal Apps, um Akku zu sparen, und bricht damit Fahrten ab. Stelle die Akkunutzung von Velowind auf „Nicht eingeschränkt“.</string>
-    <string name="intro_battery_how">Tippe auf der Seite, die sich öffnet, auf „Akkunutzung der App“ (oder „Akku“) und dann auf „Nicht eingeschränkt“. Komm danach hierher zurück.</string>
+    <string name="intro_battery_how">Tippe auf der sich öffnenden Seite auf „Akkunutzung der App“ (oder „Akku“) und dann auf „Nicht eingeschränkt“. Komm danach hierher zurück.</string>
     <string name="battery_usage">Akkunutzung</string>
     <string name="battery_unrestricted">Nicht eingeschränkt: Fahrten werden durchgehend aufgezeichnet</string>
     <string name="battery_restricted">Noch eingeschränkt</string>
@@ -140,7 +140,7 @@
     <string name="upload">Hochladen</string>
     <string name="upload_auto">Im WLAN automatisch hochladen</string>
     <string name="upload_now">Jetzt hochladen</string>
-    <string name="upload_off">Deine Fahrten bleiben auf diesem Handy. Lies, was gesendet würde, bevor du das Hochladen einschaltest.</string>
+    <string name="upload_off">Deine Fahrten bleiben auf diesem Handy. Lies, was gesendet wird, bevor du das Hochladen einschaltest.</string>
     <string name="upload_turn_on">Lesen, was gesendet wird, und einschalten</string>
     <string name="upload_line_off">Hochladen ist aus.</string>
     <string name="upload_line_done">Alle Fahrten hochgeladen.</string>
@@ -152,18 +152,18 @@
         <item quantity="one">%1$d Fahrt wartet auf WLAN.</item>
         <item quantity="other">%1$d Fahrten warten auf WLAN.</item>
     </plurals>
-    <string name="my_bikes">Meine Räder</string>
+    <string name="my_bikes">Meine Fahrräder</string>
     <string name="edit_bike">%1$s bearbeiten</string>
     <string name="during_rides">Während der Fahrt</string>
     <string name="keep_screen_on">Bildschirm anlassen</string>
-    <string name="keep_screen_on_note">Damit die Knöpfe immer bereit sind. Nach 20 Sekunden ohne Berührung wird der Bildschirm dunkler, um Akku zu sparen; eine Berührung macht ihn wieder hell. Wenn aus, erscheint die Aufzeichnung nach der Ein-/Aus-Taste trotzdem über dem Sperrbildschirm.</string>
+    <string name="keep_screen_on_note">Damit die Knöpfe immer bereit sind. Nach 20 Sekunden ohne Berührung wird der Bildschirm dunkler, um Akku zu sparen; eine Berührung macht ihn wieder hell. Wenn der Bildschirm aus ist, erscheint die Aufzeichnung nach Drücken der Ein-/Aus-Taste trotzdem über dem Sperrbildschirm.</string>
     <string name="privacy_storage">Datenschutz und Speicher</string>
     <string name="what_is_sent">Was gesendet wird und was nicht</string>
     <string name="phone_id">Handy-Kennung</string>
     <string name="phone_id_note">Zufällig, nicht mit dir verknüpft</string>
     <string name="storage">Auf diesem Handy</string>
     <string name="export_all">Alle Fahrten als ZIP exportieren</string>
-    <string name="export_all_note">Zum Datenschutz gekürzt, in Downloads</string>
+    <string name="export_all_note">Zum Schutz deiner Daten gekürzt, in Downloads</string>
     <string name="delete_server_data">Meine Daten auf dem Server löschen</string>
     <string name="app">App</string>
     <string name="version">Version</string>
@@ -175,14 +175,14 @@
     <string name="stop_before_export">Beende die Fahrt vor dem Exportieren.</string>
 
     <!-- Bikes -->
-    <string name="edit_bike_title">Rad bearbeiten</string>
+    <string name="edit_bike_title">Fahrrad bearbeiten</string>
     <string name="bike_name">Name (optional)</string>
     <string name="bike_name_note">Bleibt auf diesem Handy</string>
     <string name="bike_type">Typ</string>
     <string name="bike_colour">Farbe</string>
     <string name="colour_n">Farbe %1$d</string>
-    <string name="remove_bike">Dieses Rad entfernen</string>
-    <string name="which_bikes">Welche Räder fährst du?</string>
+    <string name="remove_bike">Dieses Fahrrad entfernen</string>
+    <string name="which_bikes">Welche Fahrräder fährst du?</string>
     <string name="which_bikes_note">Wähle alle passenden aus. Jedes bekommt einen eigenen Startknopf und eine Farbe; du kannst sie später in den Einstellungen ändern.</string>
 
     <!-- Bike types -->
@@ -223,7 +223,7 @@
     </plurals>
     <string name="wait_for_wifi">Auf WLAN warten</string>
     <string name="upload_started">Wird im Hintergrund hochgeladen; die Benachrichtigung zeigt den Fortschritt.</string>
-    <string name="server_delete_question">Alle Fahrten und Bewertungen löschen, die dieses Handy an den Projektserver gesendet hat? Das automatische Hochladen wird ausgeschaltet. Die Fahrten auf diesem Handy bleiben.</string>
+    <string name="server_delete_question">Alle Fahrten und Bewertungen löschen, die dieses Handy an den Projektserver gesendet hat? Das automatische Hochladen wird ausgeschaltet. Die Fahrten auf diesem Handy bleiben gespeichert.</string>
     <plurals name="server_deleted">
         <item quantity="one">%1$d Fahrt auf dem Server gelöscht. Hochladen ist aus.</item>
         <item quantity="other">%1$d Fahrten auf dem Server gelöscht. Hochladen ist aus.</item>
