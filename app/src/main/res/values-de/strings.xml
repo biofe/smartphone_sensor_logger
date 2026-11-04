@@ -141,6 +141,10 @@
     <string name="upload_auto">Im WLAN automatisch hochladen</string>
     <string name="upload_now">Jetzt hochladen</string>
     <string name="upload_off">Deine Fahrten bleiben auf diesem Handy. Lies, was gesendet wird, bevor du das Hochladen einschaltest.</string>
+    <string name="upload_log">Upload-Protokoll</string>
+    <string name="upload_log_note">Wann Android das Hochladen gestartet hat, und mit welchem Ergebnis</string>
+    <string name="copy">Kopieren</string>
+    <string name="copied">Kopiert</string>
     <string name="upload_turn_on">Lesen, was gesendet wird, und einschalten</string>
     <string name="upload_line_off">Hochladen ist aus.</string>
     <string name="upload_line_done">Alle Fahrten hochgeladen.</string>

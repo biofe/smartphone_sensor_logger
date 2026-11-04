@@ -180,7 +180,7 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
             RecorderState.recording = false
             RecorderState.autoStopped = autoStopped
             if (autoStopped) notifyAutoStopped()
-            UploadJob.schedule(this)
+            UploadJob.schedule(this, if (autoStopped) "Ride stopped by itself" else "Ride ended")
         }
         super.onDestroy()
     }
