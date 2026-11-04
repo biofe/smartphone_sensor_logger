@@ -171,4 +171,4 @@ nano /etc/velowind/www-private/provider.html
 
 Until that file exists, the pages say the address is shown on the live site. 
 
-The contact address is written as "felix0180 strudel web de" in the footers and legal pages, so that address harvesters don't pick it up.
+The contact address is written as "info strudel velowind de" in the footers and legal pages, so that address harvesters don't pick it up.
