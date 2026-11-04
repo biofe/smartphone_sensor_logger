@@ -28,7 +28,12 @@ class UploadJob : JobService() {
 
     override fun onStartJob(params: JobParameters): Boolean {
         val now = params.jobId == NOW
-        if (if (now) !Upload.consented(this) else !Upload.auto(this)) return false
+        val job = jobName(params.jobId)
+        if (if (now) !Upload.consented(this) else !Upload.auto(this)) {
+            UploadLog.add(this, "$job: started, but upload is off")
+            return false
+        }
+        UploadLog.add(this, "$job: started on ${UploadLog.network(this, params.network)}")
         if (now) {
             notify(params, getString(R.string.preparing), 0, 0)
             // An automatic upload may be running (or stuck in a frozen app): let it stop after its ride, then take over
@@ -40,7 +45,18 @@ class UploadJob : JobService() {
                 Upload.uploadAll(this, waitMs = if (now) TAKE_OVER_WAIT_MS else 0, only = only) { done, total ->
                     if (now && done < total) notify(params, getString(R.string.upload_progress, done + 1, total), done, total)
                 }
+            }.onFailure {
+                UploadLog.add(this, "$job: failed: ${it.javaClass.simpleName} ${it.message.orEmpty()}")
             }.getOrNull()
+            if (summary != null) {
+                val parts = buildList {
+                    add("${summary.uploaded} uploaded")
+                    if (summary.rejected > 0) add("${summary.rejected} not accepted")
+                    summary.message?.let { add(it) }
+                    if (summary.retry) add("will retry")
+                }
+                UploadLog.add(this, "$job: done: ${parts.joinToString(", ")}")
+            }
             if (now) notifyDone(params, summary)
             jobFinished(params, summary?.retry ?: true)
         }.apply { start() }
@@ -49,6 +65,8 @@ class UploadJob : JobService() {
 
     /** Android stopped the job (e.g. the network went away): finish the ride in flight, the rest waits for next time. */
     override fun onStopJob(params: JobParameters): Boolean {
+        val why = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) " (${UploadLog.stopReason(params.stopReason)})" else ""
+        UploadLog.add(this, "${jobName(params.jobId)}: stopped by Android$why")
         Upload.requestStop()
         return true
     }
@@ -106,8 +124,17 @@ class UploadJob : JobService() {
         /** One ride takes seconds on Wi-Fi; two minutes cover a slow connection. */
         private const val TAKE_OVER_WAIT_MS = 2 * 60 * 1000L
 
-        /** Call after a ride ends and whenever the upload settings change. */
-        fun schedule(context: Context) {
+        /** The jobs that upload without the rider asking, with their names in the upload log. */
+        val AUTOMATIC_JOBS = listOf(SOON to "Upload on Wi-Fi", PERIODIC to "6-hour check")
+
+        private fun jobName(id: Int) = when (id) {
+            SOON -> "Upload on Wi-Fi"
+            PERIODIC -> "6-hour check"
+            else -> "Upload now"
+        }
+
+        /** Call after a ride ends and whenever the upload settings change; [why] goes into the upload log. */
+        fun schedule(context: Context, why: String? = null) {
             val scheduler = context.getSystemService(JobScheduler::class.java)
             if (!Upload.auto(context)) {
                 scheduler.cancel(SOON)
@@ -117,13 +144,19 @@ class UploadJob : JobService() {
             val service = ComponentName(context, UploadJob::class.java)
             // Scheduling an id again would stop that job if it's running, so leave a pending or running one alone
             if (scheduler.getPendingJob(SOON) == null) {
-                scheduler.schedule(
+                val result = scheduler.schedule(
                     JobInfo.Builder(SOON, service)
                         .setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED)
                         .setBackoffCriteria(10 * 60 * 1000L, JobInfo.BACKOFF_POLICY_EXPONENTIAL)
                         .setPersisted(true)
                         .build()
                 )
+                if (why != null || result != JobScheduler.RESULT_SUCCESS) {
+                    val outcome = if (result == JobScheduler.RESULT_SUCCESS) "scheduled" else "Android refused to schedule it"
+                    UploadLog.add(context, "${why ?: "Upload on Wi-Fi"}: $outcome")
+                }
+            } else if (why != null) {
+                UploadLog.add(context, "$why: upload on Wi-Fi already waiting")
             }
             // A safety net in case a run was cut short and its retry got lost
             if (scheduler.getPendingJob(PERIODIC) == null) {

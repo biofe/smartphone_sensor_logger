@@ -95,6 +95,7 @@ class AppActions(
     val uploadNow: () -> Unit,
     val setAutoUpload: (Boolean) -> Unit,
     val showWhatIsSent: () -> Unit,
+    val showUploadLog: () -> Unit,
     val deleteServerData: () -> Unit,
     val exportAll: () -> Unit,
     val setKeepScreenOn: (Boolean) -> Unit,
@@ -146,6 +147,7 @@ class MainActivity : ComponentActivity() {
         uploadNow = { uploadNow() },
         setAutoUpload = { Upload.setAuto(this, it); renderUpload() },
         showWhatIsSent = { askConsent {} },
+        showUploadLog = ::showUploadLog,
         deleteServerData = ::confirmServerDelete,
         exportAll = { export(Rides.list(this)) },
         setKeepScreenOn = {
@@ -472,6 +474,27 @@ class MainActivity : ComponentActivity() {
     }
 
     // --- Upload ------------------------------------------------------------------------------
+
+    private fun showUploadLog() {
+        val log = UploadLog.text(this)
+        val text = TextView(this).apply {
+            val pad = (20 * resources.displayMetrics.density).toInt()
+            setPadding(pad, pad / 2, pad, 0)
+            typeface = android.graphics.Typeface.MONOSPACE
+            textSize = 12f
+            setTextIsSelectable(true)
+            this.text = log
+        }
+        val scroll = android.widget.ScrollView(this).apply { addView(text) }
+        AlertDialog.Builder(this).setTitle(R.string.upload_log).setView(scroll)
+            .setPositiveButton(R.string.close, null)
+            .setNeutralButton(R.string.copy) { _, _ ->
+                getSystemService(android.content.ClipboardManager::class.java)
+                    .setPrimaryClip(android.content.ClipData.newPlainText(getString(R.string.upload_log), log))
+                Toast.makeText(this, R.string.copied, Toast.LENGTH_SHORT).show()
+            }
+            .show()
+    }
 
     private fun askConsent(onAgreed: () -> Unit) {
         val text = TextView(this).apply {

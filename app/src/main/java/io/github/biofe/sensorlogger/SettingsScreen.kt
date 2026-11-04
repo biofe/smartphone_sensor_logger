@@ -62,6 +62,8 @@ fun SettingsScreen(ui: UiState, actions: AppActions) {
                     OutlinedButton(onClick = actions.uploadNow, modifier = Modifier.padding(vertical = 4.dp)) {
                         Text(stringResource(R.string.upload_now))
                     }
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    LinkRow(stringResource(R.string.upload_log), stringResource(R.string.upload_log_note), onClick = actions.showUploadLog)
                 } else {
                     Text(stringResource(R.string.upload_off), style = MaterialTheme.typography.bodyMedium)
                     OutlinedButton(onClick = actions.showWhatIsSent, modifier = Modifier.padding(vertical = 4.dp)) {

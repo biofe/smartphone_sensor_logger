@@ -142,6 +142,10 @@
     <string name="upload_auto">Upload automatically on Wi-Fi</string>
     <string name="upload_now">Upload now</string>
     <string name="upload_off">Your rides stay on this phone. Read what would be sent before turning upload on.</string>
+    <string name="upload_log">Upload log</string>
+    <string name="upload_log_note">When Android ran the upload, and what came of it</string>
+    <string name="copy">Copy</string>
+    <string name="copied">Copied</string>
     <string name="upload_turn_on">Read what is sent and turn on</string>
     <string name="upload_line_off">Upload is off.</string>
     <string name="upload_line_done">All rides uploaded.</string>
