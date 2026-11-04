@@ -18,7 +18,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -161,10 +160,10 @@ private fun ValueRow(title: String, note: String?, value: String, mono: Boolean 
 
 @Composable
 private fun LinkRow(title: String, note: String? = null, color: Color = Color.Unspecified, onClick: () -> Unit) {
-    TextButton(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
+    // A plain clickable row: a TextButton clips to its pill shape, which cut off the first letters of two-line rows
+    Row(
+        Modifier.fillMaxWidth().heightIn(min = 52.dp).clickable(role = Role.Button, onClick = onClick),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f)) {
             Text(
