@@ -7,6 +7,7 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.addPathNodes
 import androidx.compose.ui.unit.dp
+import java.util.Locale
 
 /**
  * Line icons on a 24 grid, drawn here instead of pulling in the large material-icons library.
@@ -16,14 +17,16 @@ object VelowindIcons {
 
     private fun circle(cx: Float, cy: Float, r: Float) = "M${cx - r},${cy}a$r,$r 0 1,0 ${2 * r},0a$r,$r 0 1,0 ${-2 * r},0"
 
-    private fun icon(name: String, vararg paths: String): ImageVector {
+    private fun icon(name: String, vararg paths: String): ImageVector = icon(name, 2f, *paths)
+
+    private fun icon(name: String, stroke: Float, vararg paths: String): ImageVector {
         val b = ImageVector.Builder(name, 24.dp, 24.dp, 24f, 24f)
         for (d in paths) {
             b.addPath(
                 pathData = addPathNodes(d),
                 fill = null,
                 stroke = SolidColor(Color.Black),
-                strokeLineWidth = 2f,
+                strokeLineWidth = stroke,
                 strokeLineCap = StrokeCap.Round,
                 strokeLineJoin = StrokeJoin.Round,
             )
@@ -31,29 +34,75 @@ object VelowindIcons {
         return b.build()
     }
 
+    // Bikes face right like the logo bike: diamond frame, saddle on a seat post, swept-back bar.
+    // Each type adds one cue that still reads at 24 dp. Thinner stroke than the UI icons so the
+    // details stay clear.
+    private const val BIKE_STROKE = 1.6f
     private val wheels = circle(5.5f, 16f, 3.5f) + circle(18.5f, 16f, 3.5f)
-    private const val BOLT = "M20 1.5l-2.5 4h3l-2.5 4"
+    private const val REAR = "M5.5 16L9 10l3 6H5.5" // seat stay, seat tube, chain stay
+    private const val FRAME = "M9 10h6.5M12 16l3.5-6" // top tube, down tube
+    private const val SADDLE = "M9 10L8.2 8.4M6.8 8.4h3"
+    private const val SWEPT_BAR = "M18.5 16L15.2 7.6h-2.3" // fork, stem and swept-back bar
+    private const val DROP_BAR = "M18.5 16L15.2 7.6h2.4c1.4 0 1.4 3 0 3"
+    /** Above the rear wheel, clear of saddle and handlebar. */
+    private const val BOLT = "M4.5 1.5l-2.5 3.5h3l-2.5 3.5"
 
+    /** Plain decimals: tiny values would otherwise print in E notation. */
+    private fun num(v: Float) = String.format(Locale.US, "%.2f", v)
 
-    private val standard = arrayOf(wheels, "M5.5 16L9 9h7l2.5 7M9 9l3 7H5.5M16 9l-1-3h-2.5M8 6.5h3")
-    private val road = arrayOf(wheels, "M5.5 16L9 9h7l2.5 7M9 9l3 7H5.5M16 9l-1-3h2.5c1 0 1 2.5 0 2.5M8 6.5h3")
-    private val mountain = arrayOf(circle(5.5f, 16f, 3.8f) + circle(18.5f, 16f, 3.8f), circle(5.5f, 16f, 1.5f) + circle(18.5f, 16f, 1.5f), "M5.5 16L9.5 9h6l3 7M9.5 9l2.5 7H5.5M15.5 9l-1-3.5h-2.5M8 7h3")
-    private val cargo = arrayOf(circle(4f, 17f, 3f) + circle(20f, 17f, 3f), "M4 17l3-7h4l1 7h8M7 10L6 7H4M12 10h8v5h-8z")
-    private val folding = arrayOf(circle(6f, 17.5f, 2.5f) + circle(18f, 17.5f, 2.5f), "M6 17.5L12 11l6 6.5M12 11V6h-2.5M12 11l4.5-1-1-4h2")
-    private val recumbent = arrayOf(circle(5f, 17f, 3f) + circle(19f, 17f, 3f), "M5 17l4-3h6l4 3M9 14L7 9M15 14l2-4h2")
+    /** Short spokes outside the tyre, for knobbly gravel tyres. */
+    private fun knobs(cx: Float, cy: Float, r: Float): String = (0 until 10).joinToString("") { k ->
+        val a = 2 * Math.PI * k / 10
+        val c = Math.cos(a).toFloat()
+        val s = Math.sin(a).toFloat()
+        "M${num(cx + r * c)},${num(cy + r * s)}l${num(0.7f * c)},${num(0.7f * s)}"
+    }
+
+    private val standard = arrayOf(wheels, REAR, FRAME, SWEPT_BAR, SADDLE)
+    private val trekking = standard + "M2.6 10.6h5.8M3.4 10.6L5.5 16" // rear rack
+    private val city = arrayOf(wheels, REAR, "M12 16c1.6-2.8 3-4 4.9-4", "M18.5 16L14.9 6.8c-.8-.4-2-.2-2.8.3", SADDLE) // step-through, upright bar
+    private val road = arrayOf(wheels, REAR, FRAME, DROP_BAR, SADDLE)
+    private val knobbly = circle(5.5f, 16f, 3.2f) + circle(18.5f, 16f, 3.2f)
+    private val treads = knobs(5.5f, 16f, 3.2f) + knobs(18.5f, 16f, 3.2f)
+    private val gravel = arrayOf(knobbly, treads, REAR, FRAME, DROP_BAR, SADDLE)
+    private val mountain = arrayOf( // knobbly tyres, low seat junction, suspension fork, flat bar
+        knobbly, treads, "M5.5 16L9 11.6l3 4.4H5.5", "M9 11.6l6.7-2.4M12 16l3.7-6.8",
+        "M18.5 16l-1.2-3.2M17.3 12.8l-1.9-5h3", "M9 11.6L8.2 8.4M6.8 8.4h3",
+    )
+    private val cargo = arrayOf( // long john: box between rider and small front wheel, bar on the box
+        circle(4f, 16f, 3f) + circle(20f, 17f, 2.2f),
+        "M4 16l3-6 2.5 6H4M9.5 16h10.5M7 10l-.6-2M5.2 8h2.6", "M12.5 10.5h6.5v4h-6.5z", "M12.5 10.5L12 7.8h-2.2",
+    )
+    private val folding = arrayOf( // small wheels, hinge, seat post parallel to the tall stem
+        circle(6f, 17.5f, 2.5f) + circle(19f, 17.5f, 2.5f), "M6 17.5h5L9.8 12.5L6 17.5", "M9.8 12.5l7.6-1.5",
+        circle(13.6f, 11.75f, 0.9f), "M11 17.5L8.6 7.6M7.3 7.6h2.8", "M19 17.5L16.6 7.6h-2.2",
+    )
+    private val recumbent = arrayOf( // reclined seat, pedals out front
+        circle(5f, 16.5f, 3f) + circle(19.5f, 17f, 2.5f), "M5 16.5l4.5-3.3h4.5l5.5 3.8",
+        "M9.5 13.2L7 7.8M9.5 13.2h3.3", "M14 13.2l5.3-3.4h1.7",
+    )
+    private val velomobile = arrayOf( // shell traced from a side-view drawing (20 % taller, flat bottom), wheels just showing
+        "M1 13.13C1.17 12.63 1.52 12.15 2 11.69C2.48 11.23 3.28 10.71 3.9 10.37C4.52 10.03 5.10 9.83 5.7 9.65C6.30 9.47 7.05 9.35 7.5 9.29C7.95 9.23 8.40 9.29 8.4 9.29C8.40 9.29 8.57 10.01 8.7 10.25C8.83 10.49 8.78 10.51 9.2 10.73C9.62 10.95 10.63 11.41 11.2 11.57C11.77 11.73 12.25 11.69 12.6 11.69C12.95 11.69 13.02 11.79 13.3 11.57C13.58 11.35 14.30 10.37 14.3 10.37C14.30 10.37 16.68 10.35 17.8 10.49C18.92 10.63 20.27 10.97 21 11.21" +
+            "C21.73 11.45 21.88 11.65 22.2 11.93C22.52 12.21 22.78 12.45 22.9 12.89C23.02 13.33 23.02 14.17 22.9 14.57C22.78 14.97 22.50 15.05 22.2 15.29C21.90 15.53 21.58 15.83 21.1 16.01C20.62 16.19 20.40 16.28 19.3 16.37C18.20 16.46 16.88 16.52 14.5 16.55C12.12 16.58 6.98 16.62 5 16.55C3.02 16.48 3.27 16.44 2.6 16.13C1.93 15.82 1.27 15.19 1 14.69C.73 14.19 0.83 13.63 1 13.13z",
+        "M4.6 16.55a1.4 .9 0 0 0 2.8 0M14.7 16.55a1.4 .9 0 0 0 2.8 0",
+    )
 
     /** The icon for a bike type; e-bikes get a small bolt. */
     fun bike(type: String): ImageVector {
-        val base = when {
-            type.contains("road") || type == "gravel" -> road
-            type.contains("mountain") -> mountain
-            type.contains("cargo") -> cargo
-            type == "folding" -> folding
-            type == "recumbent" || type == "velomobile" -> recumbent
-            else -> standard
+        val base = when (type) {
+            "trekking" -> trekking
+            "city" -> city
+            "road / racing" -> road
+            "gravel" -> gravel
+            "mountain", "e-mountain" -> mountain
+            "cargo", "e-cargo" -> cargo
+            "folding" -> folding
+            "recumbent" -> recumbent
+            "velomobile" -> velomobile
+            else -> standard // e-bike, other
         }
         val electric = type.startsWith("e-")
-        return icon("bike_$type", *(if (electric) base + BOLT else base))
+        return icon("bike_$type", BIKE_STROKE, *(if (electric) base + BOLT else base))
     }
 
     val Settings = icon("settings", circle(12f, 12f, 3f), "M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9L7 7M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1")

@@ -1,6 +1,6 @@
 # Velowind logger: project overview
 
-*Last updated: 2026-11-04 · app version on `master`: 0.12.0*
+*Last updated: 2026-11-04 · app version on `master`: 0.12.2*
 
 This page is the living overview of the logger: why it exists, what the finished app should do, and where each feature stands. Update the status tables whenever a feature changes state, and bump the date above. The [README](../README.md) stays the reference for file formats, installing and building.
 
@@ -134,3 +134,4 @@ The app is Android only (Android 10+). iOS is out of scope for now.
 | 0.11.1 | Annotate screen: the map showed only white (the map view had no height). The ride screen stays on by default and dims after 20 s without a touch |
 | 0.12.0 | German translation; bike types shown in the phone's language |
 | 0.12.1 | Upload log under Settings → Upload (when Android ran the upload jobs, on which network, what came of it); a ride that ends while an upload runs is no longer left for the 6-hour check |
+| 0.12.2 | New bike icons: a different drawing for each type, thinner lines, e-bike bolt no longer touches the handlebar |
