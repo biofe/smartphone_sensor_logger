@@ -190,7 +190,7 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
     private fun startAccelerometer() {
         val sm = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         val accel = sm.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) ?: run {
-            RecorderState.error = "No accelerometer"
+            RecorderState.error = getString(R.string.error_no_accelerometer)
             return
         }
         accelSensorName = "${accel.vendor} ${accel.name}"
@@ -245,7 +245,7 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
     @SuppressLint("MissingPermission")
     private fun startGps() {
         if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            RecorderState.error = "Location permission missing"
+            RecorderState.error = getString(R.string.error_location_permission)
             return
         }
         gpsWriter = File(rideDir, Rides.GPS_FILE).bufferedWriter().apply {
@@ -284,7 +284,7 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
     @SuppressLint("MissingPermission")
     private fun startAudio() {
         if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-            RecorderState.error = "Microphone permission missing"
+            RecorderState.error = getString(R.string.error_mic_permission)
             return
         }
         val am = getSystemService(Context.AUDIO_SERVICE) as AudioManager
@@ -310,7 +310,7 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
             candidate.release()
         }
         val rec = record ?: run {
-            RecorderState.error = "Microphone unavailable (another app may be using it)"
+            RecorderState.error = getString(R.string.error_mic_busy)
             return
         }
 
@@ -342,7 +342,7 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
                     RecorderState.lastLaeqDb = result.laeqDb
                 }
             } catch (e: Exception) {
-                RecorderState.error = "Sound recording stopped: ${e.message}"
+                RecorderState.error = getString(R.string.error_sound_stopped, e.message)
             } finally {
                 rec.stop()
                 rec.release()
@@ -406,8 +406,8 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
             AUTO_STOP_NOTIFICATION_ID,
             Notification.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_stat_ride)
-                .setContentTitle("Ride saved")
-                .setContentText("Recording stopped after $minutes minutes without moving")
+                .setContentTitle(getString(R.string.auto_stop_title))
+                .setContentText(getString(R.string.auto_stop_text, minutes.toInt()))
                 .setContentIntent(open)
                 .setAutoCancel(true)
                 .build(),
@@ -445,7 +445,7 @@ class RecordingService : Service(), SensorEventListener, LocationListener {
     private fun startInForeground() {
         val nm = getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(
-            NotificationChannel(CHANNEL_ID, "Ride recording", NotificationManager.IMPORTANCE_LOW)
+            NotificationChannel(CHANNEL_ID, getString(R.string.channel_recording), NotificationManager.IMPORTANCE_LOW)
         )
         val notification = rideNotification(confirming = false)
         val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {

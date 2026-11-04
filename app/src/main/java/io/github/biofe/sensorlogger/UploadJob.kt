@@ -30,7 +30,7 @@ class UploadJob : JobService() {
         val now = params.jobId == NOW
         if (if (now) !Upload.consented(this) else !Upload.auto(this)) return false
         if (now) {
-            notify(params, "Preparing…", 0, 0)
+            notify(params, getString(R.string.preparing), 0, 0)
             // An automatic upload may be running (or stuck in a frozen app): let it stop after its ride, then take over
             Upload.requestStop()
         }
@@ -38,7 +38,7 @@ class UploadJob : JobService() {
         worker = Thread {
             val summary = runCatching {
                 Upload.uploadAll(this, waitMs = if (now) TAKE_OVER_WAIT_MS else 0, only = only) { done, total ->
-                    if (now && done < total) notify(params, "Ride ${done + 1} of $total", done, total)
+                    if (now && done < total) notify(params, getString(R.string.upload_progress, done + 1, total), done, total)
                 }
             }.getOrNull()
             if (now) notifyDone(params, summary)
@@ -55,13 +55,13 @@ class UploadJob : JobService() {
 
     private fun notification(text: String, done: Int, total: Int, ongoing: Boolean): Notification {
         val nm = getSystemService(NotificationManager::class.java)
-        nm.createNotificationChannel(NotificationChannel(CHANNEL_ID, "Ride upload", NotificationManager.IMPORTANCE_LOW))
+        nm.createNotificationChannel(NotificationChannel(CHANNEL_ID, getString(R.string.channel_upload), NotificationManager.IMPORTANCE_LOW))
         val open = PendingIntent.getActivity(
             this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE,
         )
         return Notification.Builder(this, CHANNEL_ID)
             .setSmallIcon(if (ongoing) android.R.drawable.stat_sys_upload else android.R.drawable.stat_sys_upload_done)
-            .setContentTitle(if (ongoing) "Uploading rides" else "Upload finished")
+            .setContentTitle(getString(if (ongoing) R.string.uploading_rides else R.string.upload_finished))
             .setContentText(text)
             .setContentIntent(open)
             .setOngoing(ongoing)
@@ -81,12 +81,12 @@ class UploadJob : JobService() {
 
     private fun notifyDone(params: JobParameters, summary: Upload.Summary?) {
         val text = when {
-            summary == null -> "Upload failed; will try again."
+            summary == null -> getString(R.string.upload_failed_retry)
             else -> buildList {
-                if (summary.uploaded > 0) add("${summary.uploaded} uploaded")
-                if (summary.rejected > 0) add("${summary.rejected} not accepted")
+                if (summary.uploaded > 0) add(resources.getQuantityString(R.plurals.uploaded_n, summary.uploaded, summary.uploaded))
+                if (summary.rejected > 0) add(resources.getQuantityString(R.plurals.rejected_n, summary.rejected, summary.rejected))
                 summary.message?.let { add(it) }
-            }.joinToString(". ").ifEmpty { "Nothing new to upload." }
+            }.joinToString(". ").ifEmpty { getString(R.string.nothing_new_to_upload) }
         }
         val n = notification(text, 0, 0, ongoing = false)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE && params.isUserInitiatedJob) {

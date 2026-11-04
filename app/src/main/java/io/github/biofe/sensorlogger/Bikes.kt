@@ -18,7 +18,25 @@ object Bikes {
 
     /** [color] indexes the bike palette; [id] stays the same when the bike is edited. */
     data class Bike(val type: String, val name: String, val color: Int, val id: String = newId()) {
-        val label: String get() = name.ifBlank { type.replaceFirstChar { it.uppercase() } }
+        /** The rider's name for the bike, or its type in the phone's language. */
+        fun label(context: Context): String = name.ifBlank { context.getString(typeLabel(type)) }
+    }
+
+    /** The type as shown on screen; the stored [type] stays English, since it goes into ride data. */
+    fun typeLabel(type: String): Int = when (type) {
+        "trekking" -> R.string.bike_trekking
+        "city" -> R.string.bike_city
+        "road / racing" -> R.string.bike_road
+        "gravel" -> R.string.bike_gravel
+        "mountain" -> R.string.bike_mountain
+        "e-mountain" -> R.string.bike_e_mountain
+        "e-bike" -> R.string.bike_e_bike
+        "cargo" -> R.string.bike_cargo
+        "e-cargo" -> R.string.bike_e_cargo
+        "folding" -> R.string.bike_folding
+        "recumbent" -> R.string.bike_recumbent
+        "velomobile" -> R.string.bike_velomobile
+        else -> R.string.bike_other
     }
 
     const val COLOR_COUNT = 8

@@ -241,3 +241,7 @@ private fun startOfDay(c: Calendar): Long = (c.clone() as Calendar).apply {
 
 @Composable
 fun ridesCount(n: Int): String = pluralStringResource(R.plurals.rides, n, n)
+
+/** The rider's name for the bike, or its type in the phone's language. */
+@Composable
+fun bikeLabel(bike: Bikes.Bike): String = bike.name.ifBlank { stringResource(Bikes.typeLabel(bike.type)) }
