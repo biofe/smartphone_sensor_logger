@@ -74,16 +74,16 @@ object VelowindIcons {
         "M4 16l3-6 2.5 6H4M9.5 16h10.5M7 10l-.6-2M5.2 8h2.6", "M12.5 10.5h6.5v4h-6.5z", "M12.5 10.5L12 7.8h-2.2",
     )
     private val folding = arrayOf( // small wheels, hinge, tall seat post and stem
-        circle(6f, 17.5f, 2.5f) + circle(18f, 17.5f, 2.5f), "M6 17.5h5l-.6-5L6 17.5", "M10.4 12.5l5.9-1.6",
-        circle(13.3f, 11.7f, 0.9f), "M11 17.5L9.8 5.5M8.4 5.5h2.8", "M18 17.5L15.6 6h-2.2",
+        circle(5f, 17.5f, 2.5f) + circle(19f, 17.5f, 2.5f), "M5 17.5h6l-.6-5L5 17.5", "M10.4 12.5l7-1.5",
+        circle(13.9f, 11.75f, 0.9f), "M11 17.5L10 7.2M8.6 7.2h2.8", "M19 17.5L16.6 7.6h-2.2",
     )
     private val recumbent = arrayOf( // reclined seat, pedals out front
         circle(5f, 16.5f, 3f) + circle(19.5f, 17f, 2.5f), "M5 16.5l4.5-3.3h4.5l5.5 3.8",
         "M9.5 13.2L7 7.8M9.5 13.2h3.3", "M14 13.2l5.3-3.4h1.7",
     )
-    private val velomobile = arrayOf( // long shell, rider's head dome, open front wheel
-        "M2 13.8C2 11.6 4.5 10.3 8 10.1h3.5c5 .1 9.5 1.9 11 4.3c.3.5 0 .8-.6.8h-1.2a2.8 2.8 0 0 0-5.4 0H4.5C3 15.2 2 14.8 2 13.8z",
-        "M8.3 10.1a1.6 1.6 0 0 1 3.2 0", circle(18f, 17.2f, 1.9f), "M4.6 15.2a1.8 1.8 0 0 0 3.6 0",
+    private val velomobile = arrayOf( // closed shell: pointed tail, head dome, round nose, wheels just showing
+        "M1.2 12.2C3.5 10 6.5 9.2 9.5 9.2C15 9.2 20 11 22.2 13.3C23 14.2 22.5 16 21 16H5.5C3.5 16 2 13.8 1.2 12.2z",
+        "M8.8 9.25a1.6 1.6 0 0 1 3.2 0", "M4.3 16a1.5 1.5 0 0 0 3 0M15.5 16a1.5 1.5 0 0 0 3 0",
     )
 
     /** The icon for a bike type; e-bikes get a small bolt. */
