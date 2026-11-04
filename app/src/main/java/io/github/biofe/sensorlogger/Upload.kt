@@ -221,7 +221,9 @@ object Upload {
         }
         progress(rides.size, rides.size)
         val labelsOk = uploadLabels(context, only)
-        return Summary(uploaded, rejected, !labelsOk, null)
+        // A ride that ended while this ran found the job already scheduled: have Android run it again for that one
+        val endedMeanwhile = pending(context, only).any { it !in rides }
+        return Summary(uploaded, rejected, !labelsOk || endedMeanwhile, null)
     }
 
     /** Sends the poll taps of rides annotated after their upload. Returns false if some should be sent again later. */
