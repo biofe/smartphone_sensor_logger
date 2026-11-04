@@ -368,7 +368,7 @@ class MainActivity : ComponentActivity() {
 
     private fun startRecording() {
         val bike = pendingBike ?: Bikes.list(this).firstOrNull()
-        ui.recordingBike = bike?.label
+        ui.recordingBike = bike?.label(this)
         startForegroundService(
             Intent(this, RecordingService::class.java)
                 .putExtra(RecordingService.EXTRA_BIKE_TYPE, bike?.type ?: "unknown")
@@ -436,13 +436,13 @@ class MainActivity : ComponentActivity() {
         val text = TextView(this).apply {
             val pad = (24 * resources.displayMetrics.density).toInt()
             setPadding(pad, pad, pad, pad)
-            this.text = "Preparing…"
+            this.text = getString(R.string.preparing)
         }
-        val dialog = AlertDialog.Builder(this).setTitle("Exporting").setView(text).setCancelable(false).show()
+        val dialog = AlertDialog.Builder(this).setTitle(R.string.exporting).setView(text).setCancelable(false).show()
         Thread {
             val result = runCatching {
                 Exporter.export(this, selection) { done, total ->
-                    runOnUiThread { text.text = if (done < total) "Ride ${done + 1} of $total…" else "Finishing…" }
+                    runOnUiThread { text.text = if (done < total) getString(R.string.export_progress, done + 1, total) else getString(R.string.export_finishing) }
                 }
             }
             runOnUiThread {
@@ -454,20 +454,21 @@ class MainActivity : ComponentActivity() {
 
     private fun onExported(result: kotlin.Result<Exporter.Result>) {
         val r = result.getOrElse {
-            Toast.makeText(this, "Export failed: ${it.message}", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, getString(R.string.export_failed, it.message), Toast.LENGTH_LONG).show()
             return
         }
         if (r.uri == null) {
-            Toast.makeText(this, "Nothing to export: rides shorter than 400 m are removed for privacy.", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, R.string.export_nothing, Toast.LENGTH_LONG).show()
             return
         }
-        val skippedNote = if (r.skipped > 0) " (${r.skipped} left out: too short or unreadable)" else ""
-        Toast.makeText(this, "Saved Downloads/BikeSensorLogger/${r.fileName}$skippedNote", Toast.LENGTH_LONG).show()
+        val saved = if (r.skipped > 0) getString(R.string.export_saved_skipped, r.fileName, r.skipped)
+        else getString(R.string.export_saved, r.fileName)
+        Toast.makeText(this, saved, Toast.LENGTH_LONG).show()
         val share = Intent(Intent.ACTION_SEND)
             .setType("application/zip")
             .putExtra(Intent.EXTRA_STREAM, r.uri)
             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        startActivity(Intent.createChooser(share, "Send ride data"))
+        startActivity(Intent.createChooser(share, getString(R.string.share_ride_data)))
     }
 
     // --- Upload ------------------------------------------------------------------------------
@@ -476,24 +477,24 @@ class MainActivity : ComponentActivity() {
         val text = TextView(this).apply {
             val pad = (24 * resources.displayMetrics.density).toInt()
             setPadding(pad, pad / 2, pad, 0)
-            this.text = CONSENT_TEXT
+            this.text = getString(R.string.consent_text)
         }
         val scroll = android.widget.ScrollView(this).apply { addView(text) }
         if (Upload.consented(this)) {
             // Already agreed: just show what is sent; turning upload off is in the settings
-            AlertDialog.Builder(this).setTitle("What is sent").setView(scroll).setPositiveButton("Close", null).show()
+            AlertDialog.Builder(this).setTitle(R.string.consent_what_is_sent).setView(scroll).setPositiveButton(R.string.close, null).show()
             return
         }
         AlertDialog.Builder(this)
-            .setTitle("Send your rides to the project?")
+            .setTitle(R.string.consent_title)
             .setView(scroll)
             .setCancelable(false)
-            .setPositiveButton("Agree") { _, _ ->
+            .setPositiveButton(R.string.consent_agree) { _, _ ->
                 Upload.setConsent(this, true)
                 renderUpload()
                 onAgreed()
             }
-            .setNegativeButton("Not now") { _, _ ->
+            .setNegativeButton(R.string.consent_not_now) { _, _ ->
                 Upload.setConsent(this, false)
                 renderUpload()
             }
@@ -514,16 +515,16 @@ class MainActivity : ComponentActivity() {
         }
         val network = getSystemService(android.net.ConnectivityManager::class.java)
         if (network.activeNetwork == null) {
-            Toast.makeText(this, "No internet connection.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, R.string.no_internet, Toast.LENGTH_SHORT).show()
             return
         }
         if (network.isActiveNetworkMetered && waiting.isNotEmpty()) {
             // Zipped CSVs are about a third of their size on the phone
             val mb = waiting.sumOf { r -> r.walkTopDown().filter { it.isFile }.sumOf { it.length() } } / 3 / 1_000_000
             AlertDialog.Builder(this)
-                .setMessage("You're not on Wi-Fi. Upload ${waiting.size} ${if (waiting.size == 1) "ride" else "rides"} (about ${maxOf(mb, 1)} MB) over mobile data?")
-                .setPositiveButton("Upload") { _, _ -> runUpload(names) }
-                .setNegativeButton("Wait for Wi-Fi", null)
+                .setMessage(resources.getQuantityString(R.plurals.upload_mobile_data, waiting.size, waiting.size, maxOf(mb, 1)))
+                .setPositiveButton(R.string.action_upload) { _, _ -> runUpload(names) }
+                .setNegativeButton(R.string.wait_for_wifi, null)
                 .show()
         } else {
             runUpload(names)
@@ -532,26 +533,26 @@ class MainActivity : ComponentActivity() {
 
     private fun runUpload(only: List<String>?) {
         UploadJob.uploadNow(this, only)
-        Toast.makeText(this, "Uploading in the background; the notification shows how far it got.", Toast.LENGTH_LONG).show()
+        Toast.makeText(this, R.string.upload_started, Toast.LENGTH_LONG).show()
     }
 
     private fun confirmServerDelete() {
         AlertDialog.Builder(this)
-            .setMessage("Delete every ride and annotation this phone has sent to the project server? Automatic upload will be turned off. Rides on this phone stay.")
-            .setPositiveButton("Delete") { _, _ ->
+            .setMessage(R.string.server_delete_question)
+            .setPositiveButton(R.string.action_delete) { _, _ ->
                 Thread {
                     val result = runCatching { Upload.deleteOnServer(this) }
                     runOnUiThread {
                         renderUpload()
                         val msg = result.fold(
-                            { "Deleted $it ${if (it == 1) "ride" else "rides"} from the server. Upload is off." },
-                            { "Couldn't delete: ${it.message}. Check the connection and try again." },
+                            { resources.getQuantityString(R.plurals.server_deleted, it, it) },
+                            { getString(R.string.server_delete_failed, it.message) },
                         )
                         Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
                     }
                 }.start()
             }
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton(R.string.cancel, null)
             .show()
     }
 
@@ -611,16 +612,6 @@ class MainActivity : ComponentActivity() {
         private const val DIM_AFTER_MS = 20_000L
         private const val DIM_BRIGHTNESS = 0.05f
         private const val KEY_INTRO_SEEN = "intro_seen"
-
-        private const val CONSENT_TEXT =
-            "Your rides help build a map of how comfortable cycle paths are. If you agree, the app sends each " +
-                "finished ride to the project server when you're on Wi-Fi.\n\n" +
-                "What is sent: the motion sensor data, the GPS track, sound levels in frequency bands (never audio), " +
-                "your poll answers, the bike type, the phone model and app version, and a random id for this app " +
-                "install. The first and last 150 to 250 m of every ride are cut off, so your home or work isn't in the data.\n\n" +
-                "What is not sent: your name, contact details, bike names or colours, or the full track you can export as GPX.\n\n" +
-                "The data is used for research in this project. You can turn automatic upload off at any time, " +
-                "and delete everything this phone sent, under Settings."
     }
 }
 

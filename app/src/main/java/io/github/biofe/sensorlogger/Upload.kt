@@ -132,17 +132,6 @@ object Upload {
     fun labelsPending(ride: File): Boolean =
         status(ride).state == State.UPLOADED && labelsMtime(ride) != labelsSent(ride)
 
-    /** Short mark for the ride list. */
-    fun label(ride: File): String {
-        val s = status(ride)
-        return when (s.state) {
-            State.UPLOADED -> "uploaded"
-            State.REJECTED -> "not accepted: ${s.reason}"
-            State.EMPTY -> "nothing to upload (too short)"
-            State.WAITING -> if (isRecording(ride)) "recording" else "waiting to upload"
-        }
-    }
-
     private fun isRecording(ride: File) = RecorderState.recording && RecorderState.rideDir == ride
 
     /**
@@ -169,8 +158,8 @@ object Upload {
      * [waitMs] for the first to finish.
      */
     fun uploadAll(context: Context, waitMs: Long = 0, only: Set<String>? = null, progress: (Int, Int) -> Unit = { _, _ -> }): Summary {
-        if (!consented(context)) return Summary(0, 0, false, "Uploading needs your consent first.")
-        if (!lock.tryLock(waitMs, TimeUnit.MILLISECONDS)) return Summary(0, 0, true, "An upload is already running.")
+        if (!consented(context)) return Summary(0, 0, false, context.getString(R.string.upload_needs_consent))
+        if (!lock.tryLock(waitMs, TimeUnit.MILLISECONDS)) return Summary(0, 0, true, context.getString(R.string.upload_already_running))
         stopRequested = false
         try {
             return run(context, only, progress)
@@ -208,7 +197,7 @@ object Upload {
                 val answer = try {
                     send(context, "POST", "/v1/rides/$name", zip.readBytes(), "application/zip")
                 } catch (e: IOException) {
-                    return Summary(uploaded, rejected, true, "No connection to the server; will try again later.")
+                    return Summary(uploaded, rejected, true, context.getString(R.string.upload_no_connection))
                 }
                 when (answer.code) {
                     200, 201 -> {
@@ -221,10 +210,10 @@ object Upload {
                     }
                     403 -> {
                         setStatus(context, ride, State.REJECTED, answer.reason, name)
-                        return Summary(uploaded, rejected + 1, false, "The server doesn't accept uploads from this phone.")
+                        return Summary(uploaded, rejected + 1, false, context.getString(R.string.upload_phone_blocked))
                     }
                     // 401, 422 (damaged transfer), 429, 5xx: the same ride can succeed later
-                    else -> return Summary(uploaded, rejected, true, answer.reason.ifEmpty { "Server busy; will try again later." })
+                    else -> return Summary(uploaded, rejected, true, answer.reason.ifEmpty { context.getString(R.string.upload_server_busy) })
                 }
             } finally {
                 zip.delete()
@@ -272,7 +261,7 @@ object Upload {
             }
         }.getOrNull() ?: return null
         val mine = context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: return null
-        return if (compareVersions(mine, min) < 0) "Please update the app to $min or newer to upload rides." else null
+        return if (compareVersions(mine, min) < 0) context.getString(R.string.upload_update_app, min) else null
     }
 
     fun compareVersions(a: String, b: String): Int {
@@ -290,7 +279,7 @@ object Upload {
     /** Asks the server to delete everything this phone sent; then stops uploading. Throws on failure. */
     fun deleteOnServer(context: Context): Int {
         val answer = send(context, "DELETE", "/v1/install", null, null)
-        if (answer.code != 200) throw IOException(answer.reason.ifEmpty { "Server answered ${answer.code}" })
+        if (answer.code != 200) throw IOException(answer.reason.ifEmpty { context.getString(R.string.server_answered, answer.code) })
         prefs(context).edit().putBoolean("consent", false).putBoolean("auto", false).apply()
         UploadJob.schedule(context)
         return answer.json?.optInt("rides", 0) ?: 0

@@ -51,7 +51,7 @@ class UpdateJob : JobService() {
 
         fun notifyAvailable(context: Context, info: Updater.Info) {
             val nm = context.getSystemService(NotificationManager::class.java)
-            nm.createNotificationChannel(NotificationChannel(CHANNEL_ID, "App updates", NotificationManager.IMPORTANCE_DEFAULT))
+            nm.createNotificationChannel(NotificationChannel(CHANNEL_ID, getString(R.string.channel_updates), NotificationManager.IMPORTANCE_DEFAULT))
             val open = PendingIntent.getActivity(
                 context, 1,
                 Intent(context, MainActivity::class.java).putExtra(EXTRA_SHOW_UPDATE, true)
@@ -60,8 +60,8 @@ class UpdateJob : JobService() {
             )
             val n = Notification.Builder(context, CHANNEL_ID)
                 .setSmallIcon(android.R.drawable.stat_sys_download_done)
-                .setContentTitle("Update available")
-                .setContentText("Version ${info.versionName} of the app is ready to install. Tap to update.")
+                .setContentTitle(getString(R.string.update_available))
+                .setContentText(getString(R.string.update_available_text, info.versionName))
                 .setContentIntent(open)
                 .setAutoCancel(true)
                 .build()

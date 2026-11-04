@@ -117,7 +117,7 @@ fun MainScreen(ui: UiState, actions: AppActions) {
 @Composable
 private fun BikeTile(bike: Bikes.Bike, onStart: () -> Unit) {
     val c = LocalVelowind.current.bike(bike.color)
-    val description = stringResource(R.string.start_ride_on, bike.label)
+    val description = stringResource(R.string.start_ride_on, bikeLabel(bike))
     Surface(
         onClick = onStart,
         shape = RoundedCornerShape(24.dp),
@@ -127,9 +127,9 @@ private fun BikeTile(bike: Bikes.Bike, onStart: () -> Unit) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.SpaceBetween) {
             BikeBadge(bike.type, bike.color, size = 56.dp)
             Column {
-                Text(bike.label, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 1)
+                Text(bikeLabel(bike), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 1)
                 if (bike.name.isNotBlank()) {
-                    Text(bike.type, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+                    Text(stringResource(Bikes.typeLabel(bike.type)), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
                 }
             }
             Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.primary) {

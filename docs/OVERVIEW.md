@@ -1,6 +1,6 @@
 # Velowind logger: project overview
 
-*Last updated: 2026-11-02 · app version on `master`: 0.11.1*
+*Last updated: 2026-11-04 · app version on `master`: 0.12.0*
 
 This page is the living overview of the logger: why it exists, what the finished app should do, and where each feature stands. Update the status tables whenever a feature changes state, and bump the date above. The [README](../README.md) stays the reference for file formats, installing and building.
 
@@ -79,7 +79,7 @@ The app is Android only (Android 10+). iOS is out of scope for now.
 | Filter rides by location on the server | 💤 Deferred | | No area limit for now |
 | Redesign: Jetpack Compose + Material 3 (no Play Services), Velowind colours in light and dark, logo, bikes with icons and colours, sensor health chips, hold-to-stop, settings page | ✅ Tested | 0.10.0 | Rides are tinted in their bike's colour. Texts are string resources, ready for German |
 | Introduction on first launch: what is recorded, mount and § 23 StVO, battery setting (with a link to Android's page and a check) | 🧪 Built, untested | 0.11.0 | Shown before the first bikes are picked; again from Settings → How Velowind works. Settings also shows whether battery usage is Unrestricted |
-| German translation | 🔜 Planned | | Strings are ready in `res/values/strings.xml` |
+| German translation | 🧪 Built, untested | 0.12.0 | `res/values-de/strings.xml`; the app follows the phone's language, English otherwise. Every text is a string resource now (also dialogs, notifications and upload messages). Ride data stays English: `labels.csv` keys and the bike type in `meta.json` don't change. Messages the server sends back (reasons a ride was not accepted) stay English |
 | Consent text check | 🔜 Planned | | A first consent text is in the app (0.8.0) and needs a check: who runs the project, a contact address, how long data is kept. Test riders are data subjects under GDPR |
 
 ### Later or not at all
@@ -132,3 +132,4 @@ The app is Android only (Android 10+). iOS is out of scope for now.
 | 0.10.0 | Redesign (Compose, Velowind look and logo, bike colours); live poll with 12 buttons on the recording screen; ride list with selection; annotating a ride later on its track; old polls and map annotations removed |
 | 0.11.0 | Introduction on first launch (what is recorded, safety, battery); battery state in Settings |
 | 0.11.1 | Annotate screen: the map showed only white (the map view had no height). The ride screen stays on by default and dims after 20 s without a touch |
+| 0.12.0 | German translation; bike types shown in the phone's language |

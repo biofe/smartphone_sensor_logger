@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- All texts of the Compose screens, so a German translation is a values-de/strings.xml away -->
+<!-- All texts of the app. German is in values-de/strings.xml; a new string needs a German line there too. -->
 <resources>
-    <string name="brand">Velowind</string>
+    <string name="brand" translatable="false">Velowind</string>
     <string name="settings">Settings</string>
     <string name="back">Back</string>
     <string name="ok">OK</string>
@@ -185,4 +185,100 @@
     <string name="remove_bike">Remove this bike</string>
     <string name="which_bikes">Which bikes do you ride?</string>
     <string name="which_bikes_note">Pick all that apply. Each gets its own start button and colour; you can change them later in Settings.</string>
+    <!-- Bike types: the stored type stays English, only the label is translated -->
+    <string name="bike_trekking">Trekking</string>
+    <string name="bike_city">City</string>
+    <string name="bike_road">Road / racing</string>
+    <string name="bike_gravel">Gravel</string>
+    <string name="bike_mountain">Mountain</string>
+    <string name="bike_e_mountain">E-mountain</string>
+    <string name="bike_e_bike">E-bike</string>
+    <string name="bike_cargo">Cargo</string>
+    <string name="bike_e_cargo">E-cargo</string>
+    <string name="bike_folding">Folding</string>
+    <string name="bike_recumbent">Recumbent</string>
+    <string name="bike_velomobile">Velomobile</string>
+    <string name="bike_other">Other</string>
+
+    <!-- Exporting -->
+    <string name="preparing">Preparing…</string>
+    <string name="exporting">Exporting</string>
+    <string name="export_progress">Ride %1$d of %2$d…</string>
+    <string name="export_finishing">Finishing…</string>
+    <string name="export_nothing">Nothing to export: rides shorter than 400 m are removed for privacy.</string>
+    <string name="export_saved">Saved Downloads/BikeSensorLogger/%1$s</string>
+    <string name="export_saved_skipped">Saved Downloads/BikeSensorLogger/%1$s (%2$d left out: too short or unreadable)</string>
+    <string name="share_ride_data">Send ride data</string>
+
+    <!-- Upload consent and upload -->
+    <string name="consent_title">Send your rides to the project?</string>
+    <string name="consent_what_is_sent">What is sent</string>
+    <string name="consent_agree">Agree</string>
+    <string name="consent_not_now">Not now</string>
+    <string name="consent_text">Your rides help build a map of how comfortable cycle paths are. If you agree, the app sends each finished ride to the project server when you\'re on Wi-Fi.\n\nWhat is sent: the motion sensor data, the GPS track, sound levels in frequency bands (never audio), your poll answers, the bike type, the phone model and app version, and a random id for this app install. The first and last 150 to 250 m of every ride are cut off, so your home or work isn\'t in the data.\n\nWhat is not sent: your name, contact details, bike names or colours, or the full track you can export as GPX.\n\nThe data is used for research in this project. You can turn automatic upload off at any time, and delete everything this phone sent, under Settings.</string>
+    <string name="no_internet">No internet connection.</string>
+    <plurals name="upload_mobile_data">
+        <item quantity="one">You\'re not on Wi-Fi. Upload %1$d ride (about %2$d MB) over mobile data?</item>
+        <item quantity="other">You\'re not on Wi-Fi. Upload %1$d rides (about %2$d MB) over mobile data?</item>
+    </plurals>
+    <string name="wait_for_wifi">Wait for Wi-Fi</string>
+    <string name="upload_started">Uploading in the background; the notification shows how far it got.</string>
+    <string name="server_delete_question">Delete every ride and annotation this phone has sent to the project server? Automatic upload will be turned off. Rides on this phone stay.</string>
+    <plurals name="server_deleted">
+        <item quantity="one">Deleted %1$d ride from the server. Upload is off.</item>
+        <item quantity="other">Deleted %1$d rides from the server. Upload is off.</item>
+    </plurals>
+    <string name="server_delete_failed">Couldn\'t delete: %1$s. Check the connection and try again.</string>
+    <string name="server_answered">server answered %1$d</string>
+    <string name="channel_upload">Ride upload</string>
+    <string name="upload_progress">Ride %1$d of %2$d</string>
+    <string name="uploading_rides">Uploading rides</string>
+    <string name="upload_finished">Upload finished</string>
+    <string name="upload_failed_retry">Upload failed; will try again.</string>
+    <plurals name="uploaded_n">
+        <item quantity="one">%1$d uploaded</item>
+        <item quantity="other">%1$d uploaded</item>
+    </plurals>
+    <plurals name="rejected_n">
+        <item quantity="one">%1$d not accepted</item>
+        <item quantity="other">%1$d not accepted</item>
+    </plurals>
+    <string name="nothing_new_to_upload">Nothing new to upload.</string>
+    <string name="upload_needs_consent">Uploading needs your consent first.</string>
+    <string name="upload_already_running">An upload is already running.</string>
+    <string name="upload_no_connection">No connection to the server; will try again later.</string>
+    <string name="upload_phone_blocked">The server doesn\'t accept uploads from this phone.</string>
+    <string name="upload_server_busy">Server busy; will try again later.</string>
+    <string name="upload_update_app">Please update the app to %1$s or newer to upload rides.</string>
+
+    <!-- Recording problems and notifications -->
+    <string name="error_no_accelerometer">No accelerometer</string>
+    <string name="error_location_permission">Location permission missing</string>
+    <string name="error_mic_permission">Microphone permission missing</string>
+    <string name="error_mic_busy">Microphone unavailable (another app may be using it)</string>
+    <string name="error_sound_stopped">Sound recording stopped: %1$s</string>
+    <string name="auto_stop_title">Ride saved</string>
+    <string name="auto_stop_text">Recording stopped after %1$d minutes without moving</string>
+    <string name="channel_recording">Ride recording</string>
+
+    <!-- App updates -->
+    <string name="channel_updates">App updates</string>
+    <string name="update_available">Update available</string>
+    <string name="update_available_text">Version %1$s of the app is ready to install. Tap to update.</string>
+    <string name="update_title">Update to %1$s</string>
+    <string name="update_message">A new version of the app is available. Your rides and settings are kept.</string>
+    <string name="update_install">Install</string>
+    <string name="update_later">Later</string>
+    <string name="update_finish_ride">Finish your ride first; updating restarts the app.</string>
+    <string name="update_permission">Android asks once whether this app may install updates. Turn on \"Allow from this source\", then come back; the update carries on.</string>
+    <string name="open_settings">Open settings</string>
+    <string name="update_downloading">Downloading…</string>
+    <string name="update_downloading_percent">Downloading… %1$d %%</string>
+    <string name="update_starting">Starting the installer…</string>
+    <string name="update_failed">Update failed: %1$s</string>
+    <string name="update_not_installed">Update not installed: %1$s</string>
+    <string name="update_unknown_reason">unknown reason</string>
+    <string name="update_damaged">the download is damaged; try again</string>
+    <string name="update_not_app">the download isn\'t an app</string>
+    <string name="update_wrong_app">the download is a different app or version</string>
 </resources>

@@ -78,11 +78,11 @@ fun SettingsScreen(ui: UiState, actions: AppActions) {
                     ) {
                         BikeBadge(bike.type, bike.color)
                         Column(Modifier.weight(1f).padding(start = 12.dp)) {
-                            Text(bike.label, style = MaterialTheme.typography.bodyLarge)
-                            Text(bike.type, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(bikeLabel(bike), style = MaterialTheme.typography.bodyLarge)
+                            Text(stringResource(Bikes.typeLabel(bike.type)), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         Icon(
-                            VelowindIcons.Edit, contentDescription = stringResource(R.string.edit_bike, bike.label),
+                            VelowindIcons.Edit, contentDescription = stringResource(R.string.edit_bike, bikeLabel(bike)),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp),
                         )
                     }

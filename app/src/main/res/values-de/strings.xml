@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- German texts. Same names as values/strings.xml; a string missing here falls back to English. -->
+<resources>
+    <string name="settings">Einstellungen</string>
+    <string name="back">Zurück</string>
+    <string name="ok">OK</string>
+    <string name="save">Speichern</string>
+    <string name="cancel">Abbrechen</string>
+
+    <!-- Main screen -->
+    <string name="start_a_ride">Fahrt starten</string>
+    <string name="start">Start</string>
+    <string name="start_ride_on">Fahrt mit %1$s starten</string>
+    <string name="start_hint">Ein Tipp startet die Aufzeichnung.</string>
+    <string name="start_hint_swipe">Wische für weitere Räder. Ein Tipp startet die Aufzeichnung.</string>
+    <string name="add_bike">Rad hinzufügen</string>
+    <string name="install_update">Update %1$s installieren</string>
+    <string name="auto_stopped">Die letzte Fahrt hat nach 10 Minuten ohne Bewegung von selbst angehalten und wurde gespeichert.</string>
+    <string name="my_rides">Meine Fahrten</string>
+    <string name="see_all">Alle %1$d anzeigen</string>
+    <string name="no_rides_yet">Noch keine Fahrten. Tippe oben auf ein Rad, um deine erste aufzuzeichnen.</string>
+    <string name="date_today">Heute, %1$s</string>
+    <string name="date_yesterday">Gestern, %1$s</string>
+    <plurals name="rides">
+        <item quantity="one">%1$d Fahrt</item>
+        <item quantity="other">%1$d Fahrten</item>
+    </plurals>
+
+    <!-- Ride states -->
+    <string name="ride_recording">Läuft</string>
+    <string name="ride_uploaded">Hochgeladen</string>
+    <string name="ride_waiting">Wartet</string>
+    <string name="ride_rejected">Nicht angenommen</string>
+    <string name="ride_too_short">Zu kurz</string>
+
+    <!-- Recording -->
+    <string name="recording">Aufzeichnung</string>
+    <string name="recording_on">Aufzeichnung · %1$s</string>
+    <string name="poll_noise">Lärm</string>
+    <string name="poll_quiet">Ruhig</string>
+    <string name="poll_far_traffic">Ferner Verkehr</string>
+    <string name="poll_loud_traffic">Lauter Verkehr</string>
+    <string name="poll_wind">Wind</string>
+    <string name="poll_surface">Belag</string>
+    <string name="poll_smooth">Glatt</string>
+    <string name="poll_bumpy">Holprig</string>
+    <string name="poll_rough">Rau</string>
+    <string name="poll_width">Breite</string>
+    <string name="poll_narrow">Schmal</string>
+    <string name="poll_medium">Mittel</string>
+    <string name="poll_wide">Breit</string>
+    <string name="poll_comfort">Fahrgefühl</string>
+    <string name="poll_nice">Angenehm</string>
+    <string name="poll_unpleasant">Unangenehm</string>
+    <string name="poll_saved">Gespeichert: %1$s</string>
+    <string name="poll_undone">Entfernt: %1$s</string>
+    <string name="poll_hint">Tippe an, was dir auffällt. Gespeichert werden nur Zeit und Ort.</string>
+    <string name="undo">Rückgängig</string>
+    <string name="hold_to_stop">Halten zum Beenden</string>
+    <string name="notification_recording">Fahrt wird aufgezeichnet</string>
+    <string name="notification_recording_text">GPS, Bewegung und Geräuschpegel</string>
+    <string name="notification_stop">Beenden</string>
+    <string name="notification_stop_confirm">Ja, beenden</string>
+    <string name="notification_stop_question">Fahrt beenden?</string>
+    <string name="notification_stop_question_text">Tippe auf „Ja, beenden“, um die Fahrt zu beenden und zu speichern.</string>
+    <string name="sensor_gps">GPS</string>
+    <string name="sensor_gps_accuracy">GPS ±%1$d m</string>
+    <string name="sensor_motion">Bewegung</string>
+    <string name="sensor_sound">Ton</string>
+    <string name="sensor_no_sound">Kein Ton</string>
+    <string name="sensor_baro">Baro</string>
+    <string name="location_needed">Zum Aufzeichnen einer Fahrt braucht die App den genauen Standort.</string>
+
+    <!-- Ride list -->
+    <plurals name="selected_n">
+        <item quantity="one">%1$d ausgewählt</item>
+        <item quantity="other">%1$d ausgewählt</item>
+    </plurals>
+    <string name="select_all">Alle auswählen</string>
+    <string name="select_none">Keine auswählen</string>
+    <string name="tap_to_select">Tippe Fahrten an, um sie auszuwählen.</string>
+    <string name="action_annotate">Bewerten</string>
+    <string name="action_upload">Hochladen</string>
+    <string name="action_gpx">GPX</string>
+    <string name="action_zip">ZIP</string>
+    <string name="action_delete">Löschen</string>
+    <string name="nothing_to_upload">Nichts hochzuladen: Diese Fahrten sind schon hochgeladen oder zu kurz.</string>
+    <string name="export_failed">Export fehlgeschlagen: %1$s</string>
+    <string name="no_gps_points">Diese Fahrten haben keine GPS-Punkte.</string>
+    <string name="share_tracks">Tracks öffnen oder senden</string>
+    <plurals name="gpx_saved">
+        <item quantity="one">Vollständiger Track in Downloads/BikeSensorLogger gespeichert</item>
+        <item quantity="other">%1$d vollständige Tracks in Downloads/BikeSensorLogger gespeichert</item>
+    </plurals>
+    <plurals name="delete_rides_question">
+        <item quantity="one">Diese Fahrt vom Handy löschen?</item>
+        <item quantity="other">%1$d Fahrten vom Handy löschen?</item>
+    </plurals>
+
+    <!-- Annotating a ride afterwards -->
+    <string name="annotate_title">Fahrt bewerten</string>
+    <string name="annotate_hint">Tippe auf die Strecke, wo dir etwas aufgefallen ist. Die grau gestrichelten Enden bleiben auf deinem Handy und lassen sich nicht bewerten.</string>
+    <string name="annotate_nothing_kept">Diese Fahrt ist zu kurz: Ohne Anfang und Ende bleibt nichts übrig.</string>
+    <string name="annotate_spot_at">Stelle passiert um %1$s · %2$s</string>
+    <string name="annotate_poll_hint">Tippe an, was hier zutraf. Mehreres geht auch.</string>
+    <string name="annotate_tap_track">Tippe näher an die farbige Strecke</string>
+    <string name="annotate_during_ride">während der Fahrt</string>
+    <string name="annotate_later">nachträglich</string>
+    <string name="close">Schließen</string>
+
+    <!-- Introduction -->
+    <string name="intro_page_of">Seite %1$d von %2$d</string>
+    <string name="intro_skip">Überspringen</string>
+    <string name="intro_next">Weiter</string>
+    <string name="intro_done">Los geht\'s</string>
+    <string name="intro_recorded_title">Radwege bewerten, indem du sie fährst</string>
+    <string name="intro_recorded_text">Velowind zeichnet auf, wie sich eine Fahrt anfühlt, damit wir gemeinsam eine Karte erstellen können, wie angenehm Radwege sind. Während du fährst, zeichnet die App auf:</string>
+    <string name="intro_recorded_gps">Wo du fährst: GPS einmal pro Sekunde.</string>
+    <string name="intro_recorded_motion">Wie holprig es ist: Bewegungssensoren etwa 100-mal pro Sekunde.</string>
+    <string name="intro_recorded_sound">Wie laut es ist: Geräuschpegel in 26 Frequenzbändern. Nie Ton, also lässt sich keine Sprache heraushören.</string>
+    <string name="intro_recorded_poll">Was dir auffällt: die Knöpfe, die du antippst, mit Zeit und Ort.</string>
+    <string name="intro_recorded_privacy">Fahrten bleiben auf deinem Handy, bis du dem Senden zustimmst. Bevor etwas das Handy verlässt, werden zufällige 150 bis 250 m am Anfang und Ende jeder Fahrt abgeschnitten, damit deine Wohnung und dein Arbeitsplatz privat bleiben.</string>
+    <string name="intro_safety_title">Sicher auf dem Rad</string>
+    <string name="intro_safety_mount">Das Handy kann in der Tasche mitfahren, aber eine Lenkerhalterung liefert die besten Daten und du kannst die Knöpfe benutzen.</string>
+    <string name="intro_safety_law">In Deutschland darfst du beim Radfahren das Handy nur benutzen, wenn es in einer Halterung steckt, und nur mit einem kurzen Blick oder Tipp (§ 23 StVO). Halte es während der Fahrt nie in der Hand.</string>
+    <string name="intro_safety_tap">Tippe nur, wenn die Verkehrslage es zulässt. Ein Tipp speichert nur Zeit und Ort, es eilt also nicht.</string>
+    <string name="intro_safety_stop">Zum Beenden halte den Stopp-Knopf eine Sekunde lang gedrückt. Wenn du es vergisst, hält die Fahrt nach 10 Minuten ohne Bewegung von selbst an.</string>
+    <string name="intro_safety_later">Etwas verpasst? Bewerte die Fahrt danach auf der Karte, mit denselben Knöpfen.</string>
+    <string name="intro_battery_title">Auch bei ausgeschaltetem Bildschirm aufzeichnen</string>
+    <string name="intro_battery_text">Android pausiert manchmal Apps, um Akku zu sparen, und bricht damit Fahrten ab. Stelle die Akkunutzung von Velowind auf „Nicht eingeschränkt“.</string>
+    <string name="intro_battery_how">Tippe auf der Seite, die sich öffnet, auf „Akkunutzung der App“ (oder „Akku“) und dann auf „Nicht eingeschränkt“. Komm danach hierher zurück.</string>
+    <string name="battery_usage">Akkunutzung</string>
+    <string name="battery_unrestricted">Nicht eingeschränkt: Fahrten werden durchgehend aufgezeichnet</string>
+    <string name="battery_restricted">Noch eingeschränkt</string>
+    <string name="battery_restricted_note">Eingeschränkt: Android bricht Fahrten womöglich ab. Tippe zum Ändern.</string>
+    <string name="battery_open_settings">Akku-Einstellungen öffnen</string>
+    <string name="intro_again">So funktioniert Velowind</string>
+
+    <!-- Settings -->
+    <string name="upload">Hochladen</string>
+    <string name="upload_auto">Im WLAN automatisch hochladen</string>
+    <string name="upload_now">Jetzt hochladen</string>
+    <string name="upload_off">Deine Fahrten bleiben auf diesem Handy. Lies, was gesendet würde, bevor du das Hochladen einschaltest.</string>
+    <string name="upload_turn_on">Lesen, was gesendet wird, und einschalten</string>
+    <string name="upload_line_off">Hochladen ist aus.</string>
+    <string name="upload_line_done">Alle Fahrten hochgeladen.</string>
+    <plurals name="upload_line_manual">
+        <item quantity="one">%1$d Fahrt nicht hochgeladen; automatisches Hochladen ist aus.</item>
+        <item quantity="other">%1$d Fahrten nicht hochgeladen; automatisches Hochladen ist aus.</item>
+    </plurals>
+    <plurals name="upload_line_waiting">
+        <item quantity="one">%1$d Fahrt wartet auf WLAN.</item>
+        <item quantity="other">%1$d Fahrten warten auf WLAN.</item>
+    </plurals>
+    <string name="my_bikes">Meine Räder</string>
+    <string name="edit_bike">%1$s bearbeiten</string>
+    <string name="during_rides">Während der Fahrt</string>
+    <string name="keep_screen_on">Bildschirm anlassen</string>
+    <string name="keep_screen_on_note">Damit die Knöpfe immer bereit sind. Nach 20 Sekunden ohne Berührung wird der Bildschirm dunkler, um Akku zu sparen; eine Berührung macht ihn wieder hell. Wenn aus, erscheint die Aufzeichnung nach der Ein-/Aus-Taste trotzdem über dem Sperrbildschirm.</string>
+    <string name="privacy_storage">Datenschutz und Speicher</string>
+    <string name="what_is_sent">Was gesendet wird und was nicht</string>
+    <string name="phone_id">Handy-Kennung</string>
+    <string name="phone_id_note">Zufällig, nicht mit dir verknüpft</string>
+    <string name="storage">Auf diesem Handy</string>
+    <string name="export_all">Alle Fahrten als ZIP exportieren</string>
+    <string name="export_all_note">Zum Datenschutz gekürzt, in Downloads</string>
+    <string name="delete_server_data">Meine Daten auf dem Server löschen</string>
+    <string name="app">App</string>
+    <string name="version">Version</string>
+    <string name="test_build_note">Testversion, aktualisiert sich nicht selbst</string>
+    <string name="check_updates">Nach Updates suchen</string>
+    <string name="checking_updates">Suche nach Updates…</string>
+    <string name="up_to_date">Die App ist aktuell.</string>
+    <string name="update_server_unreachable">Update-Server nicht erreichbar.</string>
+    <string name="stop_before_export">Beende die Fahrt vor dem Exportieren.</string>
+
+    <!-- Bikes -->
+    <string name="edit_bike_title">Rad bearbeiten</string>
+    <string name="bike_name">Name (optional)</string>
+    <string name="bike_name_note">Bleibt auf diesem Handy</string>
+    <string name="bike_type">Typ</string>
+    <string name="bike_colour">Farbe</string>
+    <string name="colour_n">Farbe %1$d</string>
+    <string name="remove_bike">Dieses Rad entfernen</string>
+    <string name="which_bikes">Welche Räder fährst du?</string>
+    <string name="which_bikes_note">Wähle alle passenden aus. Jedes bekommt einen eigenen Startknopf und eine Farbe; du kannst sie später in den Einstellungen ändern.</string>
+
+    <!-- Bike types -->
+    <string name="bike_trekking">Trekkingrad</string>
+    <string name="bike_city">Stadtrad</string>
+    <string name="bike_road">Rennrad</string>
+    <string name="bike_gravel">Gravelbike</string>
+    <string name="bike_mountain">Mountainbike</string>
+    <string name="bike_e_mountain">E-Mountainbike</string>
+    <string name="bike_e_bike">E-Bike</string>
+    <string name="bike_cargo">Lastenrad</string>
+    <string name="bike_e_cargo">E-Lastenrad</string>
+    <string name="bike_folding">Faltrad</string>
+    <string name="bike_recumbent">Liegerad</string>
+    <string name="bike_velomobile">Velomobil</string>
+    <string name="bike_other">Anderes</string>
+
+    <!-- Exporting -->
+    <string name="preparing">Wird vorbereitet…</string>
+    <string name="exporting">Exportieren</string>
+    <string name="export_progress">Fahrt %1$d von %2$d…</string>
+    <string name="export_finishing">Wird abgeschlossen…</string>
+    <string name="export_nothing">Nichts zu exportieren: Fahrten unter 400 m werden zum Datenschutz entfernt.</string>
+    <string name="export_saved">Gespeichert in Downloads/BikeSensorLogger/%1$s</string>
+    <string name="export_saved_skipped">Gespeichert in Downloads/BikeSensorLogger/%1$s (%2$d ausgelassen: zu kurz oder nicht lesbar)</string>
+    <string name="share_ride_data">Fahrtdaten senden</string>
+
+    <!-- Upload consent and upload -->
+    <string name="consent_title">Deine Fahrten an das Projekt senden?</string>
+    <string name="consent_what_is_sent">Was gesendet wird</string>
+    <string name="consent_agree">Zustimmen</string>
+    <string name="consent_not_now">Nicht jetzt</string>
+    <string name="consent_text">Deine Fahrten helfen, eine Karte zu erstellen, die zeigt, wie angenehm Radwege sind. Wenn du zustimmst, sendet die App jede fertige Fahrt an den Projektserver, sobald du im WLAN bist.\n\nWas gesendet wird: die Daten der Bewegungssensoren, die GPS-Spur, Geräuschpegel in Frequenzbändern (nie Ton), deine Bewertungen, der Radtyp, das Handymodell und die App-Version sowie eine zufällige Kennung dieser App-Installation. Die ersten und letzten 150 bis 250 m jeder Fahrt werden abgeschnitten, damit deine Wohnung oder dein Arbeitsplatz nicht in den Daten stehen.\n\nWas nicht gesendet wird: dein Name, deine Kontaktdaten, die Namen oder Farben deiner Räder und der vollständige Track, den du als GPX exportieren kannst.\n\nDie Daten werden für die Forschung in diesem Projekt verwendet. Du kannst das automatische Hochladen jederzeit abschalten und alles, was dieses Handy gesendet hat, in den Einstellungen löschen.</string>
+    <string name="no_internet">Keine Internetverbindung.</string>
+    <plurals name="upload_mobile_data">
+        <item quantity="one">Du bist nicht im WLAN. %1$d Fahrt (etwa %2$d MB) über mobile Daten hochladen?</item>
+        <item quantity="other">Du bist nicht im WLAN. %1$d Fahrten (etwa %2$d MB) über mobile Daten hochladen?</item>
+    </plurals>
+    <string name="wait_for_wifi">Auf WLAN warten</string>
+    <string name="upload_started">Wird im Hintergrund hochgeladen; die Benachrichtigung zeigt den Fortschritt.</string>
+    <string name="server_delete_question">Alle Fahrten und Bewertungen löschen, die dieses Handy an den Projektserver gesendet hat? Das automatische Hochladen wird ausgeschaltet. Die Fahrten auf diesem Handy bleiben.</string>
+    <plurals name="server_deleted">
+        <item quantity="one">%1$d Fahrt auf dem Server gelöscht. Hochladen ist aus.</item>
+        <item quantity="other">%1$d Fahrten auf dem Server gelöscht. Hochladen ist aus.</item>
+    </plurals>
+    <string name="server_delete_failed">Löschen fehlgeschlagen: %1$s. Prüfe die Verbindung und versuche es noch einmal.</string>
+    <string name="server_answered">Server antwortete %1$d</string>
+    <string name="channel_upload">Fahrten hochladen</string>
+    <string name="upload_progress">Fahrt %1$d von %2$d</string>
+    <string name="uploading_rides">Fahrten werden hochgeladen</string>
+    <string name="upload_finished">Hochladen fertig</string>
+    <string name="upload_failed_retry">Hochladen fehlgeschlagen; neuer Versuch folgt.</string>
+    <plurals name="uploaded_n">
+        <item quantity="one">%1$d hochgeladen</item>
+        <item quantity="other">%1$d hochgeladen</item>
+    </plurals>
+    <plurals name="rejected_n">
+        <item quantity="one">%1$d nicht angenommen</item>
+        <item quantity="other">%1$d nicht angenommen</item>
+    </plurals>
+    <string name="nothing_new_to_upload">Nichts Neues hochzuladen.</string>
+    <string name="upload_needs_consent">Zum Hochladen brauchen wir zuerst deine Zustimmung.</string>
+    <string name="upload_already_running">Es läuft schon ein Upload.</string>
+    <string name="upload_no_connection">Keine Verbindung zum Server; neuer Versuch folgt später.</string>
+    <string name="upload_phone_blocked">Der Server nimmt von diesem Handy keine Uploads an.</string>
+    <string name="upload_server_busy">Server ausgelastet; neuer Versuch folgt später.</string>
+    <string name="upload_update_app">Bitte aktualisiere die App auf %1$s oder neuer, um Fahrten hochzuladen.</string>
+
+    <!-- Recording problems and notifications -->
+    <string name="error_no_accelerometer">Kein Beschleunigungssensor</string>
+    <string name="error_location_permission">Standortberechtigung fehlt</string>
+    <string name="error_mic_permission">Mikrofonberechtigung fehlt</string>
+    <string name="error_mic_busy">Mikrofon nicht verfügbar (eine andere App nutzt es vielleicht)</string>
+    <string name="error_sound_stopped">Geräuschmessung angehalten: %1$s</string>
+    <string name="auto_stop_title">Fahrt gespeichert</string>
+    <string name="auto_stop_text">Aufzeichnung nach %1$d Minuten ohne Bewegung beendet</string>
+    <string name="channel_recording">Fahrtaufzeichnung</string>
+
+    <!-- App updates -->
+    <string name="channel_updates">App-Updates</string>
+    <string name="update_available">Update verfügbar</string>
+    <string name="update_available_text">Version %1$s der App kann installiert werden. Tippe zum Aktualisieren.</string>
+    <string name="update_title">Update auf %1$s</string>
+    <string name="update_message">Eine neue Version der App ist verfügbar. Deine Fahrten und Einstellungen bleiben erhalten.</string>
+    <string name="update_install">Installieren</string>
+    <string name="update_later">Später</string>
+    <string name="update_finish_ride">Beende zuerst deine Fahrt; das Update startet die App neu.</string>
+    <string name="update_permission">Android fragt einmal, ob diese App Updates installieren darf. Schalte „Aus dieser Quelle zulassen“ ein und komm dann zurück; das Update geht weiter.</string>
+    <string name="open_settings">Einstellungen öffnen</string>
+    <string name="update_downloading">Wird heruntergeladen…</string>
+    <string name="update_downloading_percent">Wird heruntergeladen… %1$d %%</string>
+    <string name="update_starting">Installation wird gestartet…</string>
+    <string name="update_failed">Update fehlgeschlagen: %1$s</string>
+    <string name="update_not_installed">Update nicht installiert: %1$s</string>
+    <string name="update_unknown_reason">unbekannter Grund</string>
+    <string name="update_damaged">der Download ist beschädigt; versuche es noch einmal</string>
+    <string name="update_not_app">der Download ist keine App</string>
+    <string name="update_wrong_app">der Download ist eine andere App oder Version</string>
+</resources>

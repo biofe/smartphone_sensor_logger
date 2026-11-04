@@ -105,50 +105,50 @@ object Updater {
     fun offer(activity: Activity, info: Info) {
         val notes = if (info.notes.isBlank()) "" else "\n\n${info.notes}"
         AlertDialog.Builder(activity)
-            .setTitle("Update to ${info.versionName}")
-            .setMessage("A new version of the app is available. Your rides and settings are kept.$notes")
-            .setPositiveButton("Install") { _, _ -> install(activity, info) }
-            .setNegativeButton("Later", null)
+            .setTitle(activity.getString(R.string.update_title, info.versionName))
+            .setMessage(activity.getString(R.string.update_message) + notes)
+            .setPositiveButton(R.string.update_install) { _, _ -> install(activity, info) }
+            .setNegativeButton(R.string.update_later, null)
             .show()
     }
 
     fun install(activity: Activity, info: Info) {
         if (RecorderState.recording) {
             // Installing restarts the app, which would end the ride
-            Toast.makeText(activity, "Finish your ride first; updating restarts the app.", Toast.LENGTH_LONG).show()
+            Toast.makeText(activity, R.string.update_finish_ride, Toast.LENGTH_LONG).show()
             return
         }
         if (!activity.packageManager.canRequestPackageInstalls()) {
             AlertDialog.Builder(activity)
-                .setMessage("Android asks once whether this app may install updates. Turn on \"Allow from this source\", then come back; the update carries on.")
-                .setPositiveButton("Open settings") { _, _ ->
+                .setMessage(R.string.update_permission)
+                .setPositiveButton(R.string.open_settings) { _, _ ->
                     awaitingPermission = true
                     activity.startActivity(
                         Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:${activity.packageName}"))
                     )
                 }
-                .setNegativeButton("Cancel", null)
+                .setNegativeButton(R.string.cancel, null)
                 .show()
             return
         }
         val text = TextView(activity).apply {
             val pad = (24 * resources.displayMetrics.density).toInt()
             setPadding(pad, pad, pad, pad)
-            this.text = "Downloading…"
+            this.text = activity.getString(R.string.update_downloading)
         }
-        val dialog = AlertDialog.Builder(activity).setTitle("Update to ${info.versionName}").setView(text)
+        val dialog = AlertDialog.Builder(activity).setTitle(activity.getString(R.string.update_title, info.versionName)).setView(text)
             .setCancelable(false).show()
         val ui = Handler(Looper.getMainLooper())
         Thread {
             val result = runCatching {
-                val apk = download(activity, info) { percent -> ui.post { text.text = "Downloading… $percent %" } }
-                ui.post { text.text = "Starting the installer…" }
+                val apk = download(activity, info) { percent -> ui.post { text.text = activity.getString(R.string.update_downloading_percent, percent) } }
+                ui.post { text.text = activity.getString(R.string.update_starting) }
                 startInstaller(activity, apk)
             }
             ui.post {
                 dialog.dismiss()
                 result.exceptionOrNull()?.let {
-                    Toast.makeText(activity, "Update failed: ${it.message}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(activity, activity.getString(R.string.update_failed, it.message), Toast.LENGTH_LONG).show()
                 }
             }
         }.start()
@@ -162,7 +162,7 @@ object Updater {
         try {
             c.connectTimeout = TIMEOUT_MS
             c.readTimeout = 60_000
-            if (c.responseCode != 200) throw IOException("server answered ${c.responseCode}")
+            if (c.responseCode != 200) throw IOException(context.getString(R.string.server_answered, c.responseCode))
             val total = c.contentLengthLong
             var done = 0L
             var shown = -1
@@ -187,11 +187,11 @@ object Updater {
             c.disconnect()
         }
         val hash = digest.digest().joinToString("") { "%02x".format(it) }
-        if (hash != info.sha256) throw IOException("the download is damaged; try again")
+        if (hash != info.sha256) throw IOException(context.getString(R.string.update_damaged))
         val archive = context.packageManager.getPackageArchiveInfo(target.path, 0)
-            ?: throw IOException("the download isn't an app")
+            ?: throw IOException(context.getString(R.string.update_not_app))
         if (archive.packageName != context.packageName || archive.longVersionCode != info.versionCode) {
-            throw IOException("the download is a different app or version")
+            throw IOException(context.getString(R.string.update_wrong_app))
         }
         return target
     }
@@ -233,8 +233,8 @@ class UpdateReceiver : BroadcastReceiver() {
             PackageInstaller.STATUS_SUCCESS -> File(context.cacheDir, "update").deleteRecursively()
             PackageInstaller.STATUS_FAILURE_ABORTED -> Unit // the rider tapped Cancel
             else -> {
-                val why = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE) ?: "unknown reason"
-                Toast.makeText(context, "Update not installed: $why", Toast.LENGTH_LONG).show()
+                val why = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE) ?: context.getString(R.string.update_unknown_reason)
+                Toast.makeText(context, context.getString(R.string.update_not_installed, why), Toast.LENGTH_LONG).show()
             }
         }
     }

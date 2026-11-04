@@ -64,7 +64,7 @@ fun BikeEditor(bike: Bikes.Bike?, newColor: Int, onSave: (Bikes.Bike) -> Unit, o
                 Text(stringResource(R.string.bike_type), style = MaterialTheme.typography.titleSmall)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Bikes.TYPES.forEach { t ->
-                        FilterChip(selected = t == type, onClick = { type = t }, label = { Text(t) })
+                        FilterChip(selected = t == type, onClick = { type = t }, label = { Text(stringResource(Bikes.typeLabel(t))) })
                     }
                 }
                 Text(stringResource(R.string.bike_colour), style = MaterialTheme.typography.titleSmall)
@@ -117,7 +117,7 @@ fun FirstBikesDialog(onDone: (List<String>) -> Unit) {
                         FilterChip(
                             selected = t in picked,
                             onClick = { if (t in picked) picked.remove(t) else picked.add(t) },
-                            label = { Text(t) },
+                            label = { Text(stringResource(Bikes.typeLabel(t))) },
                         )
                     }
                 }
