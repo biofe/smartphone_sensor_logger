@@ -98,48 +98,17 @@ enum class PollHue { GREEN, ORANGE, RED, BLUE }
 class PollColor(val bg: Color, val fg: Color, val flashBg: Color, val flashFg: Color)
 
 /*
- * Poll colours. Each hue has a pale tone with dark text (7:1 or more) and a strong tone with white
- * text (5:1 or more). Light mode shows the pale tone and flashes the strong one; dark mode does the
- * opposite, so the buttons don't glare at night. The icon and the label stay, so the colour is
- * extra help, not the only cue.
+ * Poll colours, taken from the bike palette so they fit the rest of the app: at rest a button has
+ * the same tint as a ride row (pale in light mode, dark in dark mode) with the normal text colour;
+ * after a tap it flashes in the full bike colour. Green is the bluish green, red the vermilion. The
+ * icon and the label stay, so the colour is extra help, not the only cue.
  */
-private val pollTones = mapOf(
-    PollHue.GREEN to listOf(0xFFA5D6A7, 0xFF0D3B12, 0xFF2E7D32),
-    PollHue.ORANGE to listOf(0xFFFFCC80, 0xFF4A2800, 0xFFB35100),
-    PollHue.RED to listOf(0xFFEF9A9A, 0xFF5C0F0F, 0xFFC62828),
-    PollHue.BLUE to listOf(0xFF90CAF9, 0xFF0B2F55, 0xFF1565C0),
-)
+private val pollHueToBike = mapOf(PollHue.GREEN to 2, PollHue.ORANGE to 0, PollHue.RED to 3, PollHue.BLUE to 1)
 
-private fun pollColors(dark: Boolean) = pollTones.mapValues { (_, t) ->
-    val pale = Color(t[0]); val onPale = Color(t[1]); val strong = Color(t[2]); val onStrong = Color.White
-    if (dark) PollColor(strong, onStrong, pale, onPale) else PollColor(pale, onPale, strong, onStrong)
-}
-
-/*
- * Bike colours from the Okabe–Ito palette, chosen to stay distinguishable with colour blindness.
- * Order: orange, blue, bluish green, vermilion, sky blue, reddish purple, yellow, grey (the last
- * also stands for rides whose bike is unknown).
- */
-private val bikeHues = listOf(
-    Triple(0xFFE69F00, 0xFFFAECCC, 0xFF4F3E0D),
-    Triple(0xFF0072B2, 0xFFCCE3F0, 0xFF0A3042),
-    Triple(0xFF009E73, 0xFFCCECE3, 0xFF0A3D30),
-    Triple(0xFFD55E00, 0xFFF7DFCC, 0xFF4A2A0D),
-    Triple(0xFF56B4E9, 0xFFDDF0FB, 0xFF244453),
-    Triple(0xFFCC79A7, 0xFFF5E4ED, 0xFF47323F),
-    Triple(0xFFF0E442, 0xFFFCFAD9, 0xFF525221),
-    Triple(0xFF7A7A7A, 0xFFE4E4E4, 0xFF2F3433),
-)
-
-/** Blue and grey are dark enough for a white icon; the others need a dark one. */
-private val whiteIcon = setOf(1, 7)
-
-private fun bikeColors(dark: Boolean) = bikeHues.mapIndexed { i, (c, light, darkTint) ->
-    BikeColor(
-        Color(c),
-        if (i in whiteIcon) Color.White else Color(0xFF1A1A1A),
-        Color(if (dark) darkTint else light),
-    )
+private fun pollColors(dark: Boolean): Map<PollHue, PollColor> {
+    val bikes = bikeColors(dark)
+    val text = if (dark) Dark.onSurface else Light.onSurface
+    return pollHueToBike.mapValues { (_, i) -> PollColor(bikes[i].tint, text, bikes[i].color, bikes[i].on) }
 }
 
 private val LightExtra = VelowindColors(
