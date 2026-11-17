@@ -17,7 +17,8 @@ object Labels {
     const val FILE = "labels.csv"
     const val HEADER = "t_utc_ms,lat,lon,accuracy_m,source,category,value,undone\n"
 
-    class Choice(val category: String, val value: String, @StringRes val label: Int) {
+    /** [hue] colours the button; it isn't stored. */
+    class Choice(val category: String, val value: String, @StringRes val label: Int, val hue: PollHue) {
         val key: String get() = "$category/$value"
     }
 
@@ -25,24 +26,24 @@ object Labels {
 
     val ROWS = listOf(
         Row("noise", R.string.poll_noise, listOf(
-            Choice("noise", "quiet", R.string.poll_quiet),
-            Choice("noise", "far_traffic", R.string.poll_far_traffic),
-            Choice("noise", "loud_traffic", R.string.poll_loud_traffic),
-            Choice("noise", "wind", R.string.poll_wind),
+            Choice("noise", "quiet", R.string.poll_quiet, PollHue.GREEN),
+            Choice("noise", "far_traffic", R.string.poll_far_traffic, PollHue.ORANGE),
+            Choice("noise", "loud_traffic", R.string.poll_loud_traffic, PollHue.RED),
+            Choice("noise", "wind", R.string.poll_wind, PollHue.BLUE),
         )),
         Row("surface", R.string.poll_surface, listOf(
-            Choice("surface", "smooth", R.string.poll_smooth),
-            Choice("surface", "bumpy", R.string.poll_bumpy),
-            Choice("surface", "rough", R.string.poll_rough),
+            Choice("surface", "smooth", R.string.poll_smooth, PollHue.GREEN),
+            Choice("surface", "bumpy", R.string.poll_bumpy, PollHue.ORANGE),
+            Choice("surface", "rough", R.string.poll_rough, PollHue.RED),
         )),
         Row("width", R.string.poll_width, listOf(
-            Choice("width", "narrow", R.string.poll_narrow),
-            Choice("width", "medium", R.string.poll_medium),
-            Choice("width", "wide", R.string.poll_wide),
+            Choice("width", "narrow", R.string.poll_narrow, PollHue.RED),
+            Choice("width", "medium", R.string.poll_medium, PollHue.ORANGE),
+            Choice("width", "wide", R.string.poll_wide, PollHue.GREEN),
         )),
         Row("comfort", R.string.poll_comfort, listOf(
-            Choice("comfort", "nice", R.string.poll_nice),
-            Choice("comfort", "unpleasant", R.string.poll_unpleasant),
+            Choice("comfort", "nice", R.string.poll_nice, PollHue.GREEN),
+            Choice("comfort", "unpleasant", R.string.poll_unpleasant, PollHue.RED),
         )),
     )
 

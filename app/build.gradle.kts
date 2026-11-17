@@ -13,8 +13,8 @@ android {
         // Android 10+: needed for saving exports to Downloads without storage permissions
         minSdk = 29
         targetSdk = 35
-        versionCode = 20
-        versionName = "0.12.3"
+        versionCode = 21
+        versionName = "0.12.4"
         manifestPlaceholders["appLabel"] = "Velowind"
     }
 
