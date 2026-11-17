@@ -85,8 +85,34 @@ class VelowindColors(
     val warn: Color,
     val warnContainer: Color,
     val bikes: List<BikeColor>,
+    val poll: Map<PollHue, PollColor>,
 ) {
     fun bike(index: Int?): BikeColor = bikes[(index ?: bikes.lastIndex).mod(bikes.size)]
+}
+
+/** The colour of a poll button: roughly good (green), so-so (orange), bad (red), or wind (blue). */
+enum class PollHue { GREEN, ORANGE, RED, BLUE }
+
+/** A poll button at rest ([bg] with [fg] text) and while it flashes after a tap ([flashBg], [flashFg]). */
+@Immutable
+class PollColor(val bg: Color, val fg: Color, val flashBg: Color, val flashFg: Color)
+
+/*
+ * Poll colours. Each hue has a pale tone with dark text (7:1 or more) and a strong tone with white
+ * text (5:1 or more). Light mode shows the pale tone and flashes the strong one; dark mode does the
+ * opposite, so the buttons don't glare at night. The icon and the label stay, so the colour is
+ * extra help, not the only cue.
+ */
+private val pollTones = mapOf(
+    PollHue.GREEN to listOf(0xFFA5D6A7, 0xFF0D3B12, 0xFF2E7D32),
+    PollHue.ORANGE to listOf(0xFFFFCC80, 0xFF4A2800, 0xFFB35100),
+    PollHue.RED to listOf(0xFFEF9A9A, 0xFF5C0F0F, 0xFFC62828),
+    PollHue.BLUE to listOf(0xFF90CAF9, 0xFF0B2F55, 0xFF1565C0),
+)
+
+private fun pollColors(dark: Boolean) = pollTones.mapValues { (_, t) ->
+    val pale = Color(t[0]); val onPale = Color(t[1]); val strong = Color(t[2]); val onStrong = Color.White
+    if (dark) PollColor(strong, onStrong, pale, onPale) else PollColor(pale, onPale, strong, onStrong)
 }
 
 /*
@@ -120,12 +146,14 @@ private val LightExtra = VelowindColors(
     ok = Color(0xFF1E7A46), okContainer = Color(0xFFD6F0DF),
     warn = Color(0xFF8A5100), warnContainer = Color(0xFFFFE7C7),
     bikes = bikeColors(dark = false),
+    poll = pollColors(dark = false),
 )
 
 private val DarkExtra = VelowindColors(
     ok = Color(0xFF7DDB9F), okContainer = Color(0xFF163A26),
     warn = Color(0xFFFFB95C), warnContainer = Color(0xFF4A3000),
     bikes = bikeColors(dark = true),
+    poll = pollColors(dark = true),
 )
 
 val LocalVelowind = staticCompositionLocalOf { LightExtra }

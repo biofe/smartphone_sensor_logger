@@ -4,6 +4,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -129,9 +130,9 @@ fun PollGrid(lastTap: Labels.Tap?, lastTapUndone: Boolean, onTap: (Labels.Choice
 
 @Composable
 private fun PollTile(category: String, choice: Labels.Choice, flashing: Boolean, modifier: Modifier, onTap: () -> Unit) {
-    val colors = MaterialTheme.colorScheme
-    val bg by animateColorAsState(if (flashing) colors.primary else colors.surfaceContainerHigh, label = "tile")
-    val fg = if (flashing) colors.onPrimary else colors.onSurface
+    val colors = LocalVelowind.current.poll.getValue(choice.hue)
+    val bg by animateColorAsState(if (flashing) colors.flashBg else colors.bg, label = "tile")
+    val fg by animateColorAsState(if (flashing) colors.flashFg else colors.fg, label = "tileText")
     val label = stringResource(choice.label)
     val description = "$category: $label"
     Surface(
@@ -141,13 +142,15 @@ private fun PollTile(category: String, choice: Labels.Choice, flashing: Boolean,
         color = bg,
         contentColor = fg,
     ) {
-        Box(Modifier.clearAndSetSemantics {}) {
+        BoxWithConstraints(Modifier.clearAndSetSemantics {}) {
+            // 40 dp where the tile is tall enough (recording screen), down to 30 dp on the shorter annotate grid.
+            val iconSize = (maxHeight * 0.42f).coerceIn(30.dp, 40.dp)
             Column(
                 Modifier.fillMaxSize().padding(horizontal = 4.dp, vertical = 6.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {
-                Icon(VelowindIcons.poll(choice.key), contentDescription = null, modifier = Modifier.size(30.dp))
+                Icon(VelowindIcons.poll(choice.key), contentDescription = null, modifier = Modifier.size(iconSize))
                 Gap(4.dp)
                 Text(
                     label, style = MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center,

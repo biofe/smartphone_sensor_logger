@@ -1,6 +1,6 @@
 # Velowind logger: project overview
 
-*Last updated: 2026-11-04 · app version on `master`: 0.12.3*
+*Last updated: 2026-11-17 · app version on `master`: 0.12.3 (0.12.4 in review)*
 
 This page is the living overview of the logger: why it exists, what the finished app should do, and where each feature stands. Update the status tables whenever a feature changes state, and bump the date above. The [README](../README.md) stays the reference for file formats, installing and building.
 
@@ -47,7 +47,7 @@ The app is Android only (Android 10+). iOS is out of scope for now.
 
 | Feature | Status | Since | Notes |
 |---|---|---|---|
-| Live poll on the recording screen: 12 one-tap buttons (Quiet, Far traffic, Loud traffic, Wind · Smooth, Bumpy, Rough · Narrow, Medium, Wide · Nice, Unpleasant) | ✅ Tested | 0.10.0 | A tap saves only time and the last GPS fix to `labels.csv`, with a vibration and Undo for 5 s. No counters on the buttons. Meant for a mounted phone and a short tap at safe moments: German traffic law (§ 23 StVO) allows only brief operation of a phone that isn't held. Replaces the planned wind question and notification quick marks |
+| Live poll on the recording screen: 12 one-tap buttons (Quiet, Far traffic, Loud traffic, Wind · Smooth, Bumpy, Rough · Narrow, Medium, Wide · Nice, Unpleasant) | ✅ Tested | 0.10.0 | A tap saves only time and the last GPS fix to `labels.csv`, with a vibration and Undo for 5 s. No counters on the buttons. Since 0.12.4 each button has a colour so it can be found at a glance (green good, orange so-so, red bad, wind blue; pale with dark text in light mode, strong with white text in dark mode) and bigger icons. Meant for a mounted phone and a short tap at safe moments: German traffic law (§ 23 StVO) allows only brief operation of a phone that isn't held. Replaces the planned wind question and notification quick marks |
 | Ride screen over the lock screen; "keep the screen on" | ✅ Tested | 0.10.0 | From 0.11.1 on by default, dimmed after 20 s without a touch: with the phone's normal timeout the screen went off mid-ride and only the power button woke it |
 | Annotate later: select one ride, its track on OSM, tap a spot on it for the same 12 buttons | 🧪 Built, untested | 0.10.0 | Rows get `source=later` and the time and position of the track point. The privacy-trimmed ends are grey and can't be annotated. Taps added to an uploaded ride are sent on their own (`PUT /v1/rides/<name>/labels`) |
 | Old stop-and-fill poll (short and detailed), map annotations | ❌ Replaced | 0.3.0–0.9.1 | Replaced by the live poll in 0.10.0. Old rides keep their `annotations.csv`; the server still accepts map annotations from older apps |
@@ -136,3 +136,4 @@ The app is Android only (Android 10+). iOS is out of scope for now.
 | 0.12.1 | Upload log under Settings → Upload (when Android ran the upload jobs, on which network, what came of it); a ride that ends while an upload runs is no longer left for the 6-hour check |
 | 0.12.2 | New bike icons: a different drawing for each type, thinner lines, e-bike bolt no longer touches the handlebar |
 | 0.12.3 | Dark mode: intro and screen titles were dark text on dark background. Settings: the first letters of two-line link rows were cut off |
+| 0.12.4 | Poll buttons coloured by meaning (green, orange, red, blue for wind) and bigger icons |
